@@ -43,8 +43,6 @@
 
 [![RuStore](https://img.shields.io/badge/RuStore-Скачать-red.svg)](https://www.rustore.ru/catalog/app/ru.dzhaparidze.collegeapp)
 
-Скачайте актуальную версию приложения из [RuStore](https://www.rustore.ru/catalog/app/ru.dzhaparidze.collegeapp)
-
 **Google Play**:
 
 Версия для Google Play появится позже, после завершения тестирования.

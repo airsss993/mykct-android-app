@@ -2,6 +2,7 @@ package ru.dzhaparidze.collegeapp.features.schedule.utils
 
 object GroupSubgroupCompatibility {
     private val firstYearSubgroups = listOf("Подгр1", "Подгр2", "Подгр3", "Подгр4")
+    private val profileSubgroups = listOf("Подгр1", "Подгр2")
     private val profiles = listOf("BE", "FE", "GD", "PM", "SA", "CD")
     private val englishByYear = mapOf(
         "25" to listOf("A0.11", "A0.12", "A1.11", "A1.12", "A2.11", "A2.12", "B1.11", "B1.12"),
@@ -23,6 +24,13 @@ object GroupSubgroupCompatibility {
     fun getEnglishSubgroups(group: String): List<String> {
         val year = getYear(group) ?: return emptyList()
         return englishByYear[year] ?: emptyList()
+    }
+
+    fun getAdditionalSubgroups(group: String, selectedMainSubgroup: String): List<String> {
+        return when {
+            group == "ИТ24-14" && selectedMainSubgroup == "CD" -> profileSubgroups
+            else -> emptyList()
+        }
     }
 
     fun getYear(group: String): String? {

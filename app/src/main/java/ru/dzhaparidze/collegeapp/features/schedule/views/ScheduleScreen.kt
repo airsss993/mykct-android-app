@@ -91,16 +91,17 @@ fun ScheduleScreen() {
     }
     var selectedMainSubgroup by remember {
         mutableStateOf(
-            prefs.getString(
-                "selected_main_subgroup", ""
-            ) ?: ""
+            prefs.getString("selected_main_subgroup", "") ?: ""
         )
     }
     var selectedEnglishSubgroup by remember {
         mutableStateOf(
-            prefs.getString(
-                "selected_english_subgroup", ""
-            ) ?: ""
+            prefs.getString("selected_english_subgroup", "") ?: ""
+        )
+    }
+    var selectedProfileSubgroup by remember {
+        mutableStateOf(
+            prefs.getString("selected_profile_subgroup", "") ?: ""
         )
     }
     var selectedTimePeriod by remember { mutableStateOf(TimePeriod.TODAY) }
@@ -113,6 +114,7 @@ fun ScheduleScreen() {
             group = selectedGroup,
             subgroup = selectedMainSubgroup.ifEmpty { "*" },
             englishGroup = selectedEnglishSubgroup.ifEmpty { "*" },
+            profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" },
             timePeriod = selectedTimePeriod
         )
     }
@@ -204,10 +206,9 @@ fun ScheduleScreen() {
 
                         Text(
                             text = when {
-                                selectedMainSubgroup.isEmpty() && selectedEnglishSubgroup.isEmpty() -> "Все"
-                                selectedEnglishSubgroup.isNotEmpty() -> selectedMainSubgroup
-
-                                else -> selectedMainSubgroup
+                                selectedMainSubgroup.isEmpty() && selectedEnglishSubgroup.isEmpty() && selectedProfileSubgroup.isEmpty() -> "Все"
+                                selectedMainSubgroup.isNotEmpty() -> selectedMainSubgroup
+                                else -> "Все"
                             },
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -600,15 +601,17 @@ fun ScheduleScreen() {
 
                                         selectedMainSubgroup = ""
                                         selectedEnglishSubgroup = ""
+                                        selectedProfileSubgroup = ""
 
                                         prefs.edit {
                                             putString("selected_group", group)
                                             putString("selected_main_subgroup", "")
                                             putString("selected_english_subgroup", "")
+                                            putString("selected_profile_subgroup", "")
                                         }
 
                                         viewModel.updateSchedule(
-                                            group = group, subgroup = "*", englishGroup = "*"
+                                            group = group, subgroup = "*", englishGroup = "*", profileSubgroup = "*"
                                         )
                                         showGroupSheet = false
                                     }, colors = CardDefaults.cardColors(
@@ -628,7 +631,7 @@ fun ScheduleScreen() {
         }
 
         if (showSubgroupSheet) {
-            LaunchedEffect(true) {
+            LaunchedEffect(showSubgroupSheet, selectedMainSubgroup) {
                 val availableSubgroups = GroupSubgroupCompatibility.getMainSubgroups(selectedGroup)
                 tempSelectedMainSubgroup =
                     if (selectedMainSubgroup.isNotEmpty() && availableSubgroups.contains(
@@ -698,7 +701,9 @@ fun ScheduleScreen() {
 
                                     viewModel.updateSchedule(
                                         subgroup = tempSelectedMainSubgroup,
-                                        englishGroup = selectedEnglishSubgroup.ifEmpty { "*" })
+                                        englishGroup = selectedEnglishSubgroup.ifEmpty { "*" },
+                                        profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" }
+                                    )
                                     showSubgroupSheet = false
                                     tempSelectedMainSubgroup = ""
                                 }
@@ -729,13 +734,15 @@ fun ScheduleScreen() {
                                     .clickable {
                                         selectedMainSubgroup = ""
                                         selectedEnglishSubgroup = ""
+                                        selectedProfileSubgroup = ""
 
                                         prefs.edit {
                                             putString("selected_main_subgroup", "")
                                             putString("selected_english_subgroup", "")
+                                            putString("selected_profile_subgroup", "")
                                         }
                                         viewModel.updateSchedule(
-                                            subgroup = "*", englishGroup = "*"
+                                            subgroup = "*", englishGroup = "*", profileSubgroup = "*"
                                         )
                                         showSubgroupSheet = false
                                         tempSelectedMainSubgroup = ""
@@ -816,7 +823,8 @@ fun ScheduleScreen() {
 
                                             viewModel.updateSchedule(
                                                 subgroup = tempSelectedMainSubgroup,
-                                                englishGroup = "*"
+                                                englishGroup = "*",
+                                                profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" }
                                             )
                                             showSubgroupSheet = false
                                             tempSelectedMainSubgroup = ""
@@ -865,7 +873,8 @@ fun ScheduleScreen() {
 
                                             viewModel.updateSchedule(
                                                 subgroup = tempSelectedMainSubgroup,
-                                                englishGroup = englishSubgroup
+                                                englishGroup = englishSubgroup,
+                                                profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" }
                                             )
                                             showSubgroupSheet = false
                                             tempSelectedMainSubgroup = ""
@@ -889,6 +898,68 @@ fun ScheduleScreen() {
                                             selected = selectedEnglishSubgroup == englishSubgroup,
                                             onClick = null
                                         )
+                                    }
+                                }
+                            }
+
+                            if (GroupSubgroupCompatibility.getAdditionalSubgroups(selectedGroup, tempSelectedMainSubgroup).isNotEmpty()) {
+                                item {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Подгруппа",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                }
+
+                                items(GroupSubgroupCompatibility.getAdditionalSubgroups(selectedGroup, tempSelectedMainSubgroup)) { additionalSubgroup ->
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable {
+                                                selectedMainSubgroup = tempSelectedMainSubgroup
+                                                selectedProfileSubgroup = additionalSubgroup
+
+                                                prefs.edit {
+                                                    putString(
+                                                        "selected_main_subgroup",
+                                                        tempSelectedMainSubgroup
+                                                    )
+                                                    putString("selected_profile_subgroup", additionalSubgroup)
+                                                }
+
+                                                viewModel.updateSchedule(
+                                                    subgroup = tempSelectedMainSubgroup,
+                                                    englishGroup = selectedEnglishSubgroup.ifEmpty { "*" },
+                                                    profileSubgroup = additionalSubgroup
+                                                )
+                                                showSubgroupSheet = false
+                                                tempSelectedMainSubgroup = ""
+                                            }, colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.surface
+                                        )
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = additionalSubgroup,
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+
+                                            RadioButton(
+                                                selected = selectedProfileSubgroup == additionalSubgroup,
+                                                onClick = null
+                                            )
+                                        }
                                     }
                                 }
                             }

@@ -80,6 +80,7 @@ class ScheduleViewModel(private val repository: ScheduleRepositoryInterface) : V
     var selectedGroup by mutableStateOf(getLatestGroup())
     var selectedSubgroup by mutableStateOf("*")
     var selectedEnglishGroup by mutableStateOf("*")
+    var selectedProfileSubgroup by mutableStateOf("*")
     var selectedStartDate by mutableStateOf(getCurrentDate())
     var selectedEndDate by mutableStateOf(getDatePlusDays())
     var selectedWeekOffset by mutableIntStateOf(0)
@@ -93,6 +94,7 @@ class ScheduleViewModel(private val repository: ScheduleRepositoryInterface) : V
                     group = selectedGroup,
                     subgroup = selectedSubgroup,
                     englishGroup = selectedEnglishGroup,
+                    profileSubgroup = selectedProfileSubgroup,
                     start = selectedStartDate,
                     end = selectedEndDate
                 )
@@ -109,6 +111,7 @@ class ScheduleViewModel(private val repository: ScheduleRepositoryInterface) : V
         group: String? = null,
         subgroup: String? = null,
         englishGroup: String? = null,
+        profileSubgroup: String? = null,
         timePeriod: TimePeriod? = null,
         startDate: String? = null,
         endDate: String? = null
@@ -116,6 +119,7 @@ class ScheduleViewModel(private val repository: ScheduleRepositoryInterface) : V
         group?.let { selectedGroup = it }
         subgroup?.let { selectedSubgroup = it }
         englishGroup?.let { selectedEnglishGroup = it }
+        profileSubgroup?.let { selectedProfileSubgroup = it }
 
         timePeriod?.let { period ->
             when (period) {

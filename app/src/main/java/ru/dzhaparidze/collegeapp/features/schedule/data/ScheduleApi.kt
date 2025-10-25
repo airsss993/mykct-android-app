@@ -12,6 +12,7 @@ interface ScheduleAPIInterface {
         group: String,
         subgroup: String,
         englishGroup: String,
+        profileSubgroup: String,
         start: String,
         end: String
     ): ScheduleResponse
@@ -22,11 +23,12 @@ class ScheduleAPI : ScheduleAPIInterface {
         group: String,
         subgroup: String,
         englishGroup: String,
+        profileSubgroup: String,
         start: String,
         end: String
     ): ScheduleResponse {
         Log.d("ScheduleAPI", "Send request to get schedule")
-        Log.d("ScheduleAPI", "Group: $group, Subgroup: $subgroup, English: $englishGroup")
+        Log.d("ScheduleAPI", "Group: $group, Subgroup: $subgroup, English: $englishGroup, ProfileSubgroup: $profileSubgroup")
         Log.d("ScheduleAPI", "Range: $start - $end")
 
         val queryParams = mutableMapOf(
@@ -38,6 +40,10 @@ class ScheduleAPI : ScheduleAPIInterface {
 
         if (englishGroup.isNotEmpty() && englishGroup != "*") {
             queryParams["english_group"] = englishGroup
+        }
+
+        if (profileSubgroup.isNotEmpty() && profileSubgroup != "*") {
+            queryParams["profile_subgroup"] = profileSubgroup
         }
 
         val endpoint = Endpoint(

@@ -184,11 +184,9 @@ fun ScheduleScreen() {
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { showSubgroupSheet = true },
-                colors = CardDefaults.cardColors(
+                    .clickable { showSubgroupSheet = true }, colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
-                ),
-                shape = RoundedCornerShape(12.dp)
+                ), shape = RoundedCornerShape(12.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -247,10 +245,10 @@ fun ScheduleScreen() {
                         else MaterialTheme.colorScheme.onSurface
                     ),
                     elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     Text(
-                        text = "Сегодня", fontSize = 15.sp
+                        text = "Сегодня", fontSize = 13.sp
                     )
                 }
             }
@@ -270,10 +268,10 @@ fun ScheduleScreen() {
                         else MaterialTheme.colorScheme.onSurface
                     ),
                     elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     Text(
-                        text = "3 дня", fontSize = 15.sp
+                        text = "3 дня", fontSize = 13.sp
                     )
                 }
             }
@@ -293,10 +291,10 @@ fun ScheduleScreen() {
                         else MaterialTheme.colorScheme.onSurface
                     ),
                     elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     Text(
-                        text = "Неделя", fontSize = 15.sp
+                        text = "Неделя", fontSize = 13.sp
                     )
                 }
             }
@@ -309,7 +307,7 @@ fun ScheduleScreen() {
                         contentColor = MaterialTheme.colorScheme.onSecondary
                     ),
                     elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -321,7 +319,7 @@ fun ScheduleScreen() {
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "Выбрать", fontSize = 15.sp
+                            text = "Выбрать", fontSize = 13.sp
                         )
                     }
                 }
@@ -567,10 +565,10 @@ fun ScheduleScreen() {
                                 elevation = ButtonDefaults.buttonElevation(
                                     2.dp, 2.dp, 0.dp, 2.dp, 2.dp
                                 ),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "Отмена", fontSize = 14.sp
+                                    text = "Отмена", fontSize = 12.sp
                                 )
                             }
                         }
@@ -581,7 +579,7 @@ fun ScheduleScreen() {
                             Text(
                                 text = "Выбор группы",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
+                                fontSize = 16.sp,
                                 textAlign = TextAlign.Center,
                             )
                         }
@@ -611,7 +609,10 @@ fun ScheduleScreen() {
                                         }
 
                                         viewModel.updateSchedule(
-                                            group = group, subgroup = "*", englishGroup = "*", profileSubgroup = "*"
+                                            group = group,
+                                            subgroup = "*",
+                                            englishGroup = "*",
+                                            profileSubgroup = "*"
                                         )
                                         showGroupSheet = false
                                     }, colors = CardDefaults.cardColors(
@@ -674,18 +675,19 @@ fun ScheduleScreen() {
                                 contentColor = MaterialTheme.colorScheme.onSurface
                             ), elevation = ButtonDefaults.buttonElevation(
                                 2.dp, 2.dp, 0.dp, 2.dp, 2.dp
-                            ), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ), contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "Отмена", fontSize = 14.sp
+                                text = "Отмена", fontSize = 12.sp
                             )
                         }
 
                         Text(
                             text = "Выбор подгруппы",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
+                            fontSize = 16.sp,
                             textAlign = TextAlign.Center,
+                            softWrap = true,
                         )
 
                         Button(
@@ -702,8 +704,7 @@ fun ScheduleScreen() {
                                     viewModel.updateSchedule(
                                         subgroup = tempSelectedMainSubgroup,
                                         englishGroup = selectedEnglishSubgroup.ifEmpty { "*" },
-                                        profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" }
-                                    )
+                                        profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" })
                                     showSubgroupSheet = false
                                     tempSelectedMainSubgroup = ""
                                 }
@@ -716,10 +717,10 @@ fun ScheduleScreen() {
                             elevation = ButtonDefaults.buttonElevation(
                                 2.dp, 2.dp, 0.dp, 2.dp, 2.dp
                             ),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "Применить", fontSize = 14.sp
+                                text = "Применить", fontSize = 12.sp
                             )
                         }
                     }
@@ -742,7 +743,9 @@ fun ScheduleScreen() {
                                             putString("selected_profile_subgroup", "")
                                         }
                                         viewModel.updateSchedule(
-                                            subgroup = "*", englishGroup = "*", profileSubgroup = "*"
+                                            subgroup = "*",
+                                            englishGroup = "*",
+                                            profileSubgroup = "*"
                                         )
                                         showSubgroupSheet = false
                                         tempSelectedMainSubgroup = ""
@@ -824,8 +827,7 @@ fun ScheduleScreen() {
                                             viewModel.updateSchedule(
                                                 subgroup = tempSelectedMainSubgroup,
                                                 englishGroup = "*",
-                                                profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" }
-                                            )
+                                                profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" })
                                             showSubgroupSheet = false
                                             tempSelectedMainSubgroup = ""
                                         }, colors = CardDefaults.cardColors(
@@ -874,8 +876,7 @@ fun ScheduleScreen() {
                                             viewModel.updateSchedule(
                                                 subgroup = tempSelectedMainSubgroup,
                                                 englishGroup = englishSubgroup,
-                                                profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" }
-                                            )
+                                                profileSubgroup = selectedProfileSubgroup.ifEmpty { "*" })
                                             showSubgroupSheet = false
                                             tempSelectedMainSubgroup = ""
                                         }, colors = CardDefaults.cardColors(
@@ -902,7 +903,10 @@ fun ScheduleScreen() {
                                 }
                             }
 
-                            if (GroupSubgroupCompatibility.getAdditionalSubgroups(selectedGroup, tempSelectedMainSubgroup).isNotEmpty()) {
+                            if (GroupSubgroupCompatibility.getAdditionalSubgroups(
+                                    selectedGroup, tempSelectedMainSubgroup
+                                ).isNotEmpty()
+                            ) {
                                 item {
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
@@ -910,11 +914,17 @@ fun ScheduleScreen() {
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                        modifier = Modifier.padding(
+                                            horizontal = 16.dp, vertical = 8.dp
+                                        )
                                     )
                                 }
 
-                                items(GroupSubgroupCompatibility.getAdditionalSubgroups(selectedGroup, tempSelectedMainSubgroup)) { additionalSubgroup ->
+                                items(
+                                    GroupSubgroupCompatibility.getAdditionalSubgroups(
+                                        selectedGroup, tempSelectedMainSubgroup
+                                    )
+                                ) { additionalSubgroup ->
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -929,7 +939,10 @@ fun ScheduleScreen() {
                                                         "selected_main_subgroup",
                                                         tempSelectedMainSubgroup
                                                     )
-                                                    putString("selected_profile_subgroup", additionalSubgroup)
+                                                    putString(
+                                                        "selected_profile_subgroup",
+                                                        additionalSubgroup
+                                                    )
                                                 }
 
                                                 viewModel.updateSchedule(
@@ -1020,14 +1033,15 @@ fun DatePickerContent(
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 elevation = ButtonDefaults.buttonElevation(2.dp, 2.dp, 0.dp, 2.dp, 2.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp)
             ) {
-                Text("Отмена", fontSize = 14.sp)
+                Text("Отмена", fontSize = 12.sp)
             }
 
             Text(
-                text = "Выбор периода", fontWeight = FontWeight.Bold, fontSize = 20.sp,
+                text = "Выбор периода", fontWeight = FontWeight.Bold, fontSize = 16.sp,
                 textAlign = TextAlign.Center,
+
             )
 
             Button(
@@ -1050,9 +1064,9 @@ fun DatePickerContent(
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 elevation = ButtonDefaults.buttonElevation(2.dp, 2.dp, 0.dp, 2.dp, 2.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp)
             ) {
-                Text("Применить", fontSize = 14.sp)
+                Text("Применить", fontSize = 12.sp)
             }
         }
 
@@ -1066,12 +1080,10 @@ fun DatePickerContent(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { selectingStartDate = true },
-                colors = CardDefaults.cardColors(
+                    .clickable { selectingStartDate = true }, colors = CardDefaults.cardColors(
                     containerColor = if (selectingStartDate) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.surface
-                ),
-                shape = RoundedCornerShape(8.dp)
+                ), shape = RoundedCornerShape(8.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(8.dp),
@@ -1098,12 +1110,10 @@ fun DatePickerContent(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { selectingStartDate = false },
-                colors = CardDefaults.cardColors(
+                    .clickable { selectingStartDate = false }, colors = CardDefaults.cardColors(
                     containerColor = if (!selectingStartDate) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.surface
-                ),
-                shape = RoundedCornerShape(8.dp)
+                ), shape = RoundedCornerShape(8.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(8.dp),

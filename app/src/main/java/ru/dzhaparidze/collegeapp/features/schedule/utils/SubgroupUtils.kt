@@ -4,7 +4,7 @@ fun getFullSubgroupName(shortName: String): String {
     return when (shortName.uppercase()) {
         "BE" -> "Backend (BE)"
         "GD" -> "Game Dev (GD)"
-        "PM" -> "Project Management (PV)"
+        "PM" -> "Project Management (PM)"
         "SA" -> "System Administration (SA)"
         "FE" -> "Frontend (FE)"
         "CD" -> "UX/UI Design (CD)"

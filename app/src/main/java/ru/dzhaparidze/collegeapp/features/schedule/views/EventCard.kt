@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import ru.dzhaparidze.collegeapp.features.schedule.models.ScheduleEvent
@@ -134,6 +135,7 @@ fun EventCard(event: ScheduleEvent) {
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     shape = RoundedCornerShape(6.dp)
                                 )
+                                .clip(RoundedCornerShape(6.dp))
                                 .clickable { isExpanded = !isExpanded }
                                 .padding(horizontal = 8.dp, vertical = 4.dp),
                             contentAlignment = Alignment.Center

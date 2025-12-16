@@ -43,3 +43,4 @@ Thumbs.db
 keystore.properties
 *.jks
 *.keystore
+*.crt

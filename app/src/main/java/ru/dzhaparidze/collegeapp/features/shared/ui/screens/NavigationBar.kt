@@ -24,7 +24,8 @@ fun CustomNavBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 32.dp),
+            .navigationBarsPadding()
+            .padding(bottom = 16.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
@@ -89,7 +90,7 @@ private fun NavBarItem(
     Box(
         modifier = Modifier
             .width(100.dp)
-            .height(60.dp)
+            .height(50.dp)
             .clip(RoundedCornerShape(50.dp))
             .background(backgroundColor)
             .clickable(onClick = onClick),
@@ -97,7 +98,7 @@ private fun NavBarItem(
     ) {
         Icon(
             modifier = Modifier
-                .size(26.dp)
+                .size(21.dp)
                 .offset(y = iconOffsetY),
             imageVector = icon,
             tint = iconColor,
@@ -106,12 +107,11 @@ private fun NavBarItem(
 
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.primary.copy(alpha = textAlpha),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .offset(y = (-10).dp)
         )
     }
 }

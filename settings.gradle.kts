@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CollegeApp"
+rootProject.name = "MyKCT"
 include(":app")

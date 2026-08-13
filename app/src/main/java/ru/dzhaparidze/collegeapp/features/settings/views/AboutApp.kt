@@ -142,7 +142,7 @@ fun AboutAppScreen(onBackClick: () -> Unit) {
             LinkButton(
                 icon = Icons.Default.Code,
                 text = "Исходный код",
-                url = "https://github.com/airsss993/college-android-app",
+                url = "https://github.com/airsss993/mykct-android-app",
                 showDivider = true
             )
 

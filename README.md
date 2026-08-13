@@ -5,7 +5,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.5+-green.svg)](https://developer.android.com/jetpack/compose)
 [![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg)](https://android-arsenal.com/api?level=24)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/airsss993/college-android-app)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/airsss993/mykct-android-app)
 
 ## 📸 Скриншоты
 

@@ -7,14 +7,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,56 +39,96 @@ fun LessonCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val container = lesson.colorHex.toColorOrNull() ?: MaterialTheme.colorScheme.primary
+    val base = lesson.colorHex.toColorOrNull() ?: MaterialTheme.colorScheme.primary
+    val container = if (isPast) base.copy(alpha = 0.55f) else base
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
             // жать не на что, если пара общая для всей группы
             .clickable(enabled = lesson.subgroups.isNotEmpty(), onClick = onClick),
-        shape = RoundedCornerShape(22.dp),
-        color = if (isPast) container.copy(alpha = 0.55f) else container,
+        shape = RoundedCornerShape(20.dp),
+        color = container,
         shadowElevation = 6.dp,
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            TimePill(
-                text = "${lesson.start.format(TIME)} - ${lesson.end.format(TIME)}",
-                showCheck = isPast,
-                accent = container,
+        // matchParentSize, а не fillMaxSize: фон и водяной знак не должны участвовать
+        // в измерении карточки, иначе она растянется на всю высоту таймлайна.
+        Box {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.linearGradient(listOf(container, lerp(container, Color.Black, 0.22f))),
+                    ),
             )
 
-            Spacer(Modifier.height(10.dp))
-
-            Text(
-                text = lesson.title,
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            Icon(
+                imageVector = lesson.backgroundIcon(),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.13f),
+                modifier = Modifier
+                    .matchParentSize()
+                    .wrapContentSize(Alignment.BottomEnd)
+                    .offset(x = 16.dp, y = 16.dp)
+                    .size(92.dp),
             )
 
-            if (lesson.topic.isNotBlank()) {
+            Column(modifier = Modifier.padding(11.dp)) {
+                TimePill(
+                    text = "${lesson.start.format(TIME)} - ${lesson.end.format(TIME)}",
+                    showCheck = isPast,
+                    accent = container,
+                )
+
+                Spacer(Modifier.height(8.dp))
+
                 Text(
-                    text = lesson.topic,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.75f),
+                    text = lesson.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
                 )
-            }
 
-            Spacer(Modifier.height(10.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (lesson.room.isNotBlank()) {
-                    Chip(text = lesson.room, icon = Icons.Default.Place)
+                if (lesson.topic.isNotBlank()) {
+                    Text(
+                        text = lesson.topic,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.75f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
                 }
-                if (lesson.subgroups.isNotEmpty()) {
-                    Chip(text = "Подгруппы: ${lesson.subgroups.size}", icon = Icons.Default.List)
+
+                Spacer(Modifier.height(8.dp))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (lesson.room.isNotBlank()) {
+                        Chip(text = lesson.room, icon = Icons.Default.Place)
+                    }
+                    if (lesson.subgroups.isNotEmpty()) {
+                        Chip(text = "Подгруппы: ${lesson.subgroups.size}", icon = Icons.Default.List)
+                    }
                 }
             }
         }
+    }
+}
+
+/**
+ * Водяной знак по названию предмета. Названия приходят с портала свободным текстом,
+ * так что это подбор по ключевому слову с запасным вариантом, а не справочник.
+ */
+private fun Lesson.backgroundIcon(): ImageVector {
+    val name = title.lowercase()
+    return when {
+        "физич" in name || "физкультур" in name -> Icons.Default.FavoriteBorder
+        "английск" in name || "язык" in name -> Icons.Default.Face
+        "баз" in name && "данных" in name -> Icons.Default.List
+        "операционн" in name || "сет" in name -> Icons.Default.Settings
+        "разработ" in name || "модул" in name || "программ" in name -> Icons.Default.Build
+        else -> Icons.Default.Create
     }
 }
 

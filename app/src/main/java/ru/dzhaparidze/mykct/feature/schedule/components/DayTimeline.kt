@@ -18,7 +18,9 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 private const val SLOT_MINUTES = 30
-private val SLOT_HEIGHT = 56.dp // полчаса в референсе — примерно треть карточки пары
+// Полчаса сетки. Задаёт высоту карточек: пара в 90 минут = три слота. Меньше 50.dp
+// не опускать — содержимое карточки перестанет влезать и она вылезет из своего слота.
+private val SLOT_HEIGHT = 50.dp
 private val GUTTER = 56.dp
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
 

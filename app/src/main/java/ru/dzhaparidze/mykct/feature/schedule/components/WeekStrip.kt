@@ -2,13 +2,10 @@ package ru.dzhaparidze.mykct.feature.schedule.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,53 +23,27 @@ private val RU = Locale.forLanguageTag("ru-RU")
 
 /**
  * Полоса недели из референса: подпись дня, круг с числом, точки = количество пар.
- * Справа круглая кнопка «сегодня».
+ * В референсе полоса скроллится, но у нас неделя фиксированная (пн–вс) и целиком
+ * влезает в ширину — круги делят её поровну.
  */
 @Composable
 fun WeekStrip(
     days: List<DayCell>,
     selectedDate: LocalDate,
     onSelect: (LocalDate) -> Unit,
-    onToday: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            days.forEach { day ->
-                DayItem(
-                    day = day,
-                    isSelected = day.date == selectedDate,
-                    onClick = { onSelect(day.date) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-
-        Spacer(Modifier.width(8.dp))
-
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onToday),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Сегодня",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+        days.forEach { day ->
+            DayItem(
+                day = day,
+                isSelected = day.date == selectedDate,
+                onClick = { onSelect(day.date) },
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
@@ -105,7 +76,9 @@ private fun DayItem(
 
         Box(
             modifier = Modifier
-                .size(44.dp)
+                // круг занимает всю ширину ячейки — в референсе он крупный, почти впритык
+                .fillMaxWidth()
+                .aspectRatio(1f)
                 .clip(CircleShape)
                 .background(circleColor)
                 .clickable(onClick = onClick),

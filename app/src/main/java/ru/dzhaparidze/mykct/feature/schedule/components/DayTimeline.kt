@@ -16,8 +16,8 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 private const val SLOT_MINUTES = 30
-private val SLOT_HEIGHT = 46.dp
-private val GUTTER = 52.dp
+private val SLOT_HEIGHT = 56.dp // полчаса в референсе — примерно треть карточки пары
+private val GUTTER = 56.dp
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
 
 /**
@@ -28,6 +28,7 @@ private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
 fun DayTimeline(
     lessons: List<Lesson>,
     now: LocalTime?,
+    onLessonClick: (Lesson) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (lessons.isEmpty()) return
@@ -51,6 +52,7 @@ fun DayTimeline(
             LessonCard(
                 lesson = lesson,
                 isPast = now != null && !lesson.end.isAfter(now),
+                onClick = { onLessonClick(lesson) },
                 modifier = Modifier
                     .offset(y = SLOT_HEIGHT * top)
                     .padding(start = GUTTER, bottom = 6.dp)

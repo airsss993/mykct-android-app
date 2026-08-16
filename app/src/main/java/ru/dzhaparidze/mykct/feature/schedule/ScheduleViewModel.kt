@@ -1,6 +1,7 @@
 package ru.dzhaparidze.mykct.feature.schedule
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,6 +11,8 @@ import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.MockScheduleRepository
 import ru.dzhaparidze.mykct.data.ScheduleRepository
+import ru.dzhaparidze.mykct.data.Selection
+import ru.dzhaparidze.mykct.data.SelectionStore
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -24,6 +27,7 @@ data class DayCell(
 data class ScheduleUiState(
     val weekStart: LocalDate,
     val selectedDate: LocalDate,
+    val selection: Selection,
     val days: List<DayCell> = emptyList(),
     val lessons: List<Lesson> = emptyList(),
     val passedCount: Int = 0,
@@ -34,12 +38,13 @@ data class ScheduleUiState(
     val progress: Float get() = if (lessons.isEmpty()) 0f else passedCount.toFloat() / lessons.size
 }
 
-class ScheduleViewModel(
-    private val repository: ScheduleRepository = MockScheduleRepository(),
-) : ViewModel() {
+class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val store = SelectionStore(application)
+    private val repository: ScheduleRepository = MockScheduleRepository()
 
     private val _state = MutableStateFlow(
-        ScheduleUiState(weekStart = mondayOf(today()), selectedDate = today()),
+        ScheduleUiState(weekStart = mondayOf(today()), selectedDate = today(), selection = store.load()),
     )
     val state: StateFlow<ScheduleUiState> = _state.asStateFlow()
 
@@ -71,13 +76,20 @@ class ScheduleViewModel(
         }
     }
 
+    fun updateSelection(selection: Selection) {
+        if (selection == _state.value.selection) return
+        store.save(selection)
+        _state.update { it.copy(selection = selection) }
+        loadWeek()
+    }
+
     fun retry() = loadWeek()
 
     private fun loadWeek() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = false) }
             try {
-                weekLessons = repository.weekSchedule(_state.value.weekStart)
+                weekLessons = repository.weekSchedule(_state.value.weekStart, _state.value.selection)
                 applyWeek()
             } catch (e: Exception) {
                 weekLessons = emptyList()

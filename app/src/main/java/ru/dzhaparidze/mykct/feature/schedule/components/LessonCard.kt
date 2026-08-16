@@ -2,11 +2,13 @@ package ru.dzhaparidze.mykct.feature.schedule.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -27,12 +29,16 @@ private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
 fun LessonCard(
     lesson: Lesson,
     isPast: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val container = lesson.colorHex.toColorOrNull() ?: MaterialTheme.colorScheme.primary
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            // жать не на что, если пара общая для всей группы
+            .clickable(enabled = lesson.subgroups.isNotEmpty(), onClick = onClick),
         shape = RoundedCornerShape(22.dp),
         color = if (isPast) container.copy(alpha = 0.55f) else container,
         shadowElevation = 6.dp,
@@ -71,7 +77,9 @@ fun LessonCard(
                 if (lesson.room.isNotBlank()) {
                     Chip(text = lesson.room, icon = Icons.Default.Place)
                 }
-                lesson.subgroup?.let { Chip(text = it) }
+                if (lesson.subgroups.isNotEmpty()) {
+                    Chip(text = "Подгруппы: ${lesson.subgroups.size}", icon = Icons.Default.List)
+                }
             }
         }
     }
@@ -86,20 +94,21 @@ private fun TimePill(text: String, showCheck: Boolean, accent: Color) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (showCheck) {
+            // в референсе галочка — белая на цветном круге внутри белой пилюли
             Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .background(accent.copy(alpha = 0.15f), CircleShape),
+                    .size(28.dp)
+                    .background(accent, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.size(14.dp),
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp),
                 )
             }
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(4.dp))
         }
         Text(
             text = text,

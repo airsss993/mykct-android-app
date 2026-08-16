@@ -1,7 +1,7 @@
 package ru.dzhaparidze.mykct.feature.schedule
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -39,11 +39,24 @@ import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
 
 private val RU = Locale.forLanguageTag("ru-RU")
-private val DAY_TITLE = DateTimeFormatter.ofPattern("d MMMM, EEEE", RU)
+
+/**
+ * Родительный падеж руками: `MMMM` на Android отдаёт именительный («16 август»),
+ * а нужен «16 августа». Своего формата под это в java.time нет.
+ */
+private val MONTHS_GENITIVE = listOf(
+    "января", "февраля", "марта", "апреля", "мая", "июня",
+    "июля", "августа", "сентября", "октября", "ноября", "декабря",
+)
+
+private fun LocalDate.dayMonth(): String = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 1]}"
+
+private fun LocalDate.dayTitle(): String =
+    "${dayMonth()}, ${dayOfWeek.getDisplayName(TextStyle.FULL, RU)}"
 
 /** На сколько белый лист контента наезжает на лавандовую шапку (радиус его верхних углов). */
 private val SHEET_OVERLAP = 24.dp
@@ -62,8 +75,6 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
     ) {
         Header(
             groupLabel = state.selection.label(),
-            onPrevWeek = { viewModel.shiftWeek(-1) },
-            onNextWeek = { viewModel.shiftWeek(1) },
             onOpenGroups = { groupSheetOpen = true },
         )
 
@@ -86,6 +97,14 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 
             Spacer(Modifier.height(24.dp))
 
+            WeekNav(
+                weekStart = state.weekStart,
+                onPrev = { viewModel.shiftWeek(-1) },
+                onNext = { viewModel.shiftWeek(1) },
+            )
+
+            Spacer(Modifier.height(12.dp))
+
             WeekStrip(
                 days = state.days,
                 selectedDate = state.selectedDate,
@@ -96,7 +115,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             Spacer(Modifier.height(24.dp))
 
             SectionRow(
-                title = state.selectedDate.format(DAY_TITLE).replaceFirstChar { it.uppercase() },
+                title = state.selectedDate.dayTitle().replaceFirstChar { it.uppercase() },
                 onToday = viewModel::goToToday,
             )
 
@@ -159,15 +178,13 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 }
 
 /**
- * Лавандовая шапка из референса: круглые кнопки по краям, по центру — что показываем.
- * В референсе по центру название экрана, но у нас важнее группа: экран всё равно один,
- * а группу иначе негде показать и негде сменить.
+ * Лавандовая шапка: слева название экрана, справа фильтр — он же показывает текущий выбор.
+ * Переключение недели уехало вниз, к самой полосе дней: в шапке две голые стрелки читались
+ * как «назад/вперёд» вообще, а не как «неделя».
  */
 @Composable
 private fun Header(
     groupLabel: String,
-    onPrevWeek: () -> Unit,
-    onNextWeek: () -> Unit,
     onOpenGroups: () -> Unit,
 ) {
     Row(
@@ -179,35 +196,77 @@ private fun Header(
             .padding(top = 20.dp, bottom = 24.dp + SHEET_OVERLAP),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RoundButton(Icons.Default.KeyboardArrowLeft, "Предыдущая неделя", onPrevWeek)
+        Text(
+            text = "Расписание",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.weight(1f),
+        )
 
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onOpenGroups)
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
+        AssistChip(
+            onClick = onOpenGroups,
+            label = {
+                Text(
+                    text = groupLabel,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Выбрать группу и подгруппы",
+                    modifier = Modifier.size(18.dp),
+                )
+            },
+            colors = AssistChipDefaults.assistChipColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                labelColor = MaterialTheme.colorScheme.onSurface,
+                trailingIconContentColor = MaterialTheme.colorScheme.primary,
+            ),
+            border = null,
+            modifier = Modifier.widthIn(max = 200.dp),
+        )
+    }
+}
+
+/** Переключение недели: стрелки вплотную к диапазону дат, чтобы было видно, что листается. */
+@Composable
+private fun WeekNav(weekStart: LocalDate, onPrev: () -> Unit, onNext: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RoundButton(Icons.Default.KeyboardArrowLeft, "Предыдущая неделя", onPrev)
+
+        Column(
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = groupLabel,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                text = "Неделя",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = "Выбрать группу",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp),
+            Text(
+                text = weekRange(weekStart),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
             )
         }
 
-        RoundButton(Icons.Default.KeyboardArrowRight, "Следующая неделя", onNextWeek)
+        RoundButton(Icons.Default.KeyboardArrowRight, "Следующая неделя", onNext)
     }
+}
+
+/** «11 – 17 августа», а через границу месяца — «28 июля – 3 августа». */
+private fun weekRange(weekStart: LocalDate): String {
+    val end = weekStart.plusDays(6)
+    val start = if (weekStart.month == end.month) weekStart.dayOfMonth.toString() else weekStart.dayMonth()
+    return "$start – ${end.dayMonth()}"
 }
 
 /** Подпись дня и круглая кнопка «сегодня» — строка «Timeline» из референса. */
@@ -228,27 +287,11 @@ private fun SectionRow(title: String, onToday: () -> Unit) {
             modifier = Modifier.weight(1f),
         )
 
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onToday),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Сегодня",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        }
+        RoundButton(Icons.Default.DateRange, "Сегодня", onToday)
     }
 }
 
+/** Круглая кнопка на белом листе — обводка нужна, без неё surface с фоном не различается. */
 @Composable
 private fun RoundButton(icon: ImageVector, description: String, onClick: () -> Unit) {
     Box(
@@ -256,6 +299,7 @@ private fun RoundButton(icon: ImageVector, description: String, onClick: () -> U
             .size(48.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -263,6 +307,7 @@ private fun RoundButton(icon: ImageVector, description: String, onClick: () -> U
             imageVector = icon,
             contentDescription = description,
             tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
         )
     }
 }

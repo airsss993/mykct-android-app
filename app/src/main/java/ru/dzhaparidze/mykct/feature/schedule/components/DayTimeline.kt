@@ -1,7 +1,9 @@
 package ru.dzhaparidze.mykct.feature.schedule.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +21,9 @@ private const val SLOT_MINUTES = 30
 private val SLOT_HEIGHT = 56.dp // полчаса в референсе — примерно треть карточки пары
 private val GUTTER = 56.dp
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
+
+/** Десятиминутные перемены подписывать незачем — плашка в них всё равно не влезет. */
+private const val GAP_LABEL_MINUTES = 20
 
 /**
  * Сетка времени с шагом 30 минут и карточки пар поверх неё:
@@ -62,7 +67,45 @@ fun DayTimeline(
                     .heightIn(min = SLOT_HEIGHT * span),
             )
         }
+
+        for ((previous, next) in lessons.zipWithNext()) {
+            val gap = minutesBetween(previous.end, next.start)
+            if (gap < GAP_LABEL_MINUTES) continue
+
+            val top = minutesBetween(gridStart, previous.end).toFloat() / SLOT_MINUTES
+            GapLabel(
+                minutes = gap,
+                modifier = Modifier
+                    .offset(y = SLOT_HEIGHT * top)
+                    .padding(start = GUTTER)
+                    .height(SLOT_HEIGHT * (gap.toFloat() / SLOT_MINUTES)),
+            )
+        }
     }
+}
+
+/**
+ * Окно между парами: обеденные полчаса или дыра в расписании. Подпись нейтральная —
+ * «обед» это только у стандартного перерыва, а дыра в час обедом не является.
+ */
+@Composable
+private fun GapLabel(minutes: Int, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Text(
+            text = "Перерыв · ${formatMinutes(minutes)}",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+        )
+    }
+}
+
+private fun formatMinutes(minutes: Int): String = when {
+    minutes < 60 -> "$minutes мин"
+    minutes % 60 == 0 -> "${minutes / 60} ч"
+    else -> "${minutes / 60} ч ${minutes % 60} мин"
 }
 
 @Composable

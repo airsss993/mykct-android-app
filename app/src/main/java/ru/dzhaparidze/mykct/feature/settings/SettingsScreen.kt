@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
@@ -52,13 +54,19 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             ThemeMode.entries.forEachIndexed { index, mode ->
                 if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 Row(
+                    // selectable, а не clickable: иначе строка и радиокнопка — два
+                    // отдельных таргета, и TalkBack читает их дважды
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onThemeChange(mode) }
+                        .selectable(
+                            selected = themeMode == mode,
+                            role = Role.RadioButton,
+                            onClick = { onThemeChange(mode) },
+                        )
                         .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    RadioButton(selected = themeMode == mode, onClick = { onThemeChange(mode) })
+                    RadioButton(selected = themeMode == mode, onClick = null)
                     Text(
                         text = mode.title,
                         style = MaterialTheme.typography.bodyLarge,

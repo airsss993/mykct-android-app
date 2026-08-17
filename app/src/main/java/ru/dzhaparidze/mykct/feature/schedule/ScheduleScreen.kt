@@ -226,7 +226,10 @@ private fun Header(
                 trailingIconContentColor = MaterialTheme.colorScheme.primary,
             ),
             border = null,
-            modifier = Modifier.widthIn(max = 200.dp),
+            // штатная высота чипа — 32dp, это ниже минимальных 48dp под палец
+            modifier = Modifier
+                .widthIn(max = 200.dp)
+                .heightIn(min = 48.dp),
         )
     }
 }

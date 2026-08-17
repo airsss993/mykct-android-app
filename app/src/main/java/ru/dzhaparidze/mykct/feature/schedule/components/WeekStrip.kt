@@ -3,15 +3,17 @@ package ru.dzhaparidze.mykct.feature.schedule.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.feature.schedule.DayCell
@@ -63,7 +65,15 @@ private fun DayItem(
     val contentColor = if (isSelected) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onSurface
 
     Column(
-        modifier = modifier,
+        // Клик на всей ячейке, а не только на круге: круг узкий (ширина ячейки / 7),
+        // на узких экранах он меньше 48dp, да и подпись дня мимо нажатия — неочевидно.
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .selectable(
+                selected = isSelected,
+                role = Role.Tab,
+                onClick = onClick,
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -80,8 +90,7 @@ private fun DayItem(
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .clip(CircleShape)
-                .background(circleColor)
-                .clickable(onClick = onClick),
+                .background(circleColor),
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {

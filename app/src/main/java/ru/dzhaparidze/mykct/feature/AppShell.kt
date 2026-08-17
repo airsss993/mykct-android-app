@@ -147,17 +147,22 @@ private fun NavItem(
                 indication = null,
                 onClick = onClick,
             )
-            // Свечение бьёт из верхней кромки панели: радиальное, иначе получается
-            // прямоугольная плашка во всю ячейку вместо мягкого пятна.
+            // Засвет из-под верхней кромки панели, как в референсе: он там едва заметный
+            // и узкий — источник будто снаружи, над иконкой. Три остановки вместо двух,
+            // потому что линейное затухание читается как заливка, а не как свет.
             .drawBehind {
                 if (glow > 0f) {
                     drawRect(
                         Brush.radialGradient(
-                            colors = listOf(accent.copy(alpha = 0.5f * glow), Color.Transparent),
+                            colorStops = arrayOf(
+                                0f to accent.copy(alpha = 0.22f * glow),
+                                0.45f to accent.copy(alpha = 0.07f * glow),
+                                1f to Color.Transparent,
+                            ),
                             center = Offset(size.width / 2f, 0f),
                             // радиус меньше полуширины ячейки, иначе пятно обрывается
                             // об её край вертикальной линией вместо мягкого затухания
-                            radius = minOf(size.width / 2f, size.height) * 0.85f,
+                            radius = minOf(size.width / 2f, size.height * 0.7f),
                         ),
                     )
                 }

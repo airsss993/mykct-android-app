@@ -1,16 +1,18 @@
 package ru.dzhaparidze.mykct.feature
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -18,16 +20,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.feature.schedule.ScheduleScreen
 import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
@@ -66,8 +70,8 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 }
 
 /**
- * Плавающая пилюля из референса: по бокам обычные пункты, по центру — крупная
- * акцентная кнопка главной.
+ * Плавающая панель из референса: широкая скруглённая пластина, тонкие иконки без
+ * подписей, у активного пункта — зелёное свечение от верхней кромки.
  */
 @Composable
 private fun NavBar(current: Screen, onSelect: (Screen) -> Unit, modifier: Modifier = Modifier) {
@@ -75,111 +79,97 @@ private fun NavBar(current: Screen, onSelect: (Screen) -> Unit, modifier: Modifi
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
+            .padding(horizontal = 20.dp)
             .padding(bottom = 16.dp),
-        contentAlignment = Alignment.Center,
     ) {
         Surface(
-            shape = CircleShape,
+            shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shadowElevation = 12.dp,
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
+            Row(modifier = Modifier.height(NAV_BAR_HEIGHT)) {
                 NavItem(
-                    icon = Icons.Default.DateRange,
+                    icon = Icons.Outlined.DateRange,
                     label = "Расписание",
                     isSelected = current == Screen.SCHEDULE,
                     onClick = { onSelect(Screen.SCHEDULE) },
+                    modifier = Modifier.weight(1f),
                 )
-
-                HomeItem(
+                NavItem(
+                    icon = Icons.Outlined.Home,
+                    label = "Главная",
                     isSelected = current == Screen.HOME,
                     onClick = { onSelect(Screen.HOME) },
+                    modifier = Modifier.weight(1f),
                 )
-
                 NavItem(
-                    icon = Icons.Default.Settings,
+                    icon = Icons.Outlined.Settings,
                     label = "Настройки",
                     isSelected = current == Screen.SETTINGS,
                     onClick = { onSelect(Screen.SETTINGS) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
     }
 }
 
-@Composable
-private fun NavItem(icon: ImageVector, label: String, isSelected: Boolean, onClick: () -> Unit) {
-    val background by animateColorAsState(
-        targetValue = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0f)
-        },
-        animationSpec = tween(250),
-        label = "nav-item-bg",
-    )
-    val tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+private val NAV_BAR_HEIGHT = 64.dp
 
-    Column(
-        modifier = Modifier
-            .width(92.dp)
-            .clip(CircleShape)
-            .background(background)
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+@Composable
+private fun NavItem(
+    icon: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = MaterialTheme.colorScheme.secondary
+    val tint by animateColorAsState(
+        targetValue = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(250),
+        label = "nav-tint",
+    )
+    val glow by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0f,
+        animationSpec = tween(250),
+        label = "nav-glow",
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(
+                // рябь по всей ячейке спорит со свечением, поэтому её нет
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+            )
+            // Свечение бьёт из верхней кромки панели: радиальное, иначе получается
+            // прямоугольная плашка во всю ячейку вместо мягкого пятна.
+            .drawBehind {
+                if (glow > 0f) {
+                    drawRect(
+                        Brush.radialGradient(
+                            colors = listOf(accent.copy(alpha = 0.5f * glow), Color.Transparent),
+                            center = Offset(size.width / 2f, 0f),
+                            // радиус меньше полуширины ячейки, иначе пятно обрывается
+                            // об её край вертикальной линией вместо мягкого затухания
+                            radius = minOf(size.width / 2f, size.height) * 0.85f,
+                        ),
+                    )
+                }
+            },
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
             tint = tint,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(26.dp),
         )
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
-            color = tint,
-            modifier = Modifier.padding(top = 2.dp),
-        )
-    }
-}
-
-/** Центральная кнопка: всегда акцентная, выбранное состояние показывает кольцо. */
-@Composable
-private fun HomeItem(isSelected: Boolean, onClick: () -> Unit) {
-    val size by animateDpAsState(
-        targetValue = if (isSelected) 58.dp else 52.dp,
-        animationSpec = tween(250),
-        label = "home-size",
-    )
-
-    Box(
-        modifier = Modifier
-            .size(58.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(size)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondary),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Default.Home,
-                contentDescription = "Главная",
-                tint = MaterialTheme.colorScheme.onSecondary,
-                modifier = Modifier.size(26.dp),
-            )
-        }
     }
 }
 

@@ -126,7 +126,7 @@ private fun NavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = MaterialTheme.colorScheme.secondary
+    val accent = MaterialTheme.colorScheme.primary
     val tint by animateColorAsState(
         targetValue = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = tween(250),

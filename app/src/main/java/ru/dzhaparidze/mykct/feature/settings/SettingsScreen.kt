@@ -301,13 +301,13 @@ private fun PersonCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .height(CARD_HEIGHT + PORTRAIT_RISE),
+            .height((if (wideShot) WIDE_CARD_HEIGHT else CARD_HEIGHT) + PORTRAIT_RISE),
     ) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(CARD_HEIGHT)
+                .height(if (wideShot) WIDE_CARD_HEIGHT else CARD_HEIGHT)
                 .clip(RoundedCornerShape(24.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .hairline(RoundedCornerShape(24.dp)),
@@ -369,6 +369,9 @@ private fun PersonCard(
 }
 
 private val CARD_HEIGHT = 158.dp
+
+/** Кадр с машиной требует высоты: иначе от неё остаётся полоска у нижней кромки. */
+private val WIDE_CARD_HEIGHT = 190.dp
 
 /** На сколько портрет выступает над верхней кромкой карточки. */
 private val PORTRAIT_RISE = 26.dp

@@ -44,7 +44,11 @@ private val RAINBOW = listOf(
 
 private const val CYCLE_MS = 2000
 private val BORDER = 2.dp
-private val INNER = Color(0xFF121213)
+
+// Тёмная тема веб-версии: тело кнопки белое, текст — тёмный.
+// (Светлый вариант там наоборот: тело #121213, текст белый.)
+private val INNER = Color.White
+private val LABEL = Color(0xFF121213)
 
 /**
  * Кнопка с бегущей радугой: радужная рамка, тёмная заливка и размытое свечение снизу.
@@ -107,7 +111,7 @@ fun RainbowButton(
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
+                color = LABEL,
             )
         }
     }

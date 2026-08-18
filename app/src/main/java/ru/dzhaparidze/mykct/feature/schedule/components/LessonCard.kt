@@ -1,30 +1,23 @@
 package ru.dzhaparidze.mykct.feature.schedule.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import java.time.format.DateTimeFormatter
@@ -64,7 +57,7 @@ fun LessonCard(
             )
 
             Icon(
-                imageVector = lesson.backgroundIcon(),
+                painter = painterResource(lesson.backgroundIcon()),
                 contentDescription = null,
                 tint = Color.White.copy(alpha = 0.13f),
                 modifier = Modifier
@@ -106,10 +99,10 @@ fun LessonCard(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (lesson.room.isNotBlank()) {
-                        Chip(text = lesson.room, icon = Icons.Default.Place)
+                        Chip(text = lesson.room, icon = R.drawable.ic_place)
                     }
                     if (lesson.subgroups.isNotEmpty()) {
-                        Chip(text = "Подгруппы: ${lesson.subgroups.size}", icon = Icons.Default.List)
+                        Chip(text = "Подгруппы: ${lesson.subgroups.size}", icon = R.drawable.ic_list)
                     }
                 }
             }
@@ -121,15 +114,16 @@ fun LessonCard(
  * Водяной знак по названию предмета. Названия приходят с портала свободным текстом,
  * так что это подбор по ключевому слову с запасным вариантом, а не справочник.
  */
-private fun Lesson.backgroundIcon(): ImageVector {
+@DrawableRes
+private fun Lesson.backgroundIcon(): Int {
     val name = title.lowercase()
     return when {
-        "физич" in name || "физкультур" in name -> Icons.Default.FavoriteBorder
-        "английск" in name || "язык" in name -> Icons.Default.Face
-        "баз" in name && "данных" in name -> Icons.Default.List
-        "операционн" in name || "сет" in name -> Icons.Default.Settings
-        "разработ" in name || "модул" in name || "программ" in name -> Icons.Default.Build
-        else -> Icons.Default.Create
+        "физич" in name || "физкультур" in name -> R.drawable.ic_fitness
+        "английск" in name || "язык" in name -> R.drawable.ic_translate
+        "баз" in name && "данных" in name -> R.drawable.ic_list
+        "операционн" in name || "сет" in name -> R.drawable.ic_memory
+        "разработ" in name || "модул" in name || "программ" in name -> R.drawable.ic_code
+        else -> R.drawable.ic_school
     }
 }
 
@@ -150,7 +144,7 @@ private fun TimePill(text: String, showCheck: Boolean, accent: Color) {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    painter = painterResource(R.drawable.ic_check),
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(16.dp),
@@ -169,7 +163,7 @@ private fun TimePill(text: String, showCheck: Boolean, accent: Color) {
 }
 
 @Composable
-private fun Chip(text: String, icon: ImageVector? = null) {
+private fun Chip(text: String, @DrawableRes icon: Int? = null) {
     Surface(
         shape = CircleShape,
         color = Color.Transparent,
@@ -182,7 +176,7 @@ private fun Chip(text: String, icon: ImageVector? = null) {
         ) {
             icon?.let {
                 Icon(
-                    imageVector = it,
+                    painter = painterResource(it),
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(13.dp),

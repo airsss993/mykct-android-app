@@ -1,5 +1,6 @@
 package ru.dzhaparidze.mykct.feature.schedule
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,12 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.feature.NAV_BAR_INSET
@@ -137,7 +133,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
                     )
                     Spacer(Modifier.height(12.dp))
                     Button(onClick = viewModel::retry) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                         Text("Повторить")
                     }
@@ -235,10 +231,10 @@ private fun Hero(
         Spacer(Modifier.height(24.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            HeroAction(Icons.Outlined.DateRange, "Сегодня", onToday, Modifier.weight(1f))
-            HeroAction(Icons.Default.KeyboardArrowLeft, "Назад", onPrevWeek, Modifier.weight(1f), "Предыдущая неделя")
-            HeroAction(Icons.Default.KeyboardArrowRight, "Вперёд", onNextWeek, Modifier.weight(1f), "Следующая неделя")
-            HeroAction(Icons.Default.Refresh, "Обновить", onRefresh, Modifier.weight(1f))
+            HeroAction(R.drawable.ic_calendar, "Сегодня", onToday, Modifier.weight(1f))
+            HeroAction(R.drawable.ic_chevron_left, "Назад", onPrevWeek, Modifier.weight(1f), "Предыдущая неделя")
+            HeroAction(R.drawable.ic_chevron_right, "Вперёд", onNextWeek, Modifier.weight(1f), "Следующая неделя")
+            HeroAction(R.drawable.ic_refresh, "Обновить", onRefresh, Modifier.weight(1f))
         }
     }
 }
@@ -268,7 +264,7 @@ private fun GroupPill(label: String, onClick: () -> Unit) {
             overflow = TextOverflow.Ellipsis,
         )
         Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
+            painter = painterResource(R.drawable.ic_arrow_down),
             contentDescription = "Выбрать группу и подгруппы",
             tint = Color.White,
             modifier = Modifier
@@ -281,7 +277,7 @@ private fun GroupPill(label: String, onClick: () -> Unit) {
 /** Круглая полупрозрачная кнопка с подписью — ряд действий из референса. */
 @Composable
 private fun HeroAction(
-    icon: ImageVector,
+    @DrawableRes icon: Int,
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -300,7 +296,7 @@ private fun HeroAction(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(icon),
                 contentDescription = description,
                 tint = Color.White,
                 modifier = Modifier.size(24.dp),

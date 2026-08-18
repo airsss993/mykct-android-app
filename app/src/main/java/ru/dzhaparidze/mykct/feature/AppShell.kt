@@ -1,6 +1,7 @@
 package ru.dzhaparidze.mykct.feature
 
 import android.os.Build
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.tween
@@ -10,10 +11,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -39,12 +36,13 @@ import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.feature.schedule.ScheduleScreen
 import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
@@ -147,21 +145,21 @@ private fun NavBar(
                 .height(NAV_BAR_HEIGHT),
         ) {
             NavItem(
-                icon = Icons.Outlined.DateRange,
+                icon = R.drawable.ic_calendar,
                 label = "Расписание",
                 isSelected = current == Screen.SCHEDULE,
                 onClick = { onSelect(Screen.SCHEDULE) },
                 modifier = Modifier.weight(1f),
             )
             NavItem(
-                icon = Icons.Outlined.Home,
+                icon = R.drawable.ic_home,
                 label = "Главная",
                 isSelected = current == Screen.HOME,
                 onClick = { onSelect(Screen.HOME) },
                 modifier = Modifier.weight(1f),
             )
             NavItem(
-                icon = Icons.Outlined.Settings,
+                icon = R.drawable.ic_settings,
                 label = "Настройки",
                 isSelected = current == Screen.SETTINGS,
                 onClick = { onSelect(Screen.SETTINGS) },
@@ -185,7 +183,7 @@ private val NAV_PILL_RAISE = (-16).dp
 
 @Composable
 private fun NavItem(
-    icon: ImageVector,
+    @DrawableRes icon: Int,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -232,10 +230,10 @@ private fun NavItem(
                     .background(pill, CircleShape),
             )
             Icon(
-                imageVector = icon,
+                painter = painterResource(icon),
                 contentDescription = null,
                 tint = iconTint,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
 

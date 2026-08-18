@@ -1,5 +1,6 @@
 package ru.dzhaparidze.mykct.feature.settings
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,18 +9,12 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -102,11 +97,11 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 
         SectionTitle("Действия")
         Card {
-            LinkRow(Icons.Default.Warning, "Сообщить о проблеме", "https://t.me/airsss993")
+            LinkRow(R.drawable.ic_report, "Сообщить о проблеме", "https://t.me/airsss993")
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            LinkRow(Icons.Default.Build, "Исходный код", "https://github.com/airsss993/mykct-android-app")
+            LinkRow(R.drawable.ic_code, "Исходный код", "https://github.com/airsss993/mykct-android-app")
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            LinkRow(Icons.Default.Info, "Веб-сайт", "https://it-college.ru/")
+            LinkRow(R.drawable.ic_public, "Веб-сайт", "https://it-college.ru/")
         }
 
         SectionTitle("Разработчики")
@@ -156,7 +151,7 @@ private fun Card(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun LinkRow(icon: ImageVector, text: String, url: String) {
+private fun LinkRow(@DrawableRes icon: Int, text: String, url: String) {
     val uriHandler = LocalUriHandler.current
     Row(
         modifier = Modifier
@@ -165,7 +160,7 @@ private fun LinkRow(icon: ImageVector, text: String, url: String) {
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
+        Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
@@ -175,7 +170,7 @@ private fun LinkRow(icon: ImageVector, text: String, url: String) {
                 .padding(start = 16.dp),
         )
         Icon(
-            Icons.Default.KeyboardArrowRight,
+            painterResource(R.drawable.ic_chevron_right),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )

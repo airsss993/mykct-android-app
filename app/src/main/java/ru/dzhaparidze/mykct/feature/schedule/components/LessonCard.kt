@@ -31,6 +31,8 @@ fun LessonCard(
     isPast: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isNow: Boolean = false,
+    remaining: Int? = null,
 ) {
     // Монохром по референсу: все карточки в фирменном градиенте, предметы различает
     // водяной знак, а не цвет. `colorHex` с портала намеренно игнорируется.
@@ -45,6 +47,8 @@ fun LessonCard(
             .clickable(enabled = lesson.subgroups.isNotEmpty(), onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         color = accent,
+        // Идущая пара обведена светлой кромкой — её видно, не читая время.
+        border = if (isNow) BorderStroke(2.dp, Color.White.copy(alpha = 0.85f)) else null,
         shadowElevation = 6.dp,
     ) {
         // matchParentSize, а не fillMaxSize: фон и водяной знак не должны участвовать
@@ -98,6 +102,9 @@ fun LessonCard(
                 Spacer(Modifier.height(8.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (remaining != null) {
+                        Chip(text = "Идёт · осталось $remaining мин", icon = R.drawable.ic_clock)
+                    }
                     if (lesson.room.isNotBlank()) {
                         Chip(text = lesson.room, icon = R.drawable.ic_place)
                     }

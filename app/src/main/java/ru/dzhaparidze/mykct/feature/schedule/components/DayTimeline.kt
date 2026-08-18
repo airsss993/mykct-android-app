@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.data.Lesson
 import java.time.Duration
@@ -46,8 +47,12 @@ fun DayTimeline(
 
     Box(modifier = modifier.height(SLOT_HEIGHT * slots)) {
         repeat(slots + 1) { index ->
+            val slotTime = gridStart.plusMinutes(index.toLong() * SLOT_MINUTES)
             SlotLine(
-                time = gridStart.plusMinutes((index.toLong() * SLOT_MINUTES)),
+                time = slotTime,
+                // Подпись сетки прячется, если рядом стоит «сейчас» — иначе цифры
+                // наезжают друг на друга.
+                showLabel = now == null || minutesBetween(minOf(now, slotTime), maxOf(now, slotTime)) > 12,
                 modifier = Modifier.offset(y = SLOT_HEIGHT * index.toFloat()),
             )
         }
@@ -56,9 +61,13 @@ fun DayTimeline(
             val top = minutesBetween(gridStart, lesson.start).toFloat() / SLOT_MINUTES
             val span = minutesBetween(lesson.start, lesson.end).toFloat() / SLOT_MINUTES
 
+            val isNow = now != null && !now.isBefore(lesson.start) && now.isBefore(lesson.end)
+
             LessonCard(
                 lesson = lesson,
                 isPast = now != null && !lesson.end.isAfter(now),
+                isNow = isNow,
+                remaining = if (isNow) minutesBetween(now!!, lesson.end) else null,
                 onClick = { onLessonClick(lesson) },
                 modifier = Modifier
                     .offset(y = SLOT_HEIGHT * top)
@@ -67,6 +76,16 @@ fun DayTimeline(
                     // иначе обрежется. Растянувшаяся карточка может наехать на следующую;
                     // если начнёт мешать — резать текст по maxLines, а не жёстко фиксировать высоту.
                     .heightIn(min = SLOT_HEIGHT * span),
+            )
+        }
+
+        // Линия «сейчас» рисуется последней — она должна лежать поверх карточек.
+        if (now != null && now >= gridStart && now <= gridEnd) {
+            NowLine(
+                modifier = Modifier.offset(
+                    y = SLOT_HEIGHT * (minutesBetween(gridStart, now).toFloat() / SLOT_MINUTES),
+                ),
+                time = now,
             )
         }
 
@@ -81,6 +100,39 @@ fun DayTimeline(
                     .offset(y = SLOT_HEIGHT * top)
                     .padding(start = GUTTER)
                     .height(SLOT_HEIGHT * (gap.toFloat() / SLOT_MINUTES)),
+            )
+        }
+    }
+}
+
+/** Отметка текущего времени: подпись слева, точка и линия поперёк таймлайна. */
+@Composable
+private fun NowLine(time: LocalTime, modifier: Modifier = Modifier) {
+    // Не primary: карточки пар сами фиолетовые, акцент на них не читается.
+    val accent = MaterialTheme.colorScheme.onBackground
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = time.format(TIME),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = accent,
+            modifier = Modifier.width(GUTTER),
+        )
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .background(accent, CircleShape),
+        )
+        Canvas(modifier = Modifier.weight(1f).height(2.dp)) {
+            drawLine(
+                color = accent,
+                start = Offset(0f, size.height / 2),
+                end = Offset(size.width, size.height / 2),
+                strokeWidth = size.height,
             )
         }
     }
@@ -111,7 +163,7 @@ private fun formatMinutes(minutes: Int): String = when {
 }
 
 @Composable
-private fun SlotLine(time: LocalTime, modifier: Modifier = Modifier) {
+private fun SlotLine(time: LocalTime, showLabel: Boolean, modifier: Modifier = Modifier) {
     val lineColor = MaterialTheme.colorScheme.outlineVariant
 
     // Линия рисуется ровно на отметке времени (Alignment.Top), подпись поднимается
@@ -122,7 +174,7 @@ private fun SlotLine(time: LocalTime, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.Top,
     ) {
         Text(
-            text = time.format(TIME),
+            text = if (showLabel) time.format(TIME) else "",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier

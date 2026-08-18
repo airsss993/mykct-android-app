@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.dzhaparidze.mykct.R
@@ -83,6 +85,14 @@ private val SHEET_OVERLAP = 28.dp
 @Composable
 fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Часы тикают сами: линия «сейчас» и остаток пары должны ехать без перезахода
+    // на экран. Полминуты — предел, при котором минуты на экране не врут.
+    val now by produceState(LocalTime.now()) {
+        while (true) {
+            delay(30_000)
+            value = LocalTime.now()
+        }
+    }
     var groupSheetOpen by rememberSaveable { mutableStateOf(false) }
     var lessonSheet by remember { mutableStateOf<Lesson?>(null) }
 
@@ -154,7 +164,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 
                 else -> DayTimeline(
                     lessons = state.lessons,
-                    now = if (state.selectedDate == LocalDate.now()) LocalTime.now() else null,
+                    now = if (state.selectedDate == LocalDate.now()) now else null,
                     onLessonClick = { lessonSheet = it },
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
@@ -217,7 +227,13 @@ private fun Hero(
         )
         Text(
             // Крупная строка на месте баланса из референса: сколько пар в выбранном дне.
-            text = if (state.lessons.isEmpty()) "Пар нет" else lessonsCount(state.lessons.size),
+            // Во время загрузки «Пар нет» — враньё, пока данных ещё нет.
+            text = when {
+                state.isLoading -> "Загружаем…"
+                state.error -> "Нет данных"
+                state.lessons.isEmpty() -> "Пар нет"
+                else -> lessonsCount(state.lessons.size)
+            },
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,

@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.feature.schedule.ScheduleScreen
 import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
-import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 
 enum class Screen { SCHEDULE, HOME, SETTINGS }
 
@@ -69,22 +68,28 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 }
 
 /**
- * Плавающая панель из референса: тёмная скруглённая пластина, у активного пункта —
- * иконка в круге с фирменным градиентом, подпись под ней.
+ * Нижняя панель как в референсе: пластина во всю ширину, прижата к низу экрана,
+ * скруглены только верхние углы. У активного пункта — светлый круг, приподнятый
+ * над верхней кромкой панели; поэтому строка пунктов лежит поверх Surface, а не
+ * внутри него: Surface режет содержимое по своей форме и круг бы обрезался.
  */
 @Composable
 private fun NavBar(current: Screen, onSelect: (Screen) -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 16.dp,
-        modifier = modifier
-            .navigationBarsPadding()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 16.dp)
-            .fillMaxWidth(),
-    ) {
-        Row(modifier = Modifier.height(NAV_BAR_HEIGHT)) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        Surface(
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 16.dp,
+            content = {},
+            modifier = Modifier.matchParentSize(),
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(NAV_BAR_HEIGHT),
+        ) {
             NavItem(
                 icon = Icons.Outlined.DateRange,
                 label = "Расписание",
@@ -111,7 +116,10 @@ private fun NavBar(current: Screen, onSelect: (Screen) -> Unit, modifier: Modifi
 }
 
 private val NAV_BAR_HEIGHT = 74.dp
-private val NAV_PILL_SIZE = 40.dp
+private val NAV_PILL_SIZE = 44.dp
+
+/** На сколько круг активного пункта выступает над кромкой панели. */
+private val NAV_PILL_RAISE = (-16).dp
 
 @Composable
 private fun NavItem(
@@ -129,7 +137,10 @@ private fun NavItem(
         label = "nav-selected",
     )
     val idle = MaterialTheme.colorScheme.onSurfaceVariant
-    val content = lerp(idle, MaterialTheme.colorScheme.onPrimary, selected)
+    // Круг светлый, иконка внутри — цвета панели: в референсе акцента в навбаре нет,
+    // активный пункт выделен контрастом, а не цветом.
+    val pill = MaterialTheme.colorScheme.onSurface
+    val iconTint = lerp(idle, MaterialTheme.colorScheme.surface, selected)
 
     Column(
         modifier = modifier
@@ -137,7 +148,7 @@ private fun NavItem(
             .selectable(
                 selected = isSelected,
                 role = Role.Tab,
-                // рябь по всей ячейке спорит с градиентным кругом, поэтому её нет
+                // рябь по всей ячейке спорит с приподнятым кругом, поэтому её нет
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick,
@@ -146,19 +157,22 @@ private fun NavItem(
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
-            modifier = Modifier.size(NAV_PILL_SIZE),
+            modifier = Modifier
+                .size(NAV_PILL_SIZE)
+                // offset, а не padding: подъём не должен менять раскладку соседей
+                .offset(y = NAV_PILL_RAISE * selected),
             contentAlignment = Alignment.Center,
         ) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
                     .alpha(selected)
-                    .background(AccentGradient, CircleShape),
+                    .background(pill, CircleShape),
             )
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = content,
+                tint = iconTint,
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -166,7 +180,7 @@ private fun NavItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else idle,
+            color = lerp(idle, MaterialTheme.colorScheme.onSurface, selected),
             maxLines = 1,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp),

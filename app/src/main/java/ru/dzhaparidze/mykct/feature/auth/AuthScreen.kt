@@ -33,7 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.dzhaparidze.mykct.R
-import ru.dzhaparidze.mykct.ui.theme.AccentGradient
+import ru.dzhaparidze.mykct.ui.RainbowButton
 import ru.dzhaparidze.mykct.ui.theme.DarkBackground
 import ru.dzhaparidze.mykct.ui.theme.Violet
 import ru.dzhaparidze.mykct.ui.theme.VioletDeep
@@ -200,22 +200,11 @@ private fun LoginCard(
             modifier = Modifier.padding(top = 10.dp),
         )
 
-        Box(
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .fillMaxWidth()
-                .height(54.dp)
-                .clip(CircleShape)
-                .background(AccentGradient)
-                .clickable(onClick = onSubmit),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Войти",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
-            )
-        }
+        RainbowButton(
+            text = "Войти",
+            onClick = onSubmit,
+            modifier = Modifier.padding(top = 16.dp),
+        )
 
         if (notice) {
             Text(

@@ -1,5 +1,6 @@
 package ru.dzhaparidze.mykct.feature.settings
 
+import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,6 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
@@ -121,6 +124,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
                 github = "https://github.com/airsss993",
                 telegram = "https://t.me/airsss993",
                 avatar = R.drawable.avatar_artem,
+                backdrop = R.drawable.backdrop_artem,
             )
             PersonCard(
                 name = "Иван Коломацкий",
@@ -128,6 +132,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
                 github = "https://github.com/anton1ks96",
                 telegram = "https://t.me/IKolomatskii",
                 avatar = R.drawable.avatar_ivan,
+                backdrop = R.drawable.backdrop_ivan,
                 wideShot = true,
             )
         }
@@ -289,6 +294,8 @@ private fun PersonCard(
     telegram: String,
     modifier: Modifier = Modifier,
     @DrawableRes avatar: Int? = null,
+    // Исходник со сценой: уходит в фон карточки размытым и подкрашенным.
+    @DrawableRes backdrop: Int? = null,
     // Кадр «человек у машины» шире портрета: если масштабировать его по высоте
     // карточки, машина съёживается в оранжевое пятно. Такие кадры тянем по ширине.
     wideShot: Boolean = false,
@@ -312,7 +319,17 @@ private fun PersonCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .hairline(RoundedCornerShape(24.dp)),
         ) {
-            Blobs()
+            if (backdrop != null) {
+                Image(
+                    painter = painterResource(backdrop),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .matchParentSize()
+                        .then(if (CAN_BLUR) Modifier.blur(18.dp) else Modifier),
+                )
+            }
+            Tint(solid = backdrop == null)
 
             if (avatar == null) {
                 Text(
@@ -376,26 +393,52 @@ private val WIDE_CARD_HEIGHT = 190.dp
 /** На сколько портрет выступает над верхней кромкой карточки. */
 private val PORTRAIT_RISE = 26.dp
 
-/** Фигуры за портретом: два круга фирменного градиента, обрезанные кромкой карточки. */
+/**
+ * Подложка карточки: общий градиентный налёт по диагонали и два размытых пятна
+ * за портретом. Размытие делает из кругов свет — с чёткими кромками они читались
+ * аппликацией. На Android 11 и ниже RenderEffect не умеет, там останутся круги.
+ */
 @Composable
-private fun BoxScope.Blobs() {
+private fun BoxScope.Tint(solid: Boolean) {
+    // Поверх фотографии налёт плотнее: без него сцена спорит с подписью и кнопками.
+    val strong = if (solid) 0.18f else 0.72f
+    val weak = if (solid) 0.05f else 0.45f
+    Box(
+        modifier = Modifier
+            .matchParentSize()
+            .background(
+                Brush.linearGradient(
+                    0f to MaterialTheme.colorScheme.surfaceVariant.copy(alpha = strong),
+                    0.55f to MaterialTheme.colorScheme.primary.copy(alpha = weak * 0.4f),
+                    1f to MaterialTheme.colorScheme.primary.copy(alpha = weak * 0.25f),
+                ),
+            ),
+    )
+
+    if (!solid) return
+
     Box(
         modifier = Modifier
             .align(Alignment.CenterEnd)
             .padding(end = 34.dp)
-            .size(118.dp)
+            .size(128.dp)
+            .then(if (CAN_BLUR) Modifier.blur(28.dp, BlurredEdgeTreatment.Unbounded) else Modifier)
             .clip(CircleShape)
             .background(AccentGradient),
     )
     Box(
         modifier = Modifier
             .align(Alignment.TopEnd)
-            .offset(x = 26.dp, y = (-22).dp)
-            .size(88.dp)
+            .offset(x = 20.dp, y = (-18).dp)
+            .size(96.dp)
+            .then(if (CAN_BLUR) Modifier.blur(24.dp, BlurredEdgeTreatment.Unbounded) else Modifier)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)),
     )
 }
+
+/** Размытие требует Android 12; ниже пятна остаются чёткими кругами. */
+private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 /** Круглая кнопка соцсети в фирменной обводке. */
 @Composable

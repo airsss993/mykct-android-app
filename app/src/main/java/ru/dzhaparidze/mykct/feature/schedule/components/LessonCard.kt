@@ -54,10 +54,12 @@ fun LessonCard(
                 modifier = Modifier
                     .matchParentSize()
                     .wrapContentSize(Alignment.BottomCenter)
-                    .fillMaxWidth(0.78f)
-                    .height(18.dp)
-                    .offset(y = (-2).dp)
-                    .blur(26.dp, BlurredEdgeTreatment.Unbounded)
+                    .fillMaxWidth(0.9f)
+                    .height(10.dp)
+                    // уезжает под карточку: если полоса стоит вровень с кромкой,
+                    // свет отрывается от неё и висит отдельной подсветкой
+                    .offset(y = (-8).dp)
+                    .blur(24.dp, BlurredEdgeTreatment.Unbounded)
                     .background(
                         Brush.horizontalGradient(
                             0f to Color.Transparent,

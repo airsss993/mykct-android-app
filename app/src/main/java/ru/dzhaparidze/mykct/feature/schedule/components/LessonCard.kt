@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
+import ru.dzhaparidze.mykct.ui.theme.VioletLight
+import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import java.time.format.DateTimeFormatter
 
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
@@ -43,15 +46,27 @@ fun LessonCard(
     val accent = MaterialTheme.colorScheme.primary
 
     Box(modifier = modifier) {
-        // Свечение из-под идущей пары — приём из референса: цвет карточки, размытый
-        // и выпущенный за её края. Требует Android 12, ниже остаётся светлая кромка.
+        // Свечение из-под идущей пары: узкая полоса у нижней кромки, а не заливка
+        // во всю карточку — так свет читается как отблеск, а не как вторая карточка.
+        // Градиент гаснет к краям, иначе после размытия видны торцы полосы.
         if (isNow && CAN_BLUR) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .padding(10.dp)
-                    .blur(22.dp, BlurredEdgeTreatment.Unbounded)
-                    .background(accent, RoundedCornerShape(20.dp)),
+                    .wrapContentSize(Alignment.BottomCenter)
+                    .fillMaxWidth(0.78f)
+                    .height(18.dp)
+                    .offset(y = (-2).dp)
+                    .blur(26.dp, BlurredEdgeTreatment.Unbounded)
+                    .background(
+                        Brush.horizontalGradient(
+                            0f to Color.Transparent,
+                            0.25f to VioletLight.copy(alpha = 0.45f),
+                            0.5f to VioletTint.copy(alpha = 0.65f),
+                            0.75f to VioletLight.copy(alpha = 0.45f),
+                            1f to Color.Transparent,
+                        ),
+                    ),
             )
         }
 

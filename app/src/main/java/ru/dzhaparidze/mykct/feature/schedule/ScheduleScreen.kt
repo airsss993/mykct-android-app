@@ -92,23 +92,34 @@ private fun lessonsCount(count: Int): String {
  * радиусы превращают фон в грязное пятно, поэтому радиусы держим меньше ширины
  * экрана. Верхние считаются от ширины, нижний привязан к нижней кромке.
  */
-private fun DrawScope.drawAmbientGlow(accent: Color, strength: Float) {
+private fun DrawScope.drawAmbientGlow(accent: Color, darkTheme: Boolean) {
     val w = size.width
     val h = size.height
+
+    // На светлом фоне та же прозрачность читается вдвое ярче, поэтому верхние
+    // источники там гасим.
+    val strength = if (darkTheme) 1f else 0.5f
 
     fun glow(color: Color, alpha: Float, cx: Float, cy: Float, radius: Float) {
         drawRect(
             Brush.radialGradient(
-                colors = listOf(color.copy(alpha = alpha * strength), Color.Transparent),
+                colors = listOf(color.copy(alpha = alpha), Color.Transparent),
                 center = Offset(cx, cy),
                 radius = radius,
             ),
         )
     }
 
-    glow(accent, 0.50f, w * 0.42f, -w * 0.05f, w * 0.80f)
-    glow(VioletMagenta, 0.30f, w, w * 0.12f, w * 0.55f)
-    glow(VioletIndigo, 0.35f, w * 0.12f, h, w * 0.55f)
+    glow(accent, 0.50f * strength, w * 0.42f, -w * 0.05f, w * 0.80f)
+    glow(VioletMagenta, 0.30f * strength, w, w * 0.12f, w * 0.55f)
+
+    // Снизу на светлой теме индиго уходит в серую муть и его просто не видно,
+    // поэтому там акцент и без половинного гашения.
+    if (darkTheme) {
+        glow(VioletIndigo, 0.35f, w * 0.12f, h, w * 0.55f)
+    } else {
+        glow(accent, 0.30f, w * 0.12f, h, w * 0.60f)
+    }
 }
 
 @Composable
@@ -126,8 +137,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
     var lessonSheet by remember { mutableStateOf<Lesson?>(null) }
 
     val accent = MaterialTheme.colorScheme.primary
-    // На светлой теме то же свечение выходит вдвое заметнее — гасим его.
-    val glow = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) 1f else 0.5f
+    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     // Свет живёт в фоне всего экрана, а не в отдельной плашке шапки: рисуется под
     // прокруткой, поэтому не уезжает вместе с контентом.
@@ -135,7 +145,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .drawBehind { drawAmbientGlow(accent, glow) }
+            .drawBehind { drawAmbientGlow(accent, darkTheme) }
             .dotGrid(),
     ) {
     Column(

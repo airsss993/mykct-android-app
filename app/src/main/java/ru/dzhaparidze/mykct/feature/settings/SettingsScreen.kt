@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -112,21 +113,27 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             LinkRow(R.drawable.ic_public, "Веб-сайт", "https://it-college.ru/")
         }
 
-        SectionTitle("Разработчики")
-        Card {
-            Person(
+        SectionTitle("Команда")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            PersonCard(
                 name = "Артём Джапаридзе",
                 role = "Android-разработчик",
                 github = "https://github.com/airsss993",
                 telegram = "https://t.me/airsss993",
                 avatar = R.drawable.avatar_artem,
+                modifier = Modifier.weight(1f),
             )
-            Divider()
-            Person(
+            PersonCard(
                 name = "Иван Коломацкий",
                 role = "iOS-разработчик",
                 github = "https://github.com/anton1ks96",
                 telegram = "https://t.me/IKolomatskii",
+                modifier = Modifier.weight(1f),
             )
         }
 
@@ -274,63 +281,107 @@ private fun LinkRow(@DrawableRes icon: Int, text: String, url: String) {
     }
 }
 
+/**
+ * Карточка человека: фото во всю плитку на фирменном градиенте, подпись снизу,
+ * соцсети сверху. В референсе портрет вырезан по контуру и выступает за верхнюю
+ * кромку — для этого нужен PNG без фона; с обычным фото карточка заполняется
+ * целиком, а подпись читается за счёт тёмной подложки снизу.
+ */
 @Composable
-private fun Person(
+private fun PersonCard(
     name: String,
     role: String,
     github: String,
     telegram: String,
+    modifier: Modifier = Modifier,
     @DrawableRes avatar: Int? = null,
 ) {
     val uriHandler = LocalUriHandler.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 18.dp),
-        verticalAlignment = Alignment.CenterVertically,
+
+    Box(
+        modifier = modifier
+            .aspectRatio(0.74f)
+            .clip(RoundedCornerShape(28.dp))
+            .background(AccentGradient),
     ) {
-        // Пока фото нет — в кружке инициалы.
-        GradientRing(size = 64.dp, ring = 2.5.dp) {
-            if (avatar != null) {
-                Image(
-                    painter = painterResource(avatar),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                Text(
-                    text = name.initials(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+        if (avatar != null) {
+            Image(
+                painter = painterResource(avatar),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            Text(
+                text = name.initials(),
+                style = MaterialTheme.typography.headlineMedium,
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+
+        // Подложка под подписью: на светлом фото белый текст иначе пропадает.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        0.45f to Color.Transparent,
+                        1f to Color(0xCC000000),
+                    ),
+                ),
+        )
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            GlassButton(R.drawable.github_icon, "GitHub $name") { uriHandler.openUri(github) }
+            // telegram_icon нарисован «вверх ногами» относительно остальных — отражаем
+            GlassButton(R.drawable.telegram_icon, "Telegram $name", flip = true) { uriHandler.openUri(telegram) }
         }
 
         Column(
             modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp),
+                .align(Alignment.BottomStart)
+                .padding(14.dp),
         ) {
             Text(
                 text = name,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = Color.White,
             )
             Text(
-                text = role.uppercase(),
+                text = role,
                 style = MaterialTheme.typography.labelSmall,
-                // разрядка на мелкой подписи — она читается как подпись, а не как текст
-                letterSpacing = 1.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White.copy(alpha = 0.75f),
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
+    }
+}
 
-        SocialButton(R.drawable.github_icon, "GitHub $name") { uriHandler.openUri(github) }
-        Spacer(Modifier.width(8.dp))
-        // telegram_icon нарисован «вверх ногами» относительно остальных — отражаем по вертикали
-        SocialButton(R.drawable.telegram_icon, "Telegram $name", flip = true) { uriHandler.openUri(telegram) }
+/** Кружок-стекло поверх фото: плотной заливки тут нельзя, она спорит с портретом. */
+@Composable
+private fun GlassButton(@DrawableRes iconRes: Int, description: String, flip: Boolean = false, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(30.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.35f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = description,
+            tint = Color.White,
+            modifier = Modifier
+                .size(15.dp)
+                .scale(scaleX = 1f, scaleY = if (flip) -1f else 1f),
+        )
     }
 }
 
@@ -338,42 +389,4 @@ private fun Person(
 private fun String.initials(): String =
     trim().split(" ").filter { it.isNotBlank() }.take(2).map { it.first().uppercase() }.joinToString("")
 
-/**
- * Кружок в градиентной обводке: сам градиент — фон, поверх него кружок цвета карточки
- * с отступом в толщину кольца. Рисовать `border` брашем нельзя — он берёт только цвет.
- */
-@Composable
-private fun GradientRing(
-    size: Dp,
-    ring: Dp,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(AccentGradient)
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-            .padding(ring)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center,
-        content = { content() },
-    )
-}
 
-@Composable
-private fun SocialButton(iconRes: Int, description: String, flip: Boolean = false, onClick: () -> Unit) {
-    GradientRing(size = 42.dp, ring = 1.5.dp, onClick = onClick) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = description,
-            tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .size(19.dp)
-                .scale(scaleX = 1f, scaleY = if (flip) -1f else 1f),
-        )
-    }
-}

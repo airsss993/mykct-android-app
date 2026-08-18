@@ -114,11 +114,6 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             Person("Иван Коломацкий", "iOS разработчик", "https://github.com/anton1ks96", "https://t.me/IKolomatskii")
         }
 
-        SectionTitle("Маркетинг")
-        Card {
-            Person("Илья Некрасов", "Маркетолог", "https://github.com/necrasov-ilya", "https://t.me/NKSV_ILYA")
-        }
-
         Spacer(Modifier.height(28.dp))
 
         PillButton(

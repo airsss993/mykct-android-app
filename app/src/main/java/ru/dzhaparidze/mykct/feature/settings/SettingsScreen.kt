@@ -127,6 +127,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
                 role = "iOS-разработчик",
                 github = "https://github.com/anton1ks96",
                 telegram = "https://t.me/IKolomatskii",
+                avatar = R.drawable.avatar_ivan,
             )
         }
 

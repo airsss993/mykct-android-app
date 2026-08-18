@@ -20,10 +20,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.ui.dotGrid
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.feature.NAV_BAR_INSET
 
@@ -109,9 +112,9 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 
         SectionTitle("Разработчики")
         Card {
-            Person("Артём Джапаридзе", "Android разработчик", "https://github.com/airsss993", "https://t.me/airsss993")
+            Person("Артём Джапаридзе", "Android-разработчик", "https://github.com/airsss993", "https://t.me/airsss993")
             Divider()
-            Person("Иван Коломацкий", "iOS разработчик", "https://github.com/anton1ks96", "https://t.me/IKolomatskii")
+            Person("Иван Коломацкий", "iOS-разработчик", "https://github.com/anton1ks96", "https://t.me/IKolomatskii")
         }
 
         Spacer(Modifier.height(28.dp))
@@ -267,16 +270,32 @@ private fun Person(name: String, role: String, github: String, telegram: String)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
+        // Фото пока нет — в кружке инициалы. Меняется на Image, когда появятся аватарки.
+        GradientRing(size = 48.dp, ring = 2.dp) {
+            Text(
+                text = name.initials(),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 14.dp),
+        ) {
             Text(
                 text = name,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = role,
-                style = MaterialTheme.typography.bodyMedium,
+                text = role.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                // разрядка на мелкой подписи — она читается как подпись, а не как текст
+                letterSpacing = 1.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp),
             )
         }
 
@@ -287,22 +306,45 @@ private fun Person(name: String, role: String, github: String, telegram: String)
     }
 }
 
+/** Первые буквы имени и фамилии: «Артём Джапаридзе» → «АД». */
+private fun String.initials(): String =
+    trim().split(" ").filter { it.isNotBlank() }.take(2).map { it.first().uppercase() }.joinToString("")
+
+/**
+ * Кружок в градиентной обводке: сам градиент — фон, поверх него кружок цвета карточки
+ * с отступом в толщину кольца. Рисовать `border` брашем нельзя — он берёт только цвет.
+ */
+@Composable
+private fun GradientRing(
+    size: Dp,
+    ring: Dp,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(AccentGradient)
+            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+            .padding(ring)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
+        content = { content() },
+    )
+}
+
 @Composable
 private fun SocialButton(iconRes: Int, description: String, flip: Boolean = false, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(36.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
+    GradientRing(size = 38.dp, ring = 1.5.dp, onClick = onClick) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = description,
             tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
-                .size(18.dp)
+                .size(17.dp)
                 .scale(scaleX = 1f, scaleY = if (flip) -1f else 1f),
         )
     }

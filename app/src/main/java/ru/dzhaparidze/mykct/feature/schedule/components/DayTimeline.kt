@@ -57,6 +57,17 @@ fun DayTimeline(
             )
         }
 
+        // Линия рисуется до карточек: иначе она проезжает поперёк текста идущей пары.
+        // Подпись и точка живут в колонке времени, их карточка не закрывает.
+        if (now != null && now >= gridStart && now <= gridEnd) {
+            NowLine(
+                modifier = Modifier.offset(
+                    y = SLOT_HEIGHT * (minutesBetween(gridStart, now).toFloat() / SLOT_MINUTES),
+                ),
+                time = now,
+            )
+        }
+
         lessons.forEach { lesson ->
             val top = minutesBetween(gridStart, lesson.start).toFloat() / SLOT_MINUTES
             val span = minutesBetween(lesson.start, lesson.end).toFloat() / SLOT_MINUTES
@@ -76,16 +87,6 @@ fun DayTimeline(
                     // иначе обрежется. Растянувшаяся карточка может наехать на следующую;
                     // если начнёт мешать — резать текст по maxLines, а не жёстко фиксировать высоту.
                     .heightIn(min = SLOT_HEIGHT * span),
-            )
-        }
-
-        // Линия «сейчас» рисуется последней — она должна лежать поверх карточек.
-        if (now != null && now >= gridStart && now <= gridEnd) {
-            NowLine(
-                modifier = Modifier.offset(
-                    y = SLOT_HEIGHT * (minutesBetween(gridStart, now).toFloat() / SLOT_MINUTES),
-                ),
-                time = now,
             )
         }
 

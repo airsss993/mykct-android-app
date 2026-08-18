@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -83,8 +84,8 @@ fun LessonCard(
                 modifier = Modifier
                     .matchParentSize()
                     .wrapContentSize(Alignment.BottomEnd)
-                    .offset(x = 16.dp, y = 16.dp)
-                    .size(92.dp),
+                    .offset(x = 8.dp, y = 8.dp)
+                    .size(84.dp),
             )
 
             Column(modifier = Modifier.padding(11.dp)) {
@@ -117,7 +118,12 @@ fun LessonCard(
 
                 Spacer(Modifier.height(8.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // FlowRow, а не Row: на узком экране «Идёт · осталось N мин» рядом с
+                // «Подгруппы: N» не влезает в строку и второй чип обрезается.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     if (remaining != null) {
                         Chip(text = "Идёт · осталось $remaining мин", icon = R.drawable.ic_clock)
                     }

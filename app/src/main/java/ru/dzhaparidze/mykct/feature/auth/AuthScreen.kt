@@ -91,7 +91,7 @@ fun AuthScreen(onEnter: () -> Unit) {
         )
 
         Text(
-            text = "Расписание, посещаемость и баллы —\nвсё в одном приложении.",
+            text = "Расписание, посещаемость и баллы — всё в одном приложении.",
             fontSize = 16.sp,
             lineHeight = 22.sp,
             color = Color.White.copy(alpha = 0.7f),

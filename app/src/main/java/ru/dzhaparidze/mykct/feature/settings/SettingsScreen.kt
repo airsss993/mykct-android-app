@@ -286,11 +286,11 @@ private fun Person(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Пока фото нет — в кружке инициалы.
-        GradientRing(size = 48.dp, ring = 2.dp) {
+        GradientRing(size = 64.dp, ring = 2.5.dp) {
             if (avatar != null) {
                 Image(
                     painter = painterResource(avatar),
@@ -310,7 +310,7 @@ private fun Person(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 14.dp),
+                .padding(start = 16.dp),
         ) {
             Text(
                 text = name,
@@ -366,13 +366,13 @@ private fun GradientRing(
 
 @Composable
 private fun SocialButton(iconRes: Int, description: String, flip: Boolean = false, onClick: () -> Unit) {
-    GradientRing(size = 38.dp, ring = 1.5.dp, onClick = onClick) {
+    GradientRing(size = 42.dp, ring = 1.5.dp, onClick = onClick) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = description,
             tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
-                .size(17.dp)
+                .size(19.dp)
                 .scale(scaleX = 1f, scaleY = if (flip) -1f else 1f),
         )
     }

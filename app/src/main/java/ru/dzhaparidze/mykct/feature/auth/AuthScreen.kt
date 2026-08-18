@@ -1,7 +1,7 @@
 package ru.dzhaparidze.mykct.feature.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -27,7 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
+import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.ui.RainbowButton
 import ru.dzhaparidze.mykct.ui.theme.DarkBackground
 import ru.dzhaparidze.mykct.ui.theme.Violet
@@ -58,11 +60,23 @@ fun AuthScreen(onEnter: () -> Unit) {
         // Свет занимает верхнюю половину, контент начинается под ним — как в референсе.
         Spacer(Modifier.weight(1f))
 
-        ImageSlot(
-            label = "лого",
-            modifier = Modifier.size(64.dp),
-            shape = RoundedCornerShape(20.dp),
-        )
+        // Логотип приложения — тот же, что в лаунчере. Он на белой подложке:
+        // у панды чёрный контур, на near-black фоне без плашки он бы пропал.
+        Box(
+            modifier = Modifier
+                .size(84.dp)
+                .clip(RoundedCornerShape(26.dp))
+                .background(Color.White),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(R.mipmap.app_icon_foreground),
+                contentDescription = null,
+                // foreground адаптивной иконки нарисован с полями безопасной зоны,
+                // поэтому его увеличиваем и обрезаем плашкой
+                modifier = Modifier.size(112.dp),
+            )
+        }
 
         Text(
             text = "Добро пожаловать в МойКЦТ",
@@ -164,30 +178,4 @@ private fun DrawScope.drawGlowArc() {
             1f to DarkBackground,
         ),
     )
-}
-
-/**
- * Заглушка под картинку: рамка с подписью, чтобы было видно место и размер.
- * Меняется на `Image(painterResource(...))`, когда появятся сами картинки.
- */
-@Composable
-private fun ImageSlot(
-    label: String,
-    modifier: Modifier = Modifier,
-    shape: RoundedCornerShape = RoundedCornerShape(24.dp),
-) {
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(Color.White.copy(alpha = 0.08f))
-            .border(1.dp, Color.White.copy(alpha = 0.18f), shape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.55f),
-            textAlign = TextAlign.Center,
-        )
-    }
 }

@@ -19,6 +19,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,7 +43,8 @@ import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
 import ru.dzhaparidze.mykct.ui.dotGrid
-import ru.dzhaparidze.mykct.ui.theme.AccentGradient
+import ru.dzhaparidze.mykct.ui.theme.VioletDeep
+import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -80,8 +86,36 @@ private fun lessonsCount(count: Int): String {
     return "$count $word"
 }
 
-/** На сколько лист контента наезжает на градиентную шапку (радиус его верхних углов). */
-private val SHEET_OVERLAP = 28.dp
+/**
+ * Свет в фоне: широкое гало сверху по центру и два подсвета от боковых кромок.
+ * Геометрия считается от ширины, а не от высоты, иначе на длинном экране пятно
+ * растягивается и перестаёт читаться как свет из-за верхнего края.
+ */
+private fun DrawScope.drawAmbientGlow(accent: Color, strength: Float) {
+    val w = size.width
+
+    drawRect(
+        Brush.radialGradient(
+            colors = listOf(accent.copy(alpha = 0.55f * strength), accent.copy(alpha = 0.16f * strength), Color.Transparent),
+            center = Offset(w / 2f, -w * 0.15f),
+            radius = w * 1.15f,
+        ),
+    )
+    drawRect(
+        Brush.radialGradient(
+            colors = listOf(VioletTint.copy(alpha = 0.30f * strength), Color.Transparent),
+            center = Offset(0f, w * 0.10f),
+            radius = w * 0.75f,
+        ),
+    )
+    drawRect(
+        Brush.radialGradient(
+            colors = listOf(VioletDeep.copy(alpha = 0.45f * strength), Color.Transparent),
+            center = Offset(w, w * 0.25f),
+            radius = w * 0.85f,
+        ),
+    )
+}
 
 @Composable
 fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
@@ -97,10 +131,22 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
     var groupSheetOpen by rememberSaveable { mutableStateOf(false) }
     var lessonSheet by remember { mutableStateOf<Lesson?>(null) }
 
-    Column(
+    val accent = MaterialTheme.colorScheme.primary
+    // На светлой теме то же свечение выходит вдвое заметнее — гасим его.
+    val glow = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) 1f else 0.5f
+
+    // Свет живёт в фоне всего экрана, а не в отдельной плашке шапки: рисуется под
+    // прокруткой, поэтому не уезжает вместе с контентом.
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .drawBehind { drawAmbientGlow(accent, glow) }
+            .dotGrid(),
+    ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
         Hero(
@@ -112,18 +158,8 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             onRefresh = viewModel::retry,
         )
 
-        // Лист контента со скруглённым верхом наезжает на градиент — так же, как в референсе.
-        Column(
-            modifier = Modifier
-                .offset(y = -SHEET_OVERLAP)
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.background,
-                    shape = RoundedCornerShape(topStart = SHEET_OVERLAP, topEnd = SHEET_OVERLAP),
-                )
-                .dotGrid()
-                .padding(top = 24.dp),
-        ) {
+        // Отдельного «листа» больше нет: контент лежит на том же фоне, что и шапка.
+        Column(modifier = Modifier.fillMaxWidth()) {
             WeekStrip(
                 days = state.days,
                 selectedDate = state.selectedDate,
@@ -175,6 +211,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             Spacer(Modifier.height(NAV_BAR_INSET))
         }
     }
+    }
 
     if (groupSheetOpen) {
         GroupSheet(
@@ -205,16 +242,15 @@ private fun Hero(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AccentGradient)
             .statusBarsPadding()
             .padding(horizontal = 20.dp)
-            .padding(top = 12.dp, bottom = 20.dp + SHEET_OVERLAP),
+            .padding(top = 12.dp, bottom = 28.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "Расписание",
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.weight(1f),
             )
             GroupPill(label = state.selection.label(), onClick = onOpenGroups)
@@ -225,7 +261,7 @@ private fun Hero(
         Text(
             text = "Неделя ${weekRange(state.weekStart)}",
             style = MaterialTheme.typography.labelMedium,
-            color = Color.White.copy(alpha = 0.75f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             // Крупная строка на месте баланса из референса: сколько пар в выбранном дне.
@@ -238,12 +274,12 @@ private fun Hero(
             },
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
             text = state.selectedDate.dayTitle() + state.lessons.dayHours(),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.75f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(Modifier.height(24.dp))
@@ -267,7 +303,7 @@ private fun GroupPill(label: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.20f))
+            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
             .clickable(onClick = onClick)
             .widthIn(max = 200.dp)
             .heightIn(min = 48.dp)
@@ -277,14 +313,14 @@ private fun GroupPill(label: String, onClick: () -> Unit) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Icon(
             painter = painterResource(R.drawable.ic_arrow_down),
             contentDescription = "Выбрать группу и подгруппы",
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .padding(start = 4.dp)
                 .size(18.dp),
@@ -309,21 +345,21 @@ private fun HeroAction(
             modifier = Modifier
                 .size(52.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.18f))
+                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = description,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(24.dp),
             )
         }
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.85f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp),

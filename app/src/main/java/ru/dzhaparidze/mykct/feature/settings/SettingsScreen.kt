@@ -128,6 +128,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
                 github = "https://github.com/anton1ks96",
                 telegram = "https://t.me/IKolomatskii",
                 avatar = R.drawable.avatar_ivan,
+                wideShot = true,
             )
         }
 
@@ -288,6 +289,9 @@ private fun PersonCard(
     telegram: String,
     modifier: Modifier = Modifier,
     @DrawableRes avatar: Int? = null,
+    // Кадр «человек у машины» шире портрета: если масштабировать его по высоте
+    // карточки, машина съёживается в оранжевое пятно. Такие кадры тянем по ширине.
+    wideShot: Boolean = false,
 ) {
     val uriHandler = LocalUriHandler.current
 
@@ -324,7 +328,7 @@ private fun PersonCard(
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(start = 18.dp, end = 140.dp),
+                    .padding(start = 18.dp, end = if (wideShot) 186.dp else 140.dp),
             ) {
                 Text(
                     text = name,
@@ -357,14 +361,14 @@ private fun PersonCard(
                 alignment = Alignment.BottomCenter,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp)
-                    .fillMaxHeight(),
+                    .padding(end = if (wideShot) 4.dp else 20.dp)
+                    .then(if (wideShot) Modifier.fillMaxWidth(0.56f) else Modifier.fillMaxHeight()),
             )
         }
     }
 }
 
-private val CARD_HEIGHT = 150.dp
+private val CARD_HEIGHT = 158.dp
 
 /** На сколько портрет выступает над верхней кромкой карточки. */
 private val PORTRAIT_RISE = 26.dp

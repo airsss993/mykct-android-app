@@ -1,5 +1,6 @@
 package ru.dzhaparidze.mykct.feature.auth
 
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +16,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -30,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import ru.dzhaparidze.mykct.R
-import ru.dzhaparidze.mykct.ui.RainbowButton
 import ru.dzhaparidze.mykct.ui.theme.DarkBackground
 import ru.dzhaparidze.mykct.ui.theme.Violet
 import ru.dzhaparidze.mykct.ui.theme.VioletLight
@@ -97,7 +99,7 @@ fun AuthScreen(onEnter: () -> Unit) {
             modifier = Modifier.padding(top = 12.dp),
         )
 
-        RainbowButton(
+        PrimaryButton(
             text = "Войти",
             onClick = { notice = true },
             modifier = Modifier.padding(top = 32.dp),
@@ -134,6 +136,44 @@ fun AuthScreen(onEnter: () -> Unit) {
         )
     }
 }
+
+/** Белая пилюля с мягким свечением — главная кнопка из референса. */
+@Composable
+private fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        if (CAN_BLUR) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.92f)
+                    .height(46.dp)
+                    // Unbounded, иначе размытие обрезается по краям слоя и вместо
+                    // свечения выходит светлая плашка с резкими кромками.
+                    .blur(26.dp, BlurredEdgeTreatment.Unbounded)
+                    .background(Color.White.copy(alpha = 0.30f), CircleShape),
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .clip(CircleShape)
+                .background(Color.White)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = text,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF121213),
+            )
+        }
+    }
+}
+
+/** Размытие свечения требует Android 12; ниже кнопка остаётся просто белой. */
+private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 /**
  * Световая дуга из референса: свет идёт из точки под экраном, наружу пробивается

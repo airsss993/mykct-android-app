@@ -43,7 +43,8 @@ import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
 import ru.dzhaparidze.mykct.ui.dotGrid
-import ru.dzhaparidze.mykct.ui.theme.VioletDeep
+import ru.dzhaparidze.mykct.ui.theme.VioletIndigo
+import ru.dzhaparidze.mykct.ui.theme.VioletMagenta
 import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import java.time.LocalDate
 import java.time.LocalTime
@@ -87,34 +88,31 @@ private fun lessonsCount(count: Int): String {
 }
 
 /**
- * Свет в фоне: широкое гало сверху по центру и два подсвета от боковых кромок.
- * Геометрия считается от ширины, а не от высоты, иначе на длинном экране пятно
- * растягивается и перестаёт читаться как свет из-за верхнего края.
+ * Свет в фоне: несколько разноцветных источников по кромкам экрана вместо одного
+ * пятна. Сверху — пурпур, акцент и светлая сирень, снизу — индиго и пурпур послабее,
+ * они подсвечивают капсулу навбара. Верхние считаются от ширины, нижние привязаны
+ * к нижней кромке: так свет не растягивается на высоких экранах.
  */
 private fun DrawScope.drawAmbientGlow(accent: Color, strength: Float) {
     val w = size.width
+    val h = size.height
 
-    drawRect(
-        Brush.radialGradient(
-            colors = listOf(accent.copy(alpha = 0.55f * strength), accent.copy(alpha = 0.16f * strength), Color.Transparent),
-            center = Offset(w / 2f, -w * 0.15f),
-            radius = w * 1.15f,
-        ),
-    )
-    drawRect(
-        Brush.radialGradient(
-            colors = listOf(VioletTint.copy(alpha = 0.30f * strength), Color.Transparent),
-            center = Offset(0f, w * 0.10f),
-            radius = w * 0.75f,
-        ),
-    )
-    drawRect(
-        Brush.radialGradient(
-            colors = listOf(VioletDeep.copy(alpha = 0.45f * strength), Color.Transparent),
-            center = Offset(w, w * 0.25f),
-            radius = w * 0.85f,
-        ),
-    )
+    fun glow(color: Color, alpha: Float, cx: Float, cy: Float, radius: Float) {
+        drawRect(
+            Brush.radialGradient(
+                colors = listOf(color.copy(alpha = alpha * strength), Color.Transparent),
+                center = Offset(cx, cy),
+                radius = radius,
+            ),
+        )
+    }
+
+    glow(accent, 0.55f, w / 2f, -w * 0.15f, w * 1.15f)
+    glow(VioletTint, 0.32f, 0f, w * 0.10f, w * 0.75f)
+    glow(VioletMagenta, 0.40f, w, w * 0.22f, w * 0.85f)
+
+    glow(VioletIndigo, 0.45f, w * 0.15f, h, w * 0.85f)
+    glow(VioletMagenta, 0.28f, w * 0.95f, h * 0.98f, w * 0.7f)
 }
 
 @Composable

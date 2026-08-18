@@ -1,13 +1,12 @@
 package ru.dzhaparidze.mykct.feature
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DateRange
@@ -25,21 +24,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.feature.schedule.ScheduleScreen
 import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 
 enum class Screen { SCHEDULE, HOME, SETTINGS }
 
 /** Высота, которую навбар отъедает у контента снизу: экраны докладывают её сами. */
-val NAV_BAR_INSET = 104.dp
+val NAV_BAR_INSET = 112.dp
 
 /**
  * Оболочка приложения: экран + плавающий навбар поверх него.
@@ -70,53 +69,49 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 }
 
 /**
- * Плавающая панель из референса: широкая скруглённая пластина, тонкие иконки без
- * подписей, у активного пункта — зелёное свечение от верхней кромки.
+ * Плавающая панель из референса: тёмная скруглённая пластина, у активного пункта —
+ * иконка в круге с фирменным градиентом, подпись под ней.
  */
 @Composable
 private fun NavBar(current: Screen, onSelect: (Screen) -> Unit, modifier: Modifier = Modifier) {
-    Box(
+    Surface(
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 16.dp,
         modifier = modifier
-            .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp)
-            .padding(bottom = 16.dp),
+            .padding(bottom = 16.dp)
+            .fillMaxWidth(),
     ) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            shadowElevation = 12.dp,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(modifier = Modifier.height(NAV_BAR_HEIGHT)) {
-                NavItem(
-                    icon = Icons.Outlined.DateRange,
-                    label = "Расписание",
-                    isSelected = current == Screen.SCHEDULE,
-                    onClick = { onSelect(Screen.SCHEDULE) },
-                    modifier = Modifier.weight(1f),
-                )
-                NavItem(
-                    icon = Icons.Outlined.Home,
-                    label = "Главная",
-                    isSelected = current == Screen.HOME,
-                    onClick = { onSelect(Screen.HOME) },
-                    modifier = Modifier.weight(1f),
-                )
-                NavItem(
-                    icon = Icons.Outlined.Settings,
-                    label = "Настройки",
-                    isSelected = current == Screen.SETTINGS,
-                    onClick = { onSelect(Screen.SETTINGS) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        Row(modifier = Modifier.height(NAV_BAR_HEIGHT)) {
+            NavItem(
+                icon = Icons.Outlined.DateRange,
+                label = "Расписание",
+                isSelected = current == Screen.SCHEDULE,
+                onClick = { onSelect(Screen.SCHEDULE) },
+                modifier = Modifier.weight(1f),
+            )
+            NavItem(
+                icon = Icons.Outlined.Home,
+                label = "Главная",
+                isSelected = current == Screen.HOME,
+                onClick = { onSelect(Screen.HOME) },
+                modifier = Modifier.weight(1f),
+            )
+            NavItem(
+                icon = Icons.Outlined.Settings,
+                label = "Настройки",
+                isSelected = current == Screen.SETTINGS,
+                onClick = { onSelect(Screen.SETTINGS) },
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
 
-private val NAV_BAR_HEIGHT = 64.dp
+private val NAV_BAR_HEIGHT = 74.dp
+private val NAV_PILL_SIZE = 40.dp
 
 @Composable
 private fun NavItem(
@@ -126,54 +121,55 @@ private fun NavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = MaterialTheme.colorScheme.primary
-    val tint by animateColorAsState(
-        targetValue = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = tween(250),
-        label = "nav-tint",
-    )
-    val glow by animateFloatAsState(
+    // Одна анимируемая величина на весь пункт: круг проявляется, иконка и подпись
+    // одновременно доезжают до белого — иначе они расходятся по времени и это видно.
+    val selected by animateFloatAsState(
         targetValue = if (isSelected) 1f else 0f,
-        animationSpec = tween(250),
-        label = "nav-glow",
+        animationSpec = tween(220),
+        label = "nav-selected",
     )
+    val idle = MaterialTheme.colorScheme.onSurfaceVariant
+    val content = lerp(idle, MaterialTheme.colorScheme.onPrimary, selected)
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxHeight()
-            .clickable(
-                // рябь по всей ячейке спорит со свечением, поэтому её нет
+            .selectable(
+                selected = isSelected,
+                role = Role.Tab,
+                // рябь по всей ячейке спорит с градиентным кругом, поэтому её нет
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick,
-            )
-            // Засвет из-под верхней кромки панели, как в референсе: он там едва заметный
-            // и узкий — источник будто снаружи, над иконкой. Три остановки вместо двух,
-            // потому что линейное затухание читается как заливка, а не как свет.
-            .drawBehind {
-                if (glow > 0f) {
-                    drawRect(
-                        Brush.radialGradient(
-                            colorStops = arrayOf(
-                                0f to accent.copy(alpha = 0.22f * glow),
-                                0.45f to accent.copy(alpha = 0.07f * glow),
-                                1f to Color.Transparent,
-                            ),
-                            center = Offset(size.width / 2f, 0f),
-                            // радиус меньше полуширины ячейки, иначе пятно обрывается
-                            // об её край вертикальной линией вместо мягкого затухания
-                            radius = minOf(size.width / 2f, size.height * 0.7f),
-                        ),
-                    )
-                }
-            },
-        contentAlignment = Alignment.Center,
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = tint,
-            modifier = Modifier.size(26.dp),
+        Box(
+            modifier = Modifier.size(NAV_PILL_SIZE),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .alpha(selected)
+                    .background(AccentGradient, CircleShape),
+            )
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = content,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else idle,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 4.dp),
         )
     }
 }

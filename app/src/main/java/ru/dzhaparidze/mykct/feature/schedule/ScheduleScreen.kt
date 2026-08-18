@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,6 +39,7 @@ import ru.dzhaparidze.mykct.feature.schedule.components.DayTimeline
 import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.TextStyle
@@ -59,7 +61,7 @@ private fun LocalDate.dayMonth(): String = "$dayOfMonth ${MONTHS_GENITIVE[monthV
 private fun LocalDate.dayTitle(): String =
     "${dayMonth()}, ${dayOfWeek.getDisplayName(TextStyle.FULL, RU)}"
 
-/** На сколько белый лист контента наезжает на лавандовую шапку (радиус его верхних углов). */
+/** На сколько лист контента наезжает на градиентную шапку (радиус его верхних углов). */
 private val SHEET_OVERLAP = 24.dp
 
 @Composable
@@ -79,7 +81,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             onOpenGroups = { groupSheetOpen = true },
         )
 
-        // Белый лист со скруглённым верхом поверх шапки — так же, как в референсе.
+        // Лист контента со скруглённым верхом наезжает на шапку — так же, как в референсе.
         Column(
             modifier = Modifier
                 .offset(y = -SHEET_OVERLAP)
@@ -179,7 +181,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 }
 
 /**
- * Лавандовая шапка: слева название экрана, справа фильтр — он же показывает текущий выбор.
+ * Градиентная шапка: слева название экрана, справа фильтр — он же показывает текущий выбор.
  * Переключение недели уехало вниз, к самой полосе дней: в шапке две голые стрелки читались
  * как «назад/вперёд» вообще, а не как «неделя».
  */
@@ -191,7 +193,7 @@ private fun Header(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primaryContainer)
+            .background(AccentGradient)
             .statusBarsPadding()
             .padding(horizontal = 16.dp)
             .padding(top = 20.dp, bottom = 24.dp + SHEET_OVERLAP),
@@ -200,7 +202,7 @@ private fun Header(
         Text(
             text = "Расписание",
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = Color.White,
             modifier = Modifier.weight(1f),
         )
 
@@ -220,10 +222,11 @@ private fun Header(
                     modifier = Modifier.size(18.dp),
                 )
             },
+            // Стекло поверх градиента, как в референсе: белая плёнка вместо плотной плашки.
             colors = AssistChipDefaults.assistChipColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                labelColor = MaterialTheme.colorScheme.onSurface,
-                trailingIconContentColor = MaterialTheme.colorScheme.primary,
+                containerColor = Color.White.copy(alpha = 0.20f),
+                labelColor = Color.White,
+                trailingIconContentColor = Color.White,
             ),
             border = null,
             // штатная высота чипа — 32dp, это ниже минимальных 48dp под палец
@@ -295,7 +298,7 @@ private fun SectionRow(title: String, onToday: () -> Unit) {
     }
 }
 
-/** Круглая кнопка на белом листе — обводка нужна, без неё surface с фоном не различается. */
+/** Круглая кнопка на листе — обводка нужна, без неё surface с фоном не различается. */
 @Composable
 private fun RoundButton(icon: ImageVector, description: String, onClick: () -> Unit) {
     Box(

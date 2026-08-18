@@ -19,10 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import kotlin.math.roundToInt
 
 /**
- * Белая пилюля из референса: подпись слева, процент и кольцо справа, всё в одну строку.
+ * Пилюля из референса: подпись слева, процент и кольцо справа, всё в одну строку.
  * Сейчас показывает прогресс дня (сколько пар прошло). Когда появится авторизация —
  * сюда встанет процент посещаемости и стрик из GET /attendance/streak.
  */
@@ -81,7 +82,7 @@ fun ActivityCard(
 
 @Composable
 private fun ProgressRing(progress: Float) {
-    val ring = MaterialTheme.colorScheme.secondary
+    val ring = MaterialTheme.colorScheme.primary
     val track = MaterialTheme.colorScheme.surfaceVariant
 
     Box(contentAlignment = Alignment.Center) {
@@ -99,8 +100,9 @@ private fun ProgressRing(progress: Float) {
                 size = arcSize,
                 style = Stroke(width = stroke, cap = StrokeCap.Round),
             )
+            // Дуга залита фирменным градиентом, как акценты в референсе.
             drawArc(
-                color = ring,
+                brush = AccentGradient,
                 startAngle = -90f,
                 sweepAngle = 360f * progress,
                 useCenter = false,

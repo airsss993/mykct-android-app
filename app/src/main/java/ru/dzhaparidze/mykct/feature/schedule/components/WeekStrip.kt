@@ -1,6 +1,6 @@
 package ru.dzhaparidze.mykct.feature.schedule.components
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.selectable
@@ -12,11 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.feature.schedule.DayCell
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -57,12 +60,14 @@ private fun DayItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val circleColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceVariant,
+    // Выбранный день — тот же фирменный градиент, что в шапке и в навбаре;
+    // невыбранные остаются плоской заливкой, иначе полоса рябит.
+    val selected by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0f,
         animationSpec = tween(200),
-        label = "day-circle",
+        label = "day-selected",
     )
-    val contentColor = if (isSelected) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onSurface
+    val contentColor = lerp(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onTertiary, selected)
 
     Column(
         // Клик на всей ячейке, а не только на круге: круг узкий (ширина ячейки / 7),
@@ -90,9 +95,15 @@ private fun DayItem(
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .clip(CircleShape)
-                .background(circleColor),
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .alpha(selected)
+                    .background(AccentGradient),
+            )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = day.date.dayOfMonth.toString(),

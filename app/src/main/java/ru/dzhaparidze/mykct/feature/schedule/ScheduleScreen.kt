@@ -45,7 +45,6 @@ import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.theme.VioletIndigo
 import ru.dzhaparidze.mykct.ui.theme.VioletMagenta
-import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -88,10 +87,10 @@ private fun lessonsCount(count: Int): String {
 }
 
 /**
- * Свет в фоне: несколько разноцветных источников по кромкам экрана вместо одного
- * пятна. Сверху — пурпур, акцент и светлая сирень, снизу — индиго и пурпур послабее,
- * они подсвечивают капсулу навбара. Верхние считаются от ширины, нижние привязаны
- * к нижней кромке: так свет не растягивается на высоких экранах.
+ * Свет в фоне: три источника по кромкам — акцент сверху, пурпур в правом верхнем
+ * углу и индиго у левого нижнего, под капсулой навбара. Больше цветов и шире
+ * радиусы превращают фон в грязное пятно, поэтому радиусы держим меньше ширины
+ * экрана. Верхние считаются от ширины, нижний привязан к нижней кромке.
  */
 private fun DrawScope.drawAmbientGlow(accent: Color, strength: Float) {
     val w = size.width
@@ -107,12 +106,9 @@ private fun DrawScope.drawAmbientGlow(accent: Color, strength: Float) {
         )
     }
 
-    glow(accent, 0.55f, w / 2f, -w * 0.15f, w * 1.15f)
-    glow(VioletTint, 0.32f, 0f, w * 0.10f, w * 0.75f)
-    glow(VioletMagenta, 0.40f, w, w * 0.22f, w * 0.85f)
-
-    glow(VioletIndigo, 0.45f, w * 0.15f, h, w * 0.85f)
-    glow(VioletMagenta, 0.28f, w * 0.95f, h * 0.98f, w * 0.7f)
+    glow(accent, 0.50f, w * 0.42f, -w * 0.05f, w * 0.80f)
+    glow(VioletMagenta, 0.30f, w, w * 0.12f, w * 0.55f)
+    glow(VioletIndigo, 0.35f, w * 0.12f, h, w * 0.55f)
 }
 
 @Composable

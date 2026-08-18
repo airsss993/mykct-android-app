@@ -24,7 +24,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -176,11 +175,7 @@ private val BLUR_RADIUS = 24.dp
 /** RenderEffect появился в Android 12; ниже размытия нет и пластина просто плотнее. */
 private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-private val NAV_BAR_HEIGHT = 74.dp
-private val NAV_PILL_SIZE = 44.dp
-
-/** На сколько круг активного пункта выступает над кромкой панели. */
-private val NAV_PILL_RAISE = (-16).dp
+private val NAV_BAR_HEIGHT = 66.dp
 
 @Composable
 private fun NavItem(
@@ -190,62 +185,58 @@ private fun NavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Одна анимируемая величина на весь пункт: круг проявляется, иконка и подпись
-    // одновременно доезжают до белого — иначе они расходятся по времени и это видно.
+    // Пункт из референса: у активного — пилюля с иконкой и подписью в строку,
+    // у остальных только иконка. Подпись появляется вместе с пилюлей, поэтому
+    // одна анимируемая величина на всё: и заливка, и цвет, и раскрытие.
     val selected by animateFloatAsState(
         targetValue = if (isSelected) 1f else 0f,
         animationSpec = tween(220),
         label = "nav-selected",
     )
     val idle = MaterialTheme.colorScheme.onSurfaceVariant
-    // Круг светлый, иконка внутри — цвета панели: в референсе акцента в навбаре нет,
-    // активный пункт выделен контрастом, а не цветом.
-    val pill = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.90f)
-    val iconTint = lerp(idle, MaterialTheme.colorScheme.surface, selected)
+    val accent = MaterialTheme.colorScheme.primary
+    val content = lerp(idle, accent, selected)
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxHeight()
             .selectable(
                 selected = isSelected,
                 role = Role.Tab,
-                // рябь по всей ячейке спорит с приподнятым кругом, поэтому её нет
+                // рябь по всей ячейке спорит с пилюлей, поэтому её нет
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick,
             ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        contentAlignment = Alignment.Center,
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .size(NAV_PILL_SIZE)
-                // offset, а не padding: подъём не должен менять раскладку соседей
-                .offset(y = NAV_PILL_RAISE * selected),
-            contentAlignment = Alignment.Center,
+                .clip(CircleShape)
+                .background(accent.copy(alpha = 0.16f * selected))
+                .padding(horizontal = 14.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .alpha(selected)
-                    .background(pill, CircleShape),
-            )
             Icon(
                 painter = painterResource(icon),
-                contentDescription = null,
-                tint = iconTint,
+                contentDescription = if (isSelected) null else label,
+                tint = content,
                 modifier = Modifier.size(24.dp),
             )
+            if (selected > 0f) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = accent,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        // ширина едет вместе с прозрачностью — подпись не прыгает целиком
+                        .graphicsLayer { alpha = selected }
+                        .widthIn(max = 200.dp * selected),
+                )
+            }
         }
-
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = lerp(idle, MaterialTheme.colorScheme.onSurface, selected),
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 4.dp),
-        )
     }
 }
 

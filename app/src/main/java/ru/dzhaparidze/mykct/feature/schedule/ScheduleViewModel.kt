@@ -15,7 +15,6 @@ import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.data.SelectionStore
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
 data class DayCell(
@@ -30,13 +29,9 @@ data class ScheduleUiState(
     val selection: Selection,
     val days: List<DayCell> = emptyList(),
     val lessons: List<Lesson> = emptyList(),
-    val passedCount: Int = 0,
     val isLoading: Boolean = true,
     val error: Boolean = false,
-) {
-    /** Доля прошедших пар выбранного дня — под кольцо прогресса из референса. */
-    val progress: Float get() = if (lessons.isEmpty()) 0f else passedCount.toFloat() / lessons.size
-}
+)
 
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -113,14 +108,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
 
         val lessons = byDate[state.selectedDate].orEmpty().sortedBy { it.start }
-        val passed = when {
-            state.selectedDate.isBefore(today) -> lessons.size
-            state.selectedDate.isAfter(today) -> 0
-            else -> LocalTime.now().let { now -> lessons.count { !it.end.isAfter(now) } }
-        }
 
         _state.update {
-            it.copy(days = days, lessons = lessons, passedCount = passed, isLoading = false, error = false)
+            it.copy(days = days, lessons = lessons, isLoading = false, error = false)
         }
     }
 

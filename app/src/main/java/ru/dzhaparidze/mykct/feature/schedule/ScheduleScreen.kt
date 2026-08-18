@@ -1,7 +1,6 @@
 package ru.dzhaparidze.mykct.feature.schedule
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,11 +8,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,15 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.feature.NAV_BAR_INSET
-import ru.dzhaparidze.mykct.feature.schedule.components.ActivityCard
 import ru.dzhaparidze.mykct.feature.schedule.components.DayTimeline
 import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
@@ -42,10 +42,12 @@ import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
 private val RU = Locale.forLanguageTag("ru-RU")
+private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
 
 /**
  * Родительный падеж руками: `MMMM` на Android отдаёт именительный («16 август»),
@@ -59,10 +61,28 @@ private val MONTHS_GENITIVE = listOf(
 private fun LocalDate.dayMonth(): String = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 1]}"
 
 private fun LocalDate.dayTitle(): String =
-    "${dayMonth()}, ${dayOfWeek.getDisplayName(TextStyle.FULL, RU)}"
+    "${dayOfWeek.getDisplayName(TextStyle.FULL, RU).replaceFirstChar { it.uppercase() }}, ${dayMonth()}"
+
+/** «11 – 17 августа», а через границу месяца — «28 июля – 3 августа». */
+private fun weekRange(weekStart: LocalDate): String {
+    val end = weekStart.plusDays(6)
+    val start = if (weekStart.month == end.month) weekStart.dayOfMonth.toString() else weekStart.dayMonth()
+    return "$start – ${end.dayMonth()}"
+}
+
+/** «1 пара», «4 пары», «11 пар». */
+private fun lessonsCount(count: Int): String {
+    val word = when {
+        count % 100 in 11..14 -> "пар"
+        count % 10 == 1 -> "пара"
+        count % 10 in 2..4 -> "пары"
+        else -> "пар"
+    }
+    return "$count $word"
+}
 
 /** На сколько лист контента наезжает на градиентную шапку (радиус его верхних углов). */
-private val SHEET_OVERLAP = 24.dp
+private val SHEET_OVERLAP = 28.dp
 
 @Composable
 fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
@@ -76,12 +96,16 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState()),
     ) {
-        Header(
-            groupLabel = state.selection.label(),
+        Hero(
+            state = state,
             onOpenGroups = { groupSheetOpen = true },
+            onPrevWeek = { viewModel.shiftWeek(-1) },
+            onNextWeek = { viewModel.shiftWeek(1) },
+            onToday = viewModel::goToToday,
+            onRefresh = viewModel::retry,
         )
 
-        // Лист контента со скруглённым верхом наезжает на шапку — так же, как в референсе.
+        // Лист контента со скруглённым верхом наезжает на градиент — так же, как в референсе.
         Column(
             modifier = Modifier
                 .offset(y = -SHEET_OVERLAP)
@@ -90,24 +114,8 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
                     color = MaterialTheme.colorScheme.background,
                     shape = RoundedCornerShape(topStart = SHEET_OVERLAP, topEnd = SHEET_OVERLAP),
                 )
-                .padding(top = 16.dp),
+                .padding(top = 24.dp),
         ) {
-            ActivityCard(
-                title = "Прогресс дня",
-                progress = state.progress,
-                modifier = Modifier.padding(horizontal = 28.dp),
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            WeekNav(
-                weekStart = state.weekStart,
-                onPrev = { viewModel.shiftWeek(-1) },
-                onNext = { viewModel.shiftWeek(1) },
-            )
-
-            Spacer(Modifier.height(12.dp))
-
             WeekStrip(
                 days = state.days,
                 selectedDate = state.selectedDate,
@@ -116,13 +124,6 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             )
 
             Spacer(Modifier.height(24.dp))
-
-            SectionRow(
-                title = state.selectedDate.dayTitle().replaceFirstChar { it.uppercase() },
-                onToday = viewModel::goToToday,
-            )
-
-            Spacer(Modifier.height(16.dp))
 
             when {
                 state.isLoading -> Placeholder { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
@@ -181,140 +182,137 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 }
 
 /**
- * Градиентная шапка: слева название экрана, справа фильтр — он же показывает текущий выбор.
- * Переключение недели уехало вниз, к самой полосе дней: в шапке две голые стрелки читались
- * как «назад/вперёд» вообще, а не как «неделя».
+ * Градиентная шапка по референсу: строка заголовка с пилюлей выбора, крупная сводка дня
+ * на месте «баланса» и ряд круглых действий под ней.
  */
 @Composable
-private fun Header(
-    groupLabel: String,
+private fun Hero(
+    state: ScheduleUiState,
     onOpenGroups: () -> Unit,
+    onPrevWeek: () -> Unit,
+    onNextWeek: () -> Unit,
+    onToday: () -> Unit,
+    onRefresh: () -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(AccentGradient)
             .statusBarsPadding()
-            .padding(horizontal = 16.dp)
-            .padding(top = 20.dp, bottom = 24.dp + SHEET_OVERLAP),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 20.dp)
+            .padding(top = 12.dp, bottom = 20.dp + SHEET_OVERLAP),
     ) {
-        Text(
-            text = "Расписание",
-            style = MaterialTheme.typography.titleLarge,
-            color = Color.White,
-            modifier = Modifier.weight(1f),
-        )
-
-        AssistChip(
-            onClick = onOpenGroups,
-            label = {
-                Text(
-                    text = groupLabel,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "Выбрать группу и подгруппы",
-                    modifier = Modifier.size(18.dp),
-                )
-            },
-            // Стекло поверх градиента, как в референсе: белая плёнка вместо плотной плашки.
-            colors = AssistChipDefaults.assistChipColors(
-                containerColor = Color.White.copy(alpha = 0.20f),
-                labelColor = Color.White,
-                trailingIconContentColor = Color.White,
-            ),
-            border = null,
-            // штатная высота чипа — 32dp, это ниже минимальных 48dp под палец
-            modifier = Modifier
-                .widthIn(max = 200.dp)
-                .heightIn(min = 48.dp),
-        )
-    }
-}
-
-/** Переключение недели: стрелки вплотную к диапазону дат, чтобы было видно, что листается. */
-@Composable
-private fun WeekNav(weekStart: LocalDate, onPrev: () -> Unit, onNext: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RoundButton(Icons.Default.KeyboardArrowLeft, "Предыдущая неделя", onPrev)
-
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "Неделя",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = "Расписание",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                modifier = Modifier.weight(1f),
             )
-            Text(
-                text = weekRange(weekStart),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-            )
+            GroupPill(label = state.selection.label(), onClick = onOpenGroups)
         }
 
-        RoundButton(Icons.Default.KeyboardArrowRight, "Следующая неделя", onNext)
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = "Неделя ${weekRange(state.weekStart)}",
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White.copy(alpha = 0.75f),
+        )
+        Text(
+            // Крупная строка на месте баланса из референса: сколько пар в выбранном дне.
+            text = if (state.lessons.isEmpty()) "Пар нет" else lessonsCount(state.lessons.size),
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+        )
+        Text(
+            text = state.selectedDate.dayTitle() + state.lessons.dayHours(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.75f),
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            HeroAction(Icons.Outlined.DateRange, "Сегодня", onToday, Modifier.weight(1f))
+            HeroAction(Icons.Default.KeyboardArrowLeft, "Назад", onPrevWeek, Modifier.weight(1f), "Предыдущая неделя")
+            HeroAction(Icons.Default.KeyboardArrowRight, "Вперёд", onNextWeek, Modifier.weight(1f), "Следующая неделя")
+            HeroAction(Icons.Default.Refresh, "Обновить", onRefresh, Modifier.weight(1f))
+        }
     }
 }
 
-/** «11 – 17 августа», а через границу месяца — «28 июля – 3 августа». */
-private fun weekRange(weekStart: LocalDate): String {
-    val end = weekStart.plusDays(6)
-    val start = if (weekStart.month == end.month) weekStart.dayOfMonth.toString() else weekStart.dayMonth()
-    return "$start – ${end.dayMonth()}"
-}
+/** « · 9:00 – 15:40» для непустого дня, иначе ничего. */
+private fun List<Lesson>.dayHours(): String =
+    if (isEmpty()) "" else " · ${first().start.format(TIME)} – ${last().end.format(TIME)}"
 
-/** Подпись дня и круглая кнопка «сегодня» — строка «Timeline» из референса. */
+/** Стеклянная пилюля поверх градиента: показывает выбор и открывает шит групп. */
 @Composable
-private fun SectionRow(title: String, onToday: () -> Unit) {
+private fun GroupPill(label: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.20f))
+            .clickable(onClick = onClick)
+            .widthIn(max = 200.dp)
+            .heightIn(min = 48.dp)
+            .padding(start = 16.dp, end = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = Color.White,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
         )
-
-        RoundButton(Icons.Default.DateRange, "Сегодня", onToday)
+        Icon(
+            imageVector = Icons.Default.KeyboardArrowDown,
+            contentDescription = "Выбрать группу и подгруппы",
+            tint = Color.White,
+            modifier = Modifier
+                .padding(start = 4.dp)
+                .size(18.dp),
+        )
     }
 }
 
-/** Круглая кнопка на листе — обводка нужна, без неё surface с фоном не различается. */
+/** Круглая полупрозрачная кнопка с подписью — ряд действий из референса. */
 @Composable
-private fun RoundButton(icon: ImageVector, description: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
+private fun HeroAction(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    description: String = label,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = description,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp),
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.18f))
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = description,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.85f),
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp),
         )
     }
 }

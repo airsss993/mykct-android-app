@@ -19,14 +19,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.data.Lesson
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import java.time.format.DateTimeFormatter
 
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
@@ -39,16 +39,19 @@ fun LessonCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val base = lesson.colorHex.toColorOrNull() ?: MaterialTheme.colorScheme.primary
-    val container = if (isPast) base.copy(alpha = 0.55f) else base
+    // Монохром по референсу: все карточки в фирменном градиенте, предметы различает
+    // водяной знак, а не цвет. `colorHex` с портала намеренно игнорируется.
+    val accent = MaterialTheme.colorScheme.primary
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            // прошедшая пара просто гасится целиком — так же, как строки истории в референсе
+            .alpha(if (isPast) 0.55f else 1f)
             // жать не на что, если пара общая для всей группы
             .clickable(enabled = lesson.subgroups.isNotEmpty(), onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        color = container,
+        color = accent,
         shadowElevation = 6.dp,
     ) {
         // matchParentSize, а не fillMaxSize: фон и водяной знак не должны участвовать
@@ -57,9 +60,7 @@ fun LessonCard(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .background(
-                        Brush.linearGradient(listOf(container, lerp(container, Color.Black, 0.22f))),
-                    ),
+                    .background(AccentGradient),
             )
 
             Icon(
@@ -77,7 +78,7 @@ fun LessonCard(
                 TimePill(
                     text = "${lesson.start.format(TIME)} - ${lesson.end.format(TIME)}",
                     showCheck = isPast,
-                    accent = container,
+                    accent = accent,
                 )
 
                 Spacer(Modifier.height(8.dp))
@@ -194,11 +195,4 @@ private fun Chip(text: String, icon: ImageVector? = null) {
             )
         }
     }
-}
-
-/** Портал отдаёт цвет пары строкой; кривой формат не должен ронять экран. */
-private fun String?.toColorOrNull(): Color? {
-    val hex = this?.trim()?.removePrefix("#")?.takeIf { it.length == 6 } ?: return null
-    val value = hex.toLongOrNull(16) ?: return null
-    return Color(value or 0xFF000000L)
 }

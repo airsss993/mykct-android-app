@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -50,27 +51,28 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
         SectionTitle("Тема")
         Card {
             ThemeMode.entries.forEachIndexed { index, mode ->
-                if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Row(
-                    // selectable, а не clickable: иначе строка и радиокнопка — два
-                    // отдельных таргета, и TalkBack читает их дважды
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .selectable(
-                            selected = themeMode == mode,
-                            role = Role.RadioButton,
-                            onClick = { onThemeChange(mode) },
-                        )
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                if (index > 0) Divider()
+                // selectable, а не clickable: иначе строка и отметка — два отдельных
+                // таргета, и TalkBack читает их дважды
+                SettingsRow(
+                    icon = mode.icon(),
+                    text = mode.title,
+                    modifier = Modifier.selectable(
+                        selected = themeMode == mode,
+                        role = Role.RadioButton,
+                        onClick = { onThemeChange(mode) },
+                    ),
                 ) {
-                    RadioButton(selected = themeMode == mode, onClick = null)
-                    Text(
-                        text = mode.title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
+                    // Галочка вместо радиокнопки — как в референсе: выбранное состояние
+                    // отмечено акцентом, а не отдельным элементом управления.
+                    if (themeMode == mode) {
+                        Icon(
+                            painterResource(R.drawable.ic_check),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
                 }
             }
         }
@@ -100,17 +102,15 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 
         SectionTitle("Действия")
         Card {
-            LinkRow(R.drawable.ic_report, "Сообщить о проблеме", "https://t.me/airsss993")
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
             LinkRow(R.drawable.ic_code, "Исходный код", "https://github.com/airsss993/mykct-android-app")
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            Divider()
             LinkRow(R.drawable.ic_public, "Веб-сайт", "https://it-college.ru/")
         }
 
         SectionTitle("Разработчики")
         Card {
             Person("Артём Джапаридзе", "Android разработчик", "https://github.com/airsss993", "https://t.me/airsss993")
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+            Divider()
             Person("Иван Коломацкий", "iOS разработчик", "https://github.com/anton1ks96", "https://t.me/IKolomatskii")
         }
 
@@ -119,8 +119,101 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             Person("Илья Некрасов", "Маркетолог", "https://github.com/necrasov-ilya", "https://t.me/NKSV_ILYA")
         }
 
+        Spacer(Modifier.height(28.dp))
+
+        PillButton(
+            icon = R.drawable.ic_send,
+            text = "Написать разработчику",
+            url = "https://t.me/airsss993",
+        )
+
         Spacer(Modifier.height(NAV_BAR_INSET))
     }
+}
+
+/**
+ * Белая пилюля во всю ширину — главное действие экрана, как «Log Out» в референсе.
+ * Цвет заливки не из палитры темы: кнопка одинаково белая в обеих темах, это её роль.
+ */
+@Composable
+private fun PillButton(@DrawableRes icon: Int, text: String, url: String) {
+    val uriHandler = LocalUriHandler.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clip(CircleShape)
+            .background(Color.White)
+            .clickable { uriHandler.openUri(url) }
+            .padding(vertical = 18.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painterResource(icon),
+            contentDescription = null,
+            tint = INK,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            color = INK,
+            modifier = Modifier.padding(start = 10.dp),
+        )
+    }
+}
+
+private val INK = Color(0xFF121213)
+
+/**
+ * Разделитель внутри карточки — с отступом под иконку, как в референсе.
+ * Цвет свой: штатный outlineVariant в тёмной теме совпадает с фоном карточки
+ * (оба DarkGreyFill), и линии не видно вовсе.
+ */
+@Composable
+private fun Divider() = HorizontalDivider(
+    modifier = Modifier.padding(start = 54.dp),
+    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+)
+
+/** Строка настроек: иконка, подпись и что-нибудь справа — отметка или стрелка. */
+@Composable
+private fun SettingsRow(
+    @DrawableRes icon: Int,
+    text: String,
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painterResource(icon),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(22.dp),
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+        )
+        trailing()
+    }
+}
+
+@DrawableRes
+private fun ThemeMode.icon(): Int = when (this) {
+    ThemeMode.SYSTEM -> R.drawable.ic_theme_system
+    ThemeMode.LIGHT -> R.drawable.ic_theme_light
+    ThemeMode.DARK -> R.drawable.ic_theme_dark
 }
 
 @Composable
@@ -157,22 +250,11 @@ private fun Card(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 private fun LinkRow(@DrawableRes icon: Int, text: String, url: String) {
     val uriHandler = LocalUriHandler.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { uriHandler.openUri(url) }
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    SettingsRow(
+        icon = icon,
+        text = text,
+        modifier = Modifier.clickable { uriHandler.openUri(url) },
     ) {
-        Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp),
-        )
         Icon(
             painterResource(R.drawable.ic_chevron_right),
             contentDescription = null,

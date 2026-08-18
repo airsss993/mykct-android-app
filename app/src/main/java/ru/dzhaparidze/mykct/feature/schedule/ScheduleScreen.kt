@@ -37,6 +37,7 @@ import ru.dzhaparidze.mykct.feature.schedule.components.DayTimeline
 import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
+import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import java.time.LocalDate
 import java.time.LocalTime
@@ -120,6 +121,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
                     color = MaterialTheme.colorScheme.background,
                     shape = RoundedCornerShape(topStart = SHEET_OVERLAP, topEnd = SHEET_OVERLAP),
                 )
+                .dotGrid()
                 .padding(top = 24.dp),
         ) {
             WeekStrip(

@@ -22,6 +22,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
+import ru.dzhaparidze.mykct.ui.dotGrid
+import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.feature.NAV_BAR_INSET
 
 /**
@@ -34,6 +36,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .dotGrid()
             .verticalScroll(rememberScrollState())
             .statusBarsPadding(),
     ) {
@@ -145,7 +148,8 @@ private fun Card(content: @Composable ColumnScope.() -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .hairline(RoundedCornerShape(20.dp)),
         content = content,
     )
 }

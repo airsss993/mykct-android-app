@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.feature.schedule.ScheduleScreen
+import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
 
 enum class Screen { SCHEDULE, HOME, SETTINGS }
@@ -255,6 +256,7 @@ private fun ComingSoon(title: String, text: String) {
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .dotGrid()
             .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

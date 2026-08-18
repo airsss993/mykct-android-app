@@ -1,5 +1,6 @@
 package ru.dzhaparidze.mykct.feature.schedule.components
 
+import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -11,7 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,8 +41,21 @@ fun LessonCard(
     // водяной знак, а не цвет. `colorHex` с портала намеренно игнорируется.
     val accent = MaterialTheme.colorScheme.primary
 
+    Box(modifier = modifier) {
+        // Свечение из-под идущей пары — приём из референса: цвет карточки, размытый
+        // и выпущенный за её края. Требует Android 12, ниже остаётся светлая кромка.
+        if (isNow && CAN_BLUR) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(10.dp)
+                    .blur(22.dp, BlurredEdgeTreatment.Unbounded)
+                    .background(accent, RoundedCornerShape(20.dp)),
+            )
+        }
+
     Surface(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             // прошедшая пара просто гасится целиком — так же, как строки истории в референсе
             .alpha(if (isPast) 0.55f else 1f)
@@ -115,7 +131,11 @@ fun LessonCard(
             }
         }
     }
+    }
 }
+
+/** Размытие свечения требует Android 12; ниже идущая пара опознаётся только кромкой. */
+private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 /**
  * Водяной знак по названию предмета. Названия приходят с портала свободным текстом,

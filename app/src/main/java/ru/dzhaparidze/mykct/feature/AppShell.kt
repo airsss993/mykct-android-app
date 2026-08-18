@@ -25,6 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlurEffect
@@ -45,12 +48,13 @@ import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.feature.schedule.ScheduleScreen
 import ru.dzhaparidze.mykct.ui.dotGrid
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
 
 enum class Screen { SCHEDULE, HOME, SETTINGS }
 
 /** Высота, которую навбар отъедает у контента снизу: экраны докладывают её сами. */
-val NAV_BAR_INSET = 112.dp
+val NAV_BAR_INSET = 108.dp
 
 /**
  * Оболочка приложения: экран + плавающий навбар поверх него.
@@ -110,132 +114,128 @@ private fun NavBar(
 ) {
     // Куда сдвинуть записанный слой, чтобы под пластиной оказался тот же кусок экрана.
     var barTop by remember { mutableFloatStateOf(0f) }
+    var barLeft by remember { mutableFloatStateOf(0f) }
 
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .onGloballyPositioned { barTop = it.positionInRoot().y },
+            .navigationBarsPadding()
+            .padding(bottom = 20.dp)
+            .onGloballyPositioned {
+                barTop = it.positionInRoot().y
+                barLeft = it.positionInRoot().x
+            },
     ) {
         if (CAN_BLUR) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(BAR_SHAPE)
+                    .clip(CircleShape)
                     .graphicsLayer { renderEffect = BlurEffect(BLUR_RADIUS.toPx(), BLUR_RADIUS.toPx()) }
-                    .drawBehind { translate(top = -barTop) { drawLayer(backdrop) } },
+                    .drawBehind { translate(left = -barLeft, top = -barTop) { drawLayer(backdrop) } },
             )
         }
 
         Surface(
-            shape = BAR_SHAPE,
-            // Поверх размытия — тонкая плёнка цвета панели; без размытия (Android 11 и
-            // ниже RenderEffect не умеет) она почти непрозрачная, иначе текст просвечивает.
-            color = MaterialTheme.colorScheme.surface.copy(alpha = if (CAN_BLUR) 0.62f else 0.94f),
-            // Тень под полупрозрачной пластиной просвечивает насквозь и мутит её,
-            // поэтому вместо неё — светлая волосяная кромка сверху, как в референсе.
+            shape = CircleShape,
+            // Поверх размытия — плёнка цвета панели; без размытия (Android 11 и ниже
+            // RenderEffect не умеет) она почти непрозрачная, иначе текст просвечивает.
+            color = MaterialTheme.colorScheme.surface.copy(alpha = if (CAN_BLUR) 0.72f else 0.94f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)),
             content = {},
             modifier = Modifier.matchParentSize(),
         )
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .height(NAV_BAR_HEIGHT),
+            modifier = Modifier.padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             NavItem(
                 icon = R.drawable.ic_calendar,
                 label = "Расписание",
                 isSelected = current == Screen.SCHEDULE,
                 onClick = { onSelect(Screen.SCHEDULE) },
-                modifier = Modifier.weight(1f),
             )
             NavItem(
                 icon = R.drawable.ic_home,
                 label = "Главная",
                 isSelected = current == Screen.HOME,
                 onClick = { onSelect(Screen.HOME) },
-                modifier = Modifier.weight(1f),
             )
             NavItem(
                 icon = R.drawable.ic_settings,
                 label = "Настройки",
                 isSelected = current == Screen.SETTINGS,
                 onClick = { onSelect(Screen.SETTINGS) },
-                modifier = Modifier.weight(1f),
             )
         }
     }
 }
 
-private val BAR_SHAPE = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 private val BLUR_RADIUS = 24.dp
+private val NAV_ITEM_SIZE = 56.dp
 
 /** RenderEffect появился в Android 12; ниже размытия нет и пластина просто плотнее. */
 private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-private val NAV_BAR_HEIGHT = 66.dp
-
+/**
+ * Пункт-кружок из референса: активный залит фирменным градиентом и светится,
+ * остальные — тёмные кружки. Подписей нет, они у капсулы не помещаются;
+ * название остаётся в contentDescription для TalkBack.
+ */
 @Composable
 private fun NavItem(
     @DrawableRes icon: Int,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    // Пункт из референса: у активного — пилюля с иконкой и подписью в строку,
-    // у остальных только иконка. Подпись появляется вместе с пилюлей, поэтому
-    // одна анимируемая величина на всё: и заливка, и цвет, и раскрытие.
     val selected by animateFloatAsState(
         targetValue = if (isSelected) 1f else 0f,
         animationSpec = tween(220),
         label = "nav-selected",
     )
     val idle = MaterialTheme.colorScheme.onSurfaceVariant
-    val accent = MaterialTheme.colorScheme.primary
-    val content = lerp(idle, accent, selected)
+    val content = lerp(idle, Color.White, selected)
 
-    Box(
-        modifier = modifier
-            .fillMaxHeight()
-            .selectable(
-                selected = isSelected,
-                role = Role.Tab,
-                // рябь по всей ячейке спорит с пилюлей, поэтому её нет
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(
+    Box(contentAlignment = Alignment.Center) {
+        if (CAN_BLUR && selected > 0f) {
+            // Свечение под активным кружком — тот же приём, что у идущей пары.
+            Box(
+                modifier = Modifier
+                    .size(NAV_ITEM_SIZE)
+                    .graphicsLayer { alpha = selected }
+                    .blur(14.dp, BlurredEdgeTreatment.Unbounded)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape),
+            )
+        }
+
+        Box(
             modifier = Modifier
+                .size(NAV_ITEM_SIZE)
                 .clip(CircleShape)
-                .background(accent.copy(alpha = 0.16f * selected))
-                .padding(horizontal = 14.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .selectable(
+                    selected = isSelected,
+                    role = Role.Tab,
+                    // рябь спорит с градиентом и свечением, поэтому её нет
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                ),
+            contentAlignment = Alignment.Center,
         ) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .alpha(selected)
+                    .background(AccentGradient, CircleShape),
+            )
             Icon(
                 painter = painterResource(icon),
-                contentDescription = if (isSelected) null else label,
+                contentDescription = label,
                 tint = content,
                 modifier = Modifier.size(24.dp),
             )
-            if (selected > 0f) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = accent,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        // ширина едет вместе с прозрачностью — подпись не прыгает целиком
-                        .graphicsLayer { alpha = selected }
-                        .widthIn(max = 200.dp * selected),
-                )
-            }
         }
     }
 }

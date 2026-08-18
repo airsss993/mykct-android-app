@@ -12,9 +12,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import ru.dzhaparidze.mykct.data.EntryStore
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.data.ThemeStore
 import ru.dzhaparidze.mykct.feature.AppShell
+import ru.dzhaparidze.mykct.feature.auth.AuthScreen
 import ru.dzhaparidze.mykct.ui.theme.AppTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,6 +26,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val store = remember { ThemeStore(this) }
             var themeMode by remember { mutableStateOf(store.load()) }
+            // Экран входа показываем один раз — пока его не прошли (входом или «без входа»).
+            val entryStore = remember { EntryStore(this) }
+            var entered by remember { mutableStateOf(entryStore.passed()) }
             val darkTheme = when (themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false
@@ -44,13 +49,22 @@ class MainActivity : ComponentActivity() {
             }
 
             AppTheme(darkTheme = darkTheme) {
-                AppShell(
-                    themeMode = themeMode,
-                    onThemeChange = { mode ->
-                        themeMode = mode
-                        store.save(mode)
-                    },
-                )
+                if (entered) {
+                    AppShell(
+                        themeMode = themeMode,
+                        onThemeChange = { mode ->
+                            themeMode = mode
+                            store.save(mode)
+                        },
+                    )
+                } else {
+                    AuthScreen(
+                        onEnter = {
+                            entryStore.markPassed()
+                            entered = true
+                        },
+                    )
+                }
             }
         }
     }

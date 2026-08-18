@@ -200,12 +200,17 @@ private fun NavItem(
     Box(contentAlignment = Alignment.Center) {
         if (CAN_BLUR && selected > 0f) {
             // Свечение под активным кружком — тот же приём, что у идущей пары.
+            // Прозрачность зашита в цвет, а не в graphicsLayer: отдельный слой поверх
+            // размытия уводит его на другой путь отрисовки, и на время анимации
+            // вместо круглого ореола видно размытый квадрат по границам слоя.
             Box(
                 modifier = Modifier
                     .size(NAV_ITEM_SIZE)
-                    .graphicsLayer { alpha = selected }
                     .blur(14.dp, BlurredEdgeTreatment.Unbounded)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape),
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = selected),
+                        CircleShape,
+                    ),
             )
         }
 

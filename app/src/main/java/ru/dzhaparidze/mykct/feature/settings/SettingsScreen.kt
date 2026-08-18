@@ -114,26 +114,19 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
         }
 
         SectionTitle("Команда")
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             PersonCard(
                 name = "Артём Джапаридзе",
                 role = "Android-разработчик",
                 github = "https://github.com/airsss993",
                 telegram = "https://t.me/airsss993",
                 avatar = R.drawable.avatar_artem,
-                modifier = Modifier.weight(1f),
             )
             PersonCard(
                 name = "Иван Коломацкий",
                 role = "iOS-разработчик",
                 github = "https://github.com/anton1ks96",
                 telegram = "https://t.me/IKolomatskii",
-                modifier = Modifier.weight(1f),
             )
         }
 
@@ -282,10 +275,9 @@ private fun LinkRow(@DrawableRes icon: Int, text: String, url: String) {
 }
 
 /**
- * Карточка человека: фото во всю плитку на фирменном градиенте, подпись снизу,
- * соцсети сверху. В референсе портрет вырезан по контуру и выступает за верхнюю
- * кромку — для этого нужен PNG без фона; с обычным фото карточка заполняется
- * целиком, а подпись читается за счёт тёмной подложки снизу.
+ * Карточка человека: слева подпись и соцсети, справа портрет, за ним — фигуры
+ * фирменного градиента. Портрет вырезан по контуру (PNG с альфой), поэтому голова
+ * заходит за круг, как в референсе; с прямоугольным фото так не выйдет.
  */
 @Composable
 private fun PersonCard(
@@ -298,92 +290,130 @@ private fun PersonCard(
 ) {
     val uriHandler = LocalUriHandler.current
 
+    // Портрет — сосед карточки, а не её содержимое: внутри его обрезала бы скруглённая
+    // кромка, а он должен выступать над ней, как в референсе.
     Box(
         modifier = modifier
-            .aspectRatio(0.74f)
-            .clip(RoundedCornerShape(28.dp))
-            .background(AccentGradient),
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .height(CARD_HEIGHT + PORTRAIT_RISE),
     ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(CARD_HEIGHT)
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .hairline(RoundedCornerShape(24.dp)),
+        ) {
+            Blobs()
+
+            if (avatar == null) {
+                Text(
+                    text = name.initials(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 52.dp),
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 18.dp, end = 140.dp),
+            ) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = role.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    letterSpacing = 1.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(top = 12.dp),
+                ) {
+                    SocialButton(R.drawable.github_icon, "GitHub $name") { uriHandler.openUri(github) }
+                    // telegram_icon нарисован «вверх ногами» относительно остальных — отражаем
+                    SocialButton(R.drawable.telegram_icon, "Telegram $name", flip = true) { uriHandler.openUri(telegram) }
+                }
+            }
+        }
+
         if (avatar != null) {
             Image(
                 painter = painterResource(avatar),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            Text(
-                text = name.initials(),
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White,
-                modifier = Modifier.align(Alignment.Center),
-            )
-        }
-
-        // Подложка под подписью: на светлом фото белый текст иначе пропадает.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.verticalGradient(
-                        0.45f to Color.Transparent,
-                        1f to Color(0xCC000000),
-                    ),
-                ),
-        )
-
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            GlassButton(R.drawable.github_icon, "GitHub $name") { uriHandler.openUri(github) }
-            // telegram_icon нарисован «вверх ногами» относительно остальных — отражаем
-            GlassButton(R.drawable.telegram_icon, "Telegram $name", flip = true) { uriHandler.openUri(telegram) }
-        }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(14.dp),
-        ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
-            )
-            Text(
-                text = role,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.75f),
-                modifier = Modifier.padding(top = 2.dp),
+                contentScale = ContentScale.Fit,
+                alignment = Alignment.BottomCenter,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp)
+                    .fillMaxHeight(),
             )
         }
     }
 }
 
-/** Кружок-стекло поверх фото: плотной заливки тут нельзя, она спорит с портретом. */
+private val CARD_HEIGHT = 150.dp
+
+/** На сколько портрет выступает над верхней кромкой карточки. */
+private val PORTRAIT_RISE = 26.dp
+
+/** Фигуры за портретом: два круга фирменного градиента, обрезанные кромкой карточки. */
 @Composable
-private fun GlassButton(@DrawableRes iconRes: Int, description: String, flip: Boolean = false, onClick: () -> Unit) {
+private fun BoxScope.Blobs() {
     Box(
         modifier = Modifier
-            .size(30.dp)
+            .align(Alignment.CenterEnd)
+            .padding(end = 34.dp)
+            .size(118.dp)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.35f))
-            .clickable(onClick = onClick),
+            .background(AccentGradient),
+    )
+    Box(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .offset(x = 26.dp, y = (-22).dp)
+            .size(88.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
+    )
+}
+
+/** Круглая кнопка соцсети в фирменной обводке. */
+@Composable
+private fun SocialButton(@DrawableRes iconRes: Int, description: String, flip: Boolean = false, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(AccentGradient)
+            .clickable(onClick = onClick)
+            .padding(1.5.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = description,
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
-                .size(15.dp)
+                .size(16.dp)
                 .scale(scaleX = 1f, scaleY = if (flip) -1f else 1f),
         )
     }
 }
+
 
 /** Первые буквы имени и фамилии: «Артём Джапаридзе» → «АД». */
 private fun String.initials(): String =

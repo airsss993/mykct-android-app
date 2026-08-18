@@ -1,6 +1,7 @@
 package ru.dzhaparidze.mykct.feature.settings
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -112,9 +114,20 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 
         SectionTitle("Разработчики")
         Card {
-            Person("Артём Джапаридзе", "Android-разработчик", "https://github.com/airsss993", "https://t.me/airsss993")
+            Person(
+                name = "Артём Джапаридзе",
+                role = "Android-разработчик",
+                github = "https://github.com/airsss993",
+                telegram = "https://t.me/airsss993",
+                avatar = R.drawable.avatar_artem,
+            )
             Divider()
-            Person("Иван Коломацкий", "iOS-разработчик", "https://github.com/anton1ks96", "https://t.me/IKolomatskii")
+            Person(
+                name = "Иван Коломацкий",
+                role = "iOS-разработчик",
+                github = "https://github.com/anton1ks96",
+                telegram = "https://t.me/IKolomatskii",
+            )
         }
 
         Spacer(Modifier.height(28.dp))
@@ -262,7 +275,13 @@ private fun LinkRow(@DrawableRes icon: Int, text: String, url: String) {
 }
 
 @Composable
-private fun Person(name: String, role: String, github: String, telegram: String) {
+private fun Person(
+    name: String,
+    role: String,
+    github: String,
+    telegram: String,
+    @DrawableRes avatar: Int? = null,
+) {
     val uriHandler = LocalUriHandler.current
     Row(
         modifier = Modifier
@@ -270,13 +289,22 @@ private fun Person(name: String, role: String, github: String, telegram: String)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Фото пока нет — в кружке инициалы. Меняется на Image, когда появятся аватарки.
+        // Пока фото нет — в кружке инициалы.
         GradientRing(size = 48.dp, ring = 2.dp) {
-            Text(
-                text = name.initials(),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            if (avatar != null) {
+                Image(
+                    painter = painterResource(avatar),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                Text(
+                    text = name.initials(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
 
         Column(

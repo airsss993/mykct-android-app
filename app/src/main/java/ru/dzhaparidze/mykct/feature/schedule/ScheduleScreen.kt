@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Color
@@ -43,6 +44,8 @@ import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
 import ru.dzhaparidze.mykct.ui.dotGrid
+import ru.dzhaparidze.mykct.ui.hairline
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.ui.theme.VioletIndigo
 import ru.dzhaparidze.mykct.ui.theme.VioletMagenta
 import java.time.LocalDate
@@ -208,15 +211,14 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 
                 // Многодневный вид — это те же таймлайны подряд: у каждого дня своя
                 // сетка времени, поэтому склеивать их в один нельзя.
-                else -> state.visible.forEach { day ->
+                else -> state.visible.forEachIndexed { index, day ->
                     if (state.visible.size > 1) {
-                        DayHeader(date = day.date, lessons = day.lessons)
+                        // Пустой день внутри диапазона молча пропускать нельзя: иначе
+                        // «3 дня» без пар в среду выглядят как потерянный день — поэтому
+                        // полоса дня рисуется всегда, а «Пар нет» пишется в ней самой.
+                        DayHeader(date = day.date, lessons = day.lessons, first = index == 0)
                     }
-                    if (day.lessons.isEmpty()) {
-                        // Пустой день внутри диапазона молча пропускать нельзя:
-                        // иначе «3 дня» без пар в среду выглядят как потерянный день.
-                        if (state.visible.size > 1) EmptyDay()
-                    } else {
+                    if (day.lessons.isNotEmpty()) {
                         DayTimeline(
                             lessons = day.lessons,
                             now = if (day.date == LocalDate.now()) now else null,
@@ -315,36 +317,49 @@ private fun Hero(
     }
 }
 
-/** Заголовок дня в многодневном виде: «Понедельник, 17 августа» и число пар. */
+/**
+ * Граница между днями в многодневном виде. Мелкой подписи не хватало — таймлайны
+ * сливались в один, — поэтому день открывает полоса во всю ширину: у сегодняшнего
+ * она залита акцентным градиентом, у остальных лежит на поверхности с волосяной кромкой.
+ * Часы дня в подпись не пишем: на узком экране они выдавливают дату, а в таймлайне
+ * под полосой они и так видны.
+ */
 @Composable
-private fun DayHeader(date: LocalDate, lessons: List<Lesson>) {
-    Column(
+private fun DayHeader(date: LocalDate, lessons: List<Lesson>, first: Boolean) {
+    val today = date == LocalDate.now()
+    val colors = MaterialTheme.colorScheme
+
+    if (!first) Spacer(Modifier.height(28.dp))
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(top = 8.dp, bottom = 12.dp),
+            .padding(horizontal = 16.dp)
+            .background(
+                if (today) AccentGradient else SolidColor(colors.surface),
+                CircleShape,
+            )
+            .hairline(CircleShape)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = date.dayTitle(),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = if (date == LocalDate.now()) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onBackground
-            },
+            color = if (today) Color.White else colors.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
         )
+        Spacer(Modifier.width(12.dp))
         Text(
-            text = if (lessons.isEmpty()) "Пар нет" else lessonsCount(lessons.size) + lessons.dayHours(),
+            text = if (lessons.isEmpty()) "Пар нет" else lessonsCount(lessons.size),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (today) Color.White.copy(alpha = 0.8f) else colors.onSurfaceVariant,
+            maxLines = 1,
         )
     }
-}
-
-@Composable
-private fun EmptyDay() {
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(14.dp))
 }
 
 /** «17 – 21 августа» для показанного диапазона — тем же правилом, что и неделя в шапке. */

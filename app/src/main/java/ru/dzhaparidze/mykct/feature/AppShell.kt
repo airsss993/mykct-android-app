@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
+import ru.dzhaparidze.mykct.feature.auth.LoginScreen
+import ru.dzhaparidze.mykct.feature.home.HomeScreen
 import ru.dzhaparidze.mykct.feature.schedule.ScheduleScreen
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
@@ -70,6 +72,9 @@ fun navBarInset(): Dp = 108.dp + WindowInsets.navigationBars.asPaddingValues().c
 fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
     // Старт на расписании: «Главная» пока пустая, открывать приложение на заглушке незачем.
     var screen by rememberSaveable { mutableStateOf(Screen.SCHEDULE) }
+    // Форма входа живёт здесь, а не на экранах: навбар плавает поверх контента,
+    // и открытая изнутри экрана форма оказывалась под ним.
+    var loginOpen by rememberSaveable { mutableStateOf(false) }
 
     // Подложка под навбар: контент экрана пишется в слой, навбар рисует его размытым
     // у себя под пластиной. Настоящего backdrop-blur в Compose нет, это его ручная сборка.
@@ -86,12 +91,13 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
         ) {
         when (screen) {
             Screen.SCHEDULE -> ScheduleScreen()
-            Screen.HOME -> ComingSoon(
-                title = "Главная",
-                text = "Здесь появятся успеваемость и посещаемость.\nЖдём авторизацию — без неё бэкенд их не отдаёт.",
-            )
+            Screen.HOME -> HomeScreen(onLogin = { loginOpen = true })
 
-            Screen.SETTINGS -> SettingsScreen(themeMode = themeMode, onThemeChange = onThemeChange)
+            Screen.SETTINGS -> SettingsScreen(
+                themeMode = themeMode,
+                onThemeChange = onThemeChange,
+                onLogin = { loginOpen = true },
+            )
         }
         }
 
@@ -101,6 +107,10 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             onSelect = { screen = it },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+
+        if (loginOpen) {
+            LoginScreen(onBack = { loginOpen = false }, onSuccess = { loginOpen = false })
+        }
     }
 }
 
@@ -248,32 +258,5 @@ private fun NavItem(
                 modifier = Modifier.size(24.dp),
             )
         }
-    }
-}
-
-/** Экран, которого пока нет: честно пишем, чего ждать, вместо пустоты. */
-@Composable
-private fun ComingSoon(title: String, text: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .dotGrid()
-            .padding(horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp),
-        )
     }
 }

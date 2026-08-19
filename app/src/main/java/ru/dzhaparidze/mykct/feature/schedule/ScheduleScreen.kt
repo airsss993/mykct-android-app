@@ -87,12 +87,13 @@ private fun lessonsCount(count: Int): String {
 }
 
 /**
+ * Общий фон экранов приложения.
  * Свет в фоне: три источника по кромкам — акцент сверху, пурпур в правом верхнем
  * углу и индиго у левого нижнего, под капсулой навбара. Больше цветов и шире
  * радиусы превращают фон в грязное пятно, поэтому радиусы держим меньше ширины
  * экрана. Верхние считаются от ширины, нижний привязан к нижней кромке.
  */
-private fun DrawScope.drawAmbientGlow(accent: Color, darkTheme: Boolean) {
+internal fun DrawScope.drawAmbientGlow(accent: Color, darkTheme: Boolean) {
     val w = size.width
     val h = size.height
 
@@ -176,9 +177,9 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             when {
                 state.isLoading -> Placeholder { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
 
-                state.error -> Placeholder {
+                state.error != null -> Placeholder {
                     Text(
-                        text = "Не удалось загрузить расписание",
+                        text = state.error ?: "Не удалось загрузить расписание",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -272,7 +273,7 @@ private fun Hero(
             // Во время загрузки «Пар нет» — враньё, пока данных ещё нет.
             text = when {
                 state.isLoading -> "Загружаем…"
-                state.error -> "Нет данных"
+                state.error != null -> "Нет данных"
                 state.lessons.isEmpty() -> "Пар нет"
                 else -> lessonsCount(state.lessons.size)
             },

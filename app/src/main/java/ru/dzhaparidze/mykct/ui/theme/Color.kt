@@ -22,7 +22,9 @@ val VioletSoft = Color(0xFFE8E5FF)    // светлая заливка под а
  */
 val AccentGradient = Brush.linearGradient(listOf(VioletTint, VioletLight, Violet, VioletDeep))
 
-val Green = Color(0xFF22C55E)         // кольцо прогресса, «в плюсе»
+val Green = Color(0xFF22C55E)         // кольцо прогресса, «в плюсе», «был на паре»
+val Warning = Color(0xFFF5A623)       // пропуск по уважительной
+val Danger = Color(0xFFE0575B)        // ошибка, пропуск без уважительной
 
 // Светлая тема
 val LightBackground = Color(0xFFF4F4F8)

@@ -50,7 +50,7 @@ fun AuthScreen(onEnter: () -> Unit) {
     var login by remember { mutableStateOf(false) }
 
     if (login) {
-        LoginScreen(onBack = { login = false }, onSkip = onEnter)
+        LoginScreen(onBack = { login = false }, onSuccess = onEnter, onSkip = onEnter)
     } else {
         Welcome(onLogin = { login = true }, onEnter = onEnter)
     }

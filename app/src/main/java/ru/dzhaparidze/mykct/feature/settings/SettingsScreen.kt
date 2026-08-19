@@ -13,6 +13,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -35,7 +40,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.R
+import ru.dzhaparidze.mykct.data.SelectionStore
+import ru.dzhaparidze.mykct.data.auth.AuthService
+import ru.dzhaparidze.mykct.data.selectionOf
+import ru.dzhaparidze.mykct.ui.theme.Danger
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.dotGrid
@@ -48,7 +59,7 @@ import ru.dzhaparidze.mykct.feature.navBarInset
  * экранами с кнопкой «назад», но содержимого на них по горсти — вложенность не нужна.
  */
 @Composable
-fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
+fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, onLogin: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -63,6 +74,8 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(start = 20.dp, top = 24.dp, bottom = 8.dp),
         )
+
+        AccountSection(onLogin = onLogin)
 
         SectionTitle("Тема")
         Card {
@@ -159,6 +172,75 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 }
 
 /**
+ * Аккаунт: кто вошёл, перенос группы из профиля в расписание и выход.
+ * Без входа — одна строка «Войти», она же открывает форму поверх настроек.
+ */
+@Composable
+private fun AccountSection(onLogin: () -> Unit) {
+    val context = LocalContext.current
+    val auth = remember { AuthService.get(context) }
+    val session by auth.state.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    var applied by remember { mutableStateOf(false) }
+
+    SectionTitle("Аккаунт")
+    Card {
+        val user = session.user
+        if (user == null) {
+            SettingsRow(
+                icon = R.drawable.ic_person,
+                text = "Войти",
+                modifier = Modifier.clickable(onClick = onLogin),
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            SettingsRow(icon = R.drawable.ic_person, text = user.username) {
+                Text(
+                    text = user.academicGroup.orEmpty(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            val selection = remember(user) { selectionOf(user) }
+            if (selection != null) {
+                Divider()
+                SettingsRow(
+                    icon = R.drawable.ic_calendar,
+                    text = "Использовать мою группу",
+                    modifier = Modifier.clickable {
+                        SelectionStore(context).save(selection)
+                        applied = true
+                    },
+                ) {
+                    if (applied) {
+                        Icon(
+                            painterResource(R.drawable.ic_check),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
+                }
+            }
+
+            Divider()
+            SettingsRow(
+                icon = R.drawable.ic_logout,
+                text = "Выйти",
+                modifier = Modifier.clickable { scope.launch { auth.signOut() } },
+                tint = Danger,
+            ) {}
+        }
+    }
+}
+
+/**
  * Разделитель внутри карточки — с отступом под иконку, как в референсе.
  * Цвет свой: штатный outlineVariant в тёмной теме совпадает с фоном карточки
  * (оба DarkGreyFill), и линии не видно вовсе.
@@ -175,8 +257,10 @@ private fun SettingsRow(
     @DrawableRes icon: Int,
     text: String,
     modifier: Modifier = Modifier,
+    tint: Color = Color.Unspecified,
     trailing: @Composable () -> Unit,
 ) {
+    val content = if (tint == Color.Unspecified) MaterialTheme.colorScheme.onSurface else tint
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -186,13 +270,13 @@ private fun SettingsRow(
         Icon(
             painterResource(icon),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
+            tint = content,
             modifier = Modifier.size(22.dp),
         )
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = content,
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 16.dp),

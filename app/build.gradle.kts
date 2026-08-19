@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 val localProperties = Properties().apply {
@@ -32,6 +33,13 @@ android {
         versionName = "2.0.0"
 
         buildConfigField("String", "API_BASE_URL", "\"${getEnvVariable("API_BASE_URL", "http://localhost:8500")}\"")
+        // Авторизация живёт отдельным сервисом (в iOS это BaseAuthURL). Домен тот же,
+        // пока не сказано иное — переопределяется AUTH_BASE_URL в local.properties.
+        buildConfigField(
+            "String",
+            "AUTH_BASE_URL",
+            "\"${getEnvVariable("AUTH_BASE_URL", getEnvVariable("API_BASE_URL", "http://localhost:8500"))}\"",
+        )
     }
 
     signingConfigs {
@@ -93,9 +101,16 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.kotlinx.serialization.json)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.ktor.client.mock)
 }

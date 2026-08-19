@@ -20,7 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,25 +30,33 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.R
+import ru.dzhaparidze.mykct.data.auth.AuthService
 import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.theme.DarkBackground
+import ru.dzhaparidze.mykct.ui.theme.Danger
 import ru.dzhaparidze.mykct.ui.theme.Violet
 import ru.dzhaparidze.mykct.ui.theme.VioletLight
 
 /**
- * Форма входа. Отправлять пока некуда: токен выдаёт внешний auth-сервис колледжа,
- * его контракта у нас нет — кнопка проверяет заполненность и показывает, чего ждём.
- * Когда контракт появится, сюда придёт вызов репозитория, а вёрстка останется.
+ * Форма входа: логин и пароль уходят в auth-сервис колледжа через [AuthService].
+ * [onSkip] пустой на входе из «Главной» — там кнопка «без входа» уже не нужна,
+ * пользователь и так внутри приложения.
  *
  * Экран всегда тёмный, как и [AuthScreen], независимо от темы приложения.
  */
 @Composable
-fun LoginScreen(onBack: () -> Unit, onSkip: () -> Unit) {
+fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)? = null) {
+    val context = LocalContext.current
+    val auth = remember { AuthService.get(context) }
+    val scope = rememberCoroutineScope()
+
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordShown by remember { mutableStateOf(false) }
-    var notice by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -91,7 +101,7 @@ fun LoginScreen(onBack: () -> Unit, onSkip: () -> Unit) {
 
         Field(
             value = login,
-            onValueChange = { login = it; notice = false },
+            onValueChange = { login = it; error = null },
             label = "Логин",
             keyboardType = KeyboardType.Text,
             imeAction = ImeAction.Next,
@@ -101,7 +111,7 @@ fun LoginScreen(onBack: () -> Unit, onSkip: () -> Unit) {
 
         Field(
             value = password,
-            onValueChange = { password = it; notice = false },
+            onValueChange = { password = it; error = null },
             label = "Пароль",
             keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Done,
@@ -122,38 +132,51 @@ fun LoginScreen(onBack: () -> Unit, onSkip: () -> Unit) {
         )
 
         ShinyPill(
-            text = "Войти",
-            onClick = { notice = true },
-            enabled = login.isNotBlank() && password.isNotBlank(),
+            text = if (busy) "Входим…" else "Войти",
+            onClick = {
+                busy = true
+                error = null
+                scope.launch {
+                    try {
+                        auth.signIn(login.trim(), password)
+                        onSuccess()
+                    } catch (e: Exception) {
+                        error = e.message ?: "Не удалось войти"
+                    } finally {
+                        busy = false
+                    }
+                }
+            },
+            enabled = login.isNotBlank() && password.isNotBlank() && !busy,
             modifier = Modifier.padding(top = 24.dp),
         )
 
         Text(
-            text = if (notice) {
-                "Вход появится вместе с сервисом авторизации колледжа — его API нам ещё не отдали."
-            } else {
-                "Вход нужен для посещаемости и баллов. Расписание работает и без него."
-            },
+            text = error ?: "Вход нужен для посещаемости и баллов. Расписание работает и без него.",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = if (notice) 0.7f else 0.4f),
+            color = if (error != null) Danger else Color.White.copy(alpha = 0.4f),
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),
         )
 
-        Text(
-            text = "Продолжить без входа",
-            style = MaterialTheme.typography.titleSmall,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(top = 8.dp, bottom = 24.dp)
-                .fillMaxWidth()
-                .clip(CircleShape)
-                .clickable(onClick = onSkip)
-                .padding(vertical = 12.dp),
-        )
+        if (onSkip != null) {
+            Text(
+                text = "Продолжить без входа",
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(top = 8.dp, bottom = 24.dp)
+                    .fillMaxWidth()
+                    .clip(CircleShape)
+                    .clickable(onClick = onSkip)
+                    .padding(vertical = 12.dp),
+            )
+        } else {
+            Spacer(Modifier.height(24.dp))
+        }
     }
 }
 

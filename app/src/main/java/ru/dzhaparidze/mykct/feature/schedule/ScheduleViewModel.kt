@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.data.Lesson
-import ru.dzhaparidze.mykct.data.MockScheduleRepository
+import ru.dzhaparidze.mykct.data.ApiScheduleRepository
 import ru.dzhaparidze.mykct.data.ScheduleRepository
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.data.SelectionStore
@@ -30,13 +30,14 @@ data class ScheduleUiState(
     val days: List<DayCell> = emptyList(),
     val lessons: List<Lesson> = emptyList(),
     val isLoading: Boolean = true,
-    val error: Boolean = false,
+    /** Текст ошибки от сети; null — всё в порядке. */
+    val error: String? = null,
 )
 
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
 
     private val store = SelectionStore(application)
-    private val repository: ScheduleRepository = MockScheduleRepository()
+    private val repository: ScheduleRepository = ApiScheduleRepository()
 
     private val _state = MutableStateFlow(
         ScheduleUiState(weekStart = mondayOf(today()), selectedDate = today(), selection = store.load()),
@@ -47,6 +48,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     init {
         loadWeek()
+        // Выбор могли поменять в настройках («использовать мою группу») — подхватываем
+        viewModelScope.launch {
+            SelectionStore.changed.collect { selection ->
+                if (selection == _state.value.selection) return@collect
+                _state.update { it.copy(selection = selection) }
+                loadWeek()
+            }
+        }
     }
 
     fun selectDate(date: LocalDate) {
@@ -73,8 +82,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun updateSelection(selection: Selection) {
         if (selection == _state.value.selection) return
-        store.save(selection)
         _state.update { it.copy(selection = selection) }
+        store.save(selection)
         loadWeek()
     }
 
@@ -82,13 +91,20 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     private fun loadWeek() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = false) }
+            _state.update { it.copy(isLoading = true, error = null) }
             try {
                 weekLessons = repository.weekSchedule(_state.value.weekStart, _state.value.selection)
                 applyWeek()
             } catch (e: Exception) {
                 weekLessons = emptyList()
-                _state.update { it.copy(isLoading = false, error = true, days = emptyList(), lessons = emptyList()) }
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Не удалось загрузить расписание",
+                        days = emptyList(),
+                        lessons = emptyList(),
+                    )
+                }
             }
         }
     }
@@ -110,7 +126,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val lessons = byDate[state.selectedDate].orEmpty().sortedBy { it.start }
 
         _state.update {
-            it.copy(days = days, lessons = lessons, isLoading = false, error = false)
+            it.copy(days = days, lessons = lessons, isLoading = false, error = null)
         }
     }
 

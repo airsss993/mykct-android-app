@@ -169,8 +169,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val today = today()
         val byDate = weekLessons.groupBy { it.date }
 
-        val dates = (0..6).map { state.weekStart.plusDays(it.toLong()) }
-            .filter { !state.settings.skipWeekends || it.dayOfWeek.value <= 5 }
+        val dates = weekDays(state.weekStart, state.settings)
 
         val days = dates.map { date ->
             DayCell(
@@ -180,16 +179,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             )
         }
 
-        // Диапазон никогда не вылезает за неделю: дальше данных всё равно нет, их
-        // грузит loadWeek() целиком неделями. Выходные уже выброшены из dates, так что
-        // «3 дня» с включённой настройкой — это три рабочих дня, как в iOS.
-        val visibleDates = when (state.settings.view) {
-            ScheduleView.WEEK -> dates
-            else -> dates.dropWhile { it < state.selectedDate }.take(state.settings.view.days)
-        // выбран выходной, а они скрыты — показываем хвост недели, а не пустоту
-        }.ifEmpty { dates.takeLast(state.settings.view.days) }
-
-        val visible = visibleDates.map { date ->
+        val visible = visibleDays(dates, state.selectedDate, state.settings).map { date ->
             DaySchedule(date = date, lessons = byDate[date].orEmpty().sortedBy { it.start })
         }
 
@@ -203,3 +193,23 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     private fun mondayOf(date: LocalDate): LocalDate =
         date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 }
+
+/** Дни полоски недели: пн–вс или пн–пт, если выходные скрыты. */
+internal fun weekDays(weekStart: LocalDate, settings: ScheduleSettings): List<LocalDate> =
+    (0..6).map { weekStart.plusDays(it.toLong()) }
+        .filter { !settings.skipWeekends || it.dayOfWeek.value <= 5 }
+
+/**
+ * Какие дни рисует таймлайн. Диапазон никогда не вылезает за неделю: дальше данных
+ * всё равно нет, их грузит `loadWeek()` целиком неделями. Выходные выброшены ещё
+ * в [weekDays], так что «3 дня» со скрытыми выходными — это три рабочих дня, как в iOS.
+ */
+internal fun visibleDays(
+    days: List<LocalDate>,
+    selected: LocalDate,
+    settings: ScheduleSettings,
+): List<LocalDate> = when (settings.view) {
+    ScheduleView.WEEK -> days
+    else -> days.dropWhile { it < selected }.take(settings.view.days)
+    // выбран выходной, а они скрыты — показываем хвост недели, а не пустоту
+}.ifEmpty { days.takeLast(settings.view.days) }

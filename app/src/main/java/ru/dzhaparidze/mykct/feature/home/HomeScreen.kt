@@ -31,6 +31,7 @@ import ru.dzhaparidze.mykct.data.api.AttendanceRecord
 import ru.dzhaparidze.mykct.data.api.Subject
 import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.drawAmbientGlow
+import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.hairline
@@ -104,12 +105,7 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp),
         ) {
-            Text(
-                text = "Главная",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 12.dp),
-            )
+            ScreenTitle(text = "Главная")
 
             when {
                 state.isBootstrapping -> Box(

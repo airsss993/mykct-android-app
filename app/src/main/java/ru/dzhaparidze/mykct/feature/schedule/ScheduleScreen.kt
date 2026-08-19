@@ -47,6 +47,7 @@ import ru.dzhaparidze.mykct.feature.schedule.components.DayTimeline
 import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
+import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
@@ -291,15 +292,11 @@ private fun Hero(
             .fillMaxWidth()
             .statusBarsPadding()
             .padding(horizontal = 20.dp)
-            .padding(top = 12.dp, bottom = 28.dp),
+            // Верхний отступ живёт в ScreenTitle — здесь он был бы вторым, и заголовок
+            // расписания висел бы ниже, чем на «Главной» и в настройках.
+            .padding(bottom = 28.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "Расписание",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f),
-            )
+        ScreenTitle(text = "Расписание") {
             // Огонёк появляется только у вошедшего: без токена стрика просто нет.
             if (streak != null) {
                 StreakFlame(onClick = onOpenStreak)

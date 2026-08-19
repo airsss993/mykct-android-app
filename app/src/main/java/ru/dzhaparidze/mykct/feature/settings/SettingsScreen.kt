@@ -55,6 +55,7 @@ import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
+import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.feature.navBarInset
 
@@ -72,12 +73,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, onL
             .verticalScroll(rememberScrollState())
             .statusBarsPadding(),
     ) {
-        Text(
-            text = "Настройки",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 20.dp, top = 12.dp),
-        )
+        ScreenTitle(text = "Настройки", modifier = Modifier.padding(start = 20.dp))
 
         AccountSection(onLogin = onLogin)
 

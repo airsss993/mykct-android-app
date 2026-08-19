@@ -136,7 +136,9 @@ private fun Flame(diameter: Dp, modifier: Modifier = Modifier) {
 fun StreakFlame(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
     Flame(
-        diameter = 52.dp,
+        // Ровно по высоте строки заголовка (как пилюля группы): выше — и заголовок
+        // расписания съезжает вниз относительно других экранов.
+        diameter = 48.dp,
         modifier = modifier.clickable(
             interactionSource = interaction,
             indication = null,

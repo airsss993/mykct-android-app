@@ -1,8 +1,14 @@
 package ru.dzhaparidze.mykct.ui
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
@@ -56,3 +62,30 @@ fun Modifier.dotGrid(step: Dp = 24.dp, dot: Dp = 1.dp): Modifier {
 @Composable
 fun Modifier.hairline(shape: Shape): Modifier =
     border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), shape)
+
+/**
+ * Заголовок экрана — один на все три. Высота строки задана явно: в расписании рядом
+ * с заголовком стоит пилюля группы (48dp), она растягивала строку, и текст там висел
+ * ниже, чем на «Главной» и в настройках.
+ */
+@Composable
+fun ScreenTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    trailing: @Composable RowScope.() -> Unit = {},
+) {
+    Row(
+        modifier = modifier
+            .padding(top = 12.dp)
+            .heightIn(min = 48.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f),
+        )
+        trailing()
+    }
+}

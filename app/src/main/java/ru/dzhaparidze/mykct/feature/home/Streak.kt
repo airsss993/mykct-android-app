@@ -74,20 +74,32 @@ private fun Flame(diameter: Dp, modifier: Modifier = Modifier) {
     )
     // Прозрачность анимируем цветом, а не alpha поверх размытия — см. DESIGN.md.
     val glow by infinite.animateFloat(
-        initialValue = 0.18f,
-        targetValue = 0.5f,
+        initialValue = 0.22f,
+        targetValue = 0.6f,
         animationSpec = infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "glow",
+    )
+    // Свечение ещё и дышит в размере, но не выходит за половину бокса: за ней его
+    // срежет граница компонента, и вместо ореола получится круг с обрубленным краем.
+    val spread by infinite.animateFloat(
+        initialValue = 0.38f,
+        targetValue = 0.5f,
+        animationSpec = infiniteRepeatable(tween(2100, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "spread",
     )
 
     Box(
         modifier = modifier
             .size(diameter)
             .drawBehind {
-                val radius = size.minDimension * 0.62f
+                val radius = size.minDimension * spread
                 drawCircle(
+                    // Мягкий спад: на двух остановках у ореола видна кромка.
                     brush = Brush.radialGradient(
-                        colors = listOf(VioletLight.copy(alpha = glow), Color.Transparent),
+                        0f to VioletLight.copy(alpha = glow),
+                        0.4f to VioletLight.copy(alpha = glow * 0.5f),
+                        0.75f to VioletLight.copy(alpha = glow * 0.16f),
+                        1f to Color.Transparent,
                         radius = radius,
                     ),
                     radius = radius,
@@ -99,7 +111,7 @@ private fun Flame(diameter: Dp, modifier: Modifier = Modifier) {
             painter = painterResource(R.drawable.ic_fire),
             contentDescription = null,
             modifier = Modifier
-                .size(diameter * 0.62f)
+                .size(diameter * 0.5f)
                 // SrcIn красит непрозрачные пиксели иконки градиентом, но только
                 // в своём слое — без offscreen он затрёт всё, что нарисовано ниже.
                 .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }

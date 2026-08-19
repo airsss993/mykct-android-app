@@ -84,7 +84,7 @@ private fun DayItem(
     ) {
         Text(
             text = day.date.dayOfWeek.getDisplayName(TextStyle.SHORT, RU).replaceFirstChar { it.uppercase() },
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = if (day.isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
@@ -108,7 +108,7 @@ private fun DayItem(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = day.date.dayOfMonth.toString(),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.SemiBold,
                     color = contentColor,
                 )
@@ -121,17 +121,17 @@ private fun DayItem(
 @Composable
 private fun LessonDots(count: Int, color: androidx.compose.ui.graphics.Color) {
     if (count == 0) {
-        Spacer(Modifier.height(7.dp))
+        Spacer(Modifier.height(9.dp))
         return
     }
     Row(
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        modifier = Modifier.padding(top = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        modifier = Modifier.padding(top = 3.dp),
     ) {
         repeat(count.coerceAtMost(4)) {
             Box(
                 modifier = Modifier
-                    .size(3.dp)
+                    .size(4.dp)
                     .clip(CircleShape)
                     .background(color.copy(alpha = 0.7f)),
             )

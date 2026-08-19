@@ -386,7 +386,7 @@ private fun PersonCard(
                     .align(Alignment.BottomEnd)
                     .padding(end = if (wideShot) 4.dp else 20.dp)
                     .then(if (wideShot) Modifier.fillMaxWidth(0.56f) else Modifier.fillMaxHeight())
-                    .fadeBottom(FADE_HEIGHT),
+                    .fadeEdges(FADE_HEIGHT),
             )
         }
     }
@@ -445,26 +445,37 @@ private fun BoxScope.Tint(solid: Boolean) {
 }
 
 /**
- * Растушёвка нижней кромки: снимок обрывается ровной линией там, где кончается
- * кадр (колёса, тень), и это читается как срез. Гасим альфу к низу — фото
- * растворяется в размытом фоне карточки.
+ * Растушёвка нижней и правой кромок: снимок обрывается ровной линией там, где
+ * кончается кадр (колёса снизу, нос машины справа), и это читается как срез.
+ * Гасим альфу к этим краям — фото растворяется в размытом фоне карточки.
  *
  * Нужен offscreen-слой: без него `BlendMode.DstIn` применится ко всему, что уже
  * нарисовано под картинкой, и выест фон карточки.
  */
-private fun Modifier.fadeBottom(height: Dp): Modifier = this
+private fun Modifier.fadeEdges(fade: Dp): Modifier = this
     .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
     .drawWithContent {
         drawContent()
-        val fade = height.toPx()
+        val px = fade.toPx()
+
         drawRect(
             brush = Brush.verticalGradient(
                 colors = listOf(Color.Black, Color.Transparent),
-                startY = size.height - fade,
+                startY = size.height - px,
                 endY = size.height,
             ),
-            topLeft = Offset(0f, size.height - fade),
-            size = Size(size.width, fade),
+            topLeft = Offset(0f, size.height - px),
+            size = Size(size.width, px),
+            blendMode = BlendMode.DstIn,
+        )
+        drawRect(
+            brush = Brush.horizontalGradient(
+                colors = listOf(Color.Black, Color.Transparent),
+                startX = size.width - px,
+                endX = size.width,
+            ),
+            topLeft = Offset(size.width - px, 0f),
+            size = Size(px, size.height),
             blendMode = BlendMode.DstIn,
         )
     }

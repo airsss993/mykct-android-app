@@ -7,7 +7,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,20 +20,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -54,18 +51,67 @@ import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.math.PI
+import kotlin.math.sin
 
 /**
- * Огонёк переливается фирменными цветами: одна и та же линейная заливка ездит по
- * иконке, поэтому блик бежит снизу вверх. Отдельного оранжевого, как в референсе,
- * не заводим — второго акцентного цвета в палитре нет (см. DESIGN.md).
+ * Огонёк переливается фирменными цветами: линейная заливка ездит по пламени, поэтому
+ * блик бежит снизу вверх. Отдельного оранжевого, как в референсе, не заводим —
+ * второго акцентного цвета в палитре нет (см. DESIGN.md).
  */
 private val FLAME = listOf(VioletTint, VioletLight, Violet, VioletDeep, Violet, VioletLight, VioletTint)
 
-/** Живой огонёк: блик бежит по градиенту, свечение под ним дышит. */
+/**
+ * Пламя рисуем кривыми, а не берём готовую иконку: контрольные точки боков и кончика
+ * ходят по синусу с разными фазами, и лепестки извиваются. У vector drawable форма
+ * жёсткая — его можно только целиком крутить и тянуть, а это читается как дрожь.
+ */
+private fun flamePath(size: Float, left: Float, top: Float, phase: Float): Path {
+    fun x(v: Float) = left + v * size
+    fun y(v: Float) = top + v * size
+    val a1 = 0.035f * sin(phase)
+    val a2 = 0.045f * sin(phase * 1.3f + 1.1f)
+    val a3 = 0.035f * sin(phase + 2.2f)
+    return Path().apply {
+        moveTo(x(0.50f), y(1.00f))
+        // Касательные у основания горизонтальные, иначе на стыке кривых торчит носик.
+        cubicTo(x(0.24f), y(1.00f), x(0.10f + a1), y(0.84f), x(0.18f - a1), y(0.58f))
+        cubicTo(x(0.26f), y(0.42f), x(0.42f), y(0.36f), x(0.40f), y(0.24f))
+        cubicTo(x(0.39f + a2), y(0.15f), x(0.35f + a2), y(0.08f), x(0.40f + a2), y(0.02f))
+        cubicTo(x(0.60f), y(0.15f), x(0.70f), y(0.30f), x(0.82f), y(0.44f))
+        cubicTo(x(0.96f + a3), y(0.64f), x(0.78f), y(1.00f), x(0.50f), y(1.00f))
+        close()
+    }
+}
+
+/** Внутренняя капля: качается слабее внешнего лепестка, иначе пламя «плывёт» целиком. */
+private fun corePath(size: Float, left: Float, top: Float, phase: Float): Path {
+    fun x(v: Float) = left + v * size
+    fun y(v: Float) = top + v * size
+    val b1 = 0.02f * sin(phase * 1.6f)
+    val b2 = 0.02f * sin(phase * 1.6f + 2.6f)
+    return Path().apply {
+        moveTo(x(0.50f), y(0.44f))
+        cubicTo(x(0.68f + b1), y(0.58f), x(0.72f), y(0.68f), x(0.71f), y(0.79f))
+        cubicTo(x(0.69f), y(0.92f), x(0.61f), y(0.99f), x(0.50f), y(0.99f))
+        cubicTo(x(0.39f), y(0.99f), x(0.31f), y(0.92f), x(0.29f), y(0.79f))
+        cubicTo(x(0.28f), y(0.68f), x(0.32f + b2), y(0.58f), x(0.50f), y(0.44f))
+        close()
+    }
+}
+
+/** Живой огонёк: лепестки извиваются, блик бежит по градиенту, свечение под ним дышит. */
 @Composable
 private fun Flame(diameter: Dp, modifier: Modifier = Modifier) {
     val infinite = rememberInfiniteTransition(label = "streak")
+    val phase by infinite.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * PI).toFloat(),
+        // Полный оборот по синусу, поэтому Restart, а не Reverse: на развороте пламя
+        // видимо замирает.
+        animationSpec = infiniteRepeatable(tween(2600, easing = LinearEasing), RepeatMode.Restart),
+        label = "phase",
+    )
     val shift by infinite.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -87,46 +133,34 @@ private fun Flame(diameter: Dp, modifier: Modifier = Modifier) {
         animationSpec = infiniteRepeatable(tween(2100, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "spread",
     )
+    val core = VioletTint
 
-    Box(
-        modifier = modifier
-            .size(diameter)
-            .drawBehind {
-                val radius = size.minDimension * spread
-                drawCircle(
-                    // Мягкий спад: на двух остановках у ореола видна кромка.
-                    brush = Brush.radialGradient(
-                        0f to VioletLight.copy(alpha = glow),
-                        0.4f to VioletLight.copy(alpha = glow * 0.5f),
-                        0.75f to VioletLight.copy(alpha = glow * 0.16f),
-                        1f to Color.Transparent,
-                        radius = radius,
-                    ),
-                    radius = radius,
-                )
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.ic_fire),
-            contentDescription = null,
-            modifier = Modifier
-                .size(diameter * 0.5f)
-                // SrcIn красит непрозрачные пиксели иконки градиентом, но только
-                // в своём слое — без offscreen он затрёт всё, что нарисовано ниже.
-                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                .drawWithContent {
-                    drawContent()
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colors = FLAME,
-                            start = Offset(0f, size.height * (shift - 1f)),
-                            end = Offset(0f, size.height * (shift + 0.6f)),
-                        ),
-                        blendMode = BlendMode.SrcIn,
-                    )
-                },
+    Canvas(modifier = modifier.size(diameter)) {
+        val radius = size.minDimension * spread
+        drawCircle(
+            // Мягкий спад: на двух остановках у ореола видна кромка.
+            brush = Brush.radialGradient(
+                0f to VioletLight.copy(alpha = glow),
+                0.4f to VioletLight.copy(alpha = glow * 0.5f),
+                0.75f to VioletLight.copy(alpha = glow * 0.16f),
+                1f to Color.Transparent,
+                radius = radius,
+            ),
+            radius = radius,
         )
+
+        val side = size.minDimension * 0.62f
+        val left = (size.width - side) / 2f
+        val top = (size.height - side) / 2f
+        drawPath(
+            path = flamePath(side, left, top, phase),
+            brush = Brush.linearGradient(
+                colors = FLAME,
+                start = Offset(0f, top + side * (shift - 1f)),
+                end = Offset(0f, top + side * (shift + 0.6f)),
+            ),
+        )
+        drawPath(path = corePath(side, left, top, phase), color = core)
     }
 }
 
@@ -135,7 +169,7 @@ private fun Flame(diameter: Dp, modifier: Modifier = Modifier) {
 fun StreakFlame(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interaction = remember { MutableInteractionSource() }
     Flame(
-        diameter = 44.dp,
+        diameter = 52.dp,
         modifier = modifier.clickable(
             interactionSource = interaction,
             indication = null,
@@ -159,7 +193,12 @@ fun StreakSheet(
     weekStart: LocalDate,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    // Лист открывается сразу целиком: в половинном состоянии видно только огонёк,
+    // и его приходится дотягивать вручную.
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())

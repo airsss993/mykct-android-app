@@ -135,7 +135,6 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
         }
     }
     var groupSheetOpen by rememberSaveable { mutableStateOf(false) }
-    var lessonSheet by remember { mutableStateOf<Lesson?>(null) }
 
     val accent = MaterialTheme.colorScheme.primary
     val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -208,7 +207,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
                 else -> DayTimeline(
                     lessons = state.lessons,
                     now = if (state.selectedDate == LocalDate.now()) now else null,
-                    onLessonClick = { lessonSheet = it },
+                    onLessonClick = viewModel::openLesson,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
@@ -226,8 +225,8 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
         )
     }
 
-    lessonSheet?.let { lesson ->
-        LessonSheet(lesson = lesson, onDismiss = { lessonSheet = null })
+    state.details?.let { details ->
+        LessonSheet(details = details, onDismiss = viewModel::closeLesson)
     }
 }
 

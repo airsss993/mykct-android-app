@@ -8,6 +8,12 @@ import java.time.LocalTime
 interface ScheduleRepository {
     /** Расписание на неделю, начиная с понедельника [monday], для выбора [selection]. */
     suspend fun weekSchedule(monday: LocalDate, selection: Selection): List<Lesson>
+
+    /**
+     * Детали пары из GET /api/v1/classdetails плоским «ключ → значение»:
+     * схемы у портала нет (см. `flattenDetails`). Мок деталей не знает — их неоткуда взять.
+     */
+    suspend fun classDetails(id: String): List<Pair<String, String>> = emptyList()
 }
 
 /**

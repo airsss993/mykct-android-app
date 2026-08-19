@@ -23,6 +23,14 @@ data class DayCell(
     val isToday: Boolean,
 )
 
+/** Открытая пара и её детали с портала: грузятся по нажатию, а не вместе с неделей. */
+data class LessonDetails(
+    val lesson: Lesson,
+    val rows: List<Pair<String, String>> = emptyList(),
+    val isLoading: Boolean = true,
+    val error: String? = null,
+)
+
 data class ScheduleUiState(
     val weekStart: LocalDate,
     val selectedDate: LocalDate,
@@ -32,6 +40,8 @@ data class ScheduleUiState(
     val isLoading: Boolean = true,
     /** Текст ошибки от сети; null — всё в порядке. */
     val error: String? = null,
+    /** null — лист с парой закрыт. */
+    val details: LessonDetails? = null,
 )
 
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
@@ -88,6 +98,26 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun retry() = loadWeek()
+
+    fun openLesson(lesson: Lesson) {
+        _state.update { it.copy(details = LessonDetails(lesson)) }
+        viewModelScope.launch {
+            val result = runCatching { repository.classDetails(lesson.id) }
+            _state.update { state ->
+                // пока грузили, могли закрыть лист или открыть другую пару — ответ уже не нужен
+                if (state.details?.lesson?.id != lesson.id) return@update state
+                state.copy(
+                    details = state.details.copy(
+                        rows = result.getOrDefault(emptyList()),
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message,
+                    ),
+                )
+            }
+        }
+    }
+
+    fun closeLesson() = _state.update { it.copy(details = null) }
 
     private fun loadWeek() {
         viewModelScope.launch {

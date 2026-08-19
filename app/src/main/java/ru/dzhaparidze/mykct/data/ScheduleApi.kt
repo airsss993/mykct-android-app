@@ -4,6 +4,10 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import ru.dzhaparidze.mykct.BuildConfig
 import ru.dzhaparidze.mykct.data.net.Http
 import ru.dzhaparidze.mykct.data.net.apiCall
@@ -31,7 +35,45 @@ class ApiScheduleRepository(private val baseUrl: String = BuildConfig.API_BASE_U
         }.decode()
         response.events.mapNotNull { it.toLesson() }
     }
+
+    override suspend fun classDetails(id: String): List<Pair<String, String>> = apiCall {
+        val details: JsonObject = Http.client.get("$baseUrl/api/v1/classdetails") {
+            parameter("id", id)
+        }.decode()
+        details.flattenDetails()
+    }
 }
+
+/**
+ * Детали пары портал отдаёт произвольным объектом: бэкенд его не типизирует
+ * (`FetchClassDetails` возвращает `map[string]any` и льёт как есть), в iOS эндпоинт
+ * не используется, живого портала под рукой нет. Поэтому не выдуманная модель, а
+ * плоский список «ключ → значение»: листья берутся как есть, пустые значения и то,
+ * что уже нарисовано на карточке, выбрасываются.
+ *
+ * ponytail: подписи — сырые ключи портала. Появится настоящий ответ — сюда придёт
+ * словарь русских названий, разбор менять не придётся.
+ */
+internal fun JsonObject.flattenDetails(): List<Pair<String, String>> = buildList {
+    fun walk(element: JsonElement, key: String) {
+        when (element) {
+            is JsonObject -> element.forEach { (name, value) -> walk(value, name) }
+            is JsonArray -> element.forEach { walk(it, key) }
+            is JsonPrimitive -> {
+                val text = element.content.trim()
+                if (key !in SHOWN_KEYS && text.isNotBlank() && text != "null" && text != "—") {
+                    add(key to text)
+                }
+            }
+        }
+    }
+    walk(this@flattenDetails, "")
+}
+
+/** Ключи, которые уже видно в карточке пары: дублировать их в деталях незачем. */
+private val SHOWN_KEYS = setOf(
+    "ClID", "SClID", "Day", "start", "end", "title", "topic", "room", "group", "color", "type",
+)
 
 @Serializable
 private data class ScheduleResponse(val events: List<EventDto> = emptyList())

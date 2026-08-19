@@ -2,6 +2,8 @@ package ru.dzhaparidze.mykct.feature.schedule.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.FlowRowScope
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -22,8 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.data.Groups
-import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.Selection
+import ru.dzhaparidze.mykct.feature.schedule.LessonDetails
 import java.time.format.DateTimeFormatter
 
 private val SHEET_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
@@ -86,12 +89,14 @@ fun GroupSheet(
 }
 
 /**
- * Пара, которая делится на подгруппы. Раскрывать карточку прямо в таймлайне нельзя —
- * она позиционируется по времени и наедет на следующую, поэтому подробности здесь.
+ * Подробности пары. Раскрывать карточку прямо в таймлайне нельзя — она позиционируется
+ * по времени и наедет на следующую, поэтому всё здесь: подгруппы, если пара делится,
+ * и то, что отдал портал по GET /api/v1/classdetails.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LessonSheet(lesson: Lesson, onDismiss: () -> Unit) {
+fun LessonSheet(details: LessonDetails, onDismiss: () -> Unit) {
+    val lesson = details.lesson
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -111,6 +116,11 @@ fun LessonSheet(lesson: Lesson, onDismiss: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(top = 4.dp),
             )
+            // У пары без подгрупп тема и кабинет лежат в ней самой — иначе лист пустой
+            listOfNotNull(
+                lesson.topic.takeIf { it.isNotBlank() },
+                lesson.room.takeIf { it.isNotBlank() }?.let { "Кабинет $it" },
+            ).forEach { Caption(it) }
 
             lesson.subgroups.forEach { subgroup ->
                 HorizontalDivider(Modifier.padding(vertical = 16.dp))
@@ -129,18 +139,60 @@ fun LessonSheet(lesson: Lesson, onDismiss: () -> Unit) {
                 listOfNotNull(
                     subgroup.topic.takeIf { it.isNotBlank() },
                     subgroup.room.takeIf { it.isNotBlank() }?.let { "Кабинет $it" },
-                ).forEach {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                ).forEach { Caption(it) }
+            }
+
+            // Молча ничего не показываем, если портал ничего не дал: пустая секция
+            // «Подробности» на каждой паре выглядела бы поломкой.
+            if (details.isLoading || details.error != null || details.rows.isNotEmpty()) {
+                HorizontalDivider(Modifier.padding(vertical = 16.dp))
+                Text(
+                    text = "Подробности",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                when {
+                    details.isLoading -> CircularProgressIndicator(
+                        modifier = Modifier.padding(top = 12.dp).size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
                     )
+                    details.error != null -> Caption(details.error)
+                    // Ключи сырые: схемы у /classdetails нет, см. flattenDetails
+                    else -> details.rows.forEach { (key, value) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(
+                                text = key,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                text = value,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
                 }
             }
 
             Spacer(Modifier.height(8.dp))
         }
     }
+}
+
+@Composable
+private fun Caption(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class) // FlowRow: в старых версиях foundation ещё experimental

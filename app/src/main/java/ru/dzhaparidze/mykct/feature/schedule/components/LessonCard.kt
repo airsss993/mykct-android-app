@@ -77,8 +77,8 @@ fun LessonCard(
             .fillMaxWidth()
             // прошедшая пара просто гасится целиком — так же, как строки истории в референсе
             .alpha(if (isPast) 0.55f else 1f)
-            // жать не на что, если пара общая для всей группы
-            .clickable(enabled = lesson.subgroups.isNotEmpty(), onClick = onClick),
+            // жмётся любая пара: в листе не только подгруппы, но и детали с портала
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         color = accent,
         // Идущая пара обведена светлой кромкой — её видно, не читая время.

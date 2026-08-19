@@ -1,5 +1,7 @@
 package ru.dzhaparidze.mykct.data
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -21,6 +23,25 @@ class ApiMappingTest {
         assertEquals(LocalTime.of(15, 40), parseTime("2026-09-01 15:40"))
         assertNull(parseTime(""))
         assertNull(parseTime("—"))
+    }
+
+    @Test
+    fun `детали пары складываются в плоский список без того, что уже на карточке`() {
+        val json = """
+            {"ClID": "12345", "teacher": "Иванов И.И.", "title": "Математика",
+             "room": "", "note": null, "any": {"nested": true, "empty": ""},
+             "files": [{"name": "лекция.pdf"}, {"name": "задание.pdf"}]}
+        """.trimIndent()
+
+        assertEquals(
+            listOf(
+                "teacher" to "Иванов И.И.",
+                "nested" to "true",
+                "name" to "лекция.pdf",
+                "name" to "задание.pdf",
+            ),
+            Json.parseToJsonElement(json).jsonObject.flattenDetails(),
+        )
     }
 
     @Test

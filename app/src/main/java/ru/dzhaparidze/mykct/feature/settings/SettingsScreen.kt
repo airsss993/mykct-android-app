@@ -2,11 +2,6 @@ package ru.dzhaparidze.mykct.feature.settings
 
 import android.os.Build
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,19 +13,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
@@ -45,14 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
+import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
-import ru.dzhaparidze.mykct.ui.theme.DarkSurface
-import ru.dzhaparidze.mykct.ui.theme.Violet
-import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.feature.navBarInset
-import kotlin.math.hypot
 
 /**
  * Настройки версии 1.1.1 одним экраном: там тема и «О приложении» были отдельными
@@ -157,96 +146,17 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
 
         Spacer(Modifier.height(28.dp))
 
-        PillButton(
-            icon = R.drawable.ic_send,
+        val uriHandler = LocalUriHandler.current
+        ShinyPill(
             text = "Написать разработчику",
-            url = "https://t.me/airsss993",
+            icon = R.drawable.ic_send,
+            onClick = { uriHandler.openUri("https://t.me/airsss993") },
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
 
         Spacer(Modifier.height(navBarInset()))
     }
 }
-
-/**
- * Белая пилюля во всю ширину — главное действие экрана, как «Log Out» в референсе.
- * Цвет заливки не из палитры темы: кнопка одинаково белая в обеих темах, это её роль.
- *
- * По кромке бежит conic-подсветка из референса shiny-cta. Sweep-градиент в Compose
- * повернуть нечем, поэтому крутится не градиент, а холст: `rotate` вокруг центра
- * кнопки. Рисуем квадрат со стороной в диагональ — прямоугольник по размеру кнопки
- * при повороте открывал бы углы.
- */
-@Composable
-private fun PillButton(@DrawableRes icon: Int, text: String, url: String) {
-    val uriHandler = LocalUriHandler.current
-    val angle by rememberInfiniteTransition(label = "shine").animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing)),
-        label = "angle",
-    )
-
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        if (CAN_BLUR) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .padding(horizontal = 24.dp, vertical = 8.dp)
-                    .blur(24.dp, BlurredEdgeTreatment.Unbounded)
-                    .background(Violet.copy(alpha = 0.45f), CircleShape),
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(CircleShape)
-                .drawBehind {
-                    val side = hypot(size.width, size.height)
-                    rotate(angle) {
-                        drawRect(
-                            brush = Brush.sweepGradient(
-                                0.00f to Color.Transparent,
-                                0.06f to Violet,
-                                0.12f to VioletTint,
-                                0.18f to Violet,
-                                0.24f to Color.Transparent,
-                                1.00f to Color.Transparent,
-                                center = center,
-                            ),
-                            topLeft = Offset((size.width - side) / 2f, (size.height - side) / 2f),
-                            size = Size(side, side),
-                        )
-                    }
-                }
-                .padding(2.dp)
-                .clip(CircleShape)
-                // Тёмное стекло в наш цвет: near-black основа плюс фиолетовая плёнка
-                // сверху вниз. Цвета не из палитры темы — кнопка одинаковая в обеих,
-                // это её роль, как раньше была одинаково белой.
-                .background(DarkSurface)
-                .background(Brush.verticalGradient(listOf(Violet.copy(alpha = 0.32f), Violet.copy(alpha = 0.10f))))
-                .clickable { uriHandler.openUri(url) }
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                painterResource(icon),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(20.dp),
-            )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
-                modifier = Modifier.padding(start = 10.dp),
-            )
-        }
-    }
-}
-
 
 /**
  * Разделитель внутри карточки — с отступом под иконку, как в референсе.

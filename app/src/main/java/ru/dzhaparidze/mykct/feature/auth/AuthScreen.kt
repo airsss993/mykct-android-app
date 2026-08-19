@@ -39,16 +39,25 @@ import ru.dzhaparidze.mykct.ui.theme.VioletLight
 
 /**
  * Экран запуска: near-black фон, световая дуга сверху, лого, заголовок и кнопка.
- * Формы входа тут нет намеренно — в референсе её нет, да и слать логин пока некуда:
+ * Формы входа тут нет — она на отдельном экране [LoginScreen], сюда её класть незачем:
+ * в референсе приветствие без полей. Рабочий путь пока — «Продолжить без входа»:
  * токен выдаёт внешний auth-сервис колледжа, его контракта у нас ещё нет.
- * Рабочий путь — «Продолжить без входа».
  *
  * Экран всегда тёмный, независимо от темы приложения.
  */
 @Composable
 fun AuthScreen(onEnter: () -> Unit) {
-    var notice by remember { mutableStateOf(false) }
+    var login by remember { mutableStateOf(false) }
 
+    if (login) {
+        LoginScreen(onBack = { login = false }, onSkip = onEnter)
+    } else {
+        Welcome(onLogin = { login = true }, onEnter = onEnter)
+    }
+}
+
+@Composable
+private fun Welcome(onLogin: () -> Unit, onEnter: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -101,7 +110,7 @@ fun AuthScreen(onEnter: () -> Unit) {
 
         PrimaryButton(
             text = "Войти",
-            onClick = { notice = true },
+            onClick = onLogin,
             modifier = Modifier.padding(top = 32.dp),
         )
 
@@ -123,14 +132,9 @@ fun AuthScreen(onEnter: () -> Unit) {
         )
 
         Text(
-            text = if (notice) {
-                "Вход появится вместе с сервисом авторизации колледжа. " +
-                    "Расписание работает и без него."
-            } else {
-                "Расписание доступно без входа. Вход нужен для посещаемости и баллов."
-            },
+            text = "Расписание доступно без входа. Вход нужен для посещаемости и баллов.",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = if (notice) 0.7f else 0.4f),
+            color = Color.White.copy(alpha = 0.4f),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 16.dp, bottom = 32.dp),
         )
@@ -181,7 +185,7 @@ private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
  * прозрачный в середине и яркий у своей кромки. Тёплое кольцо снаружи,
  * фиолетовое чуть внутри, как холодное ядро в референсе.
  */
-private fun DrawScope.drawGlowArc() {
+internal fun DrawScope.drawGlowArc() {
     val w = size.width
     val h = size.height
     val center = Offset(w / 2f, h * 0.58f)

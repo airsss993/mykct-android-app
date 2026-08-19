@@ -18,6 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
@@ -379,7 +385,8 @@ private fun PersonCard(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = if (wideShot) 4.dp else 20.dp)
-                    .then(if (wideShot) Modifier.fillMaxWidth(0.56f) else Modifier.fillMaxHeight()),
+                    .then(if (wideShot) Modifier.fillMaxWidth(0.56f) else Modifier.fillMaxHeight())
+                    .fadeBottom(FADE_HEIGHT),
             )
         }
     }
@@ -436,6 +443,33 @@ private fun BoxScope.Tint(solid: Boolean) {
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)),
     )
 }
+
+/**
+ * Растушёвка нижней кромки: снимок обрывается ровной линией там, где кончается
+ * кадр (колёса, тень), и это читается как срез. Гасим альфу к низу — фото
+ * растворяется в размытом фоне карточки.
+ *
+ * Нужен offscreen-слой: без него `BlendMode.DstIn` применится ко всему, что уже
+ * нарисовано под картинкой, и выест фон карточки.
+ */
+private fun Modifier.fadeBottom(height: Dp): Modifier = this
+    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val fade = height.toPx()
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(Color.Black, Color.Transparent),
+                startY = size.height - fade,
+                endY = size.height,
+            ),
+            topLeft = Offset(0f, size.height - fade),
+            size = Size(size.width, fade),
+            blendMode = BlendMode.DstIn,
+        )
+    }
+
+private val FADE_HEIGHT = 18.dp
 
 /** Размытие требует Android 12; ниже пятна остаются чёткими кругами. */
 private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S

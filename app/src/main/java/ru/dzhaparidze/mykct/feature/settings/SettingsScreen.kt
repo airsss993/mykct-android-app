@@ -74,9 +74,9 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, onL
     ) {
         Text(
             text = "Настройки",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 20.dp, top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 20.dp, top = 12.dp),
         )
 
         AccountSection(onLogin = onLogin)

@@ -112,7 +112,7 @@ fun LessonSheet(details: LessonDetails, onDismiss: () -> Unit) {
             )
             Text(
                 text = lesson.title,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(top = 4.dp),
             )

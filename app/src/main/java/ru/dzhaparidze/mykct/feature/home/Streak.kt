@@ -253,7 +253,7 @@ private fun WeekChecks(weekStart: LocalDate, records: List<AttendanceRecord>) {
                 ) {
                     if (attended) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_check),
+                            painter = painterResource(R.drawable.ic_check_bold),
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(18.dp),

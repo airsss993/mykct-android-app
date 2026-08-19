@@ -47,6 +47,7 @@ import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
+import ru.dzhaparidze.mykct.ui.theme.DarkSurface
 import ru.dzhaparidze.mykct.ui.theme.Violet
 import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import ru.dzhaparidze.mykct.ui.hairline
@@ -220,7 +221,11 @@ private fun PillButton(@DrawableRes icon: Int, text: String, url: String) {
                 }
                 .padding(2.dp)
                 .clip(CircleShape)
-                .background(Color.White)
+                // Тёмное стекло в наш цвет: near-black основа плюс фиолетовая плёнка
+                // сверху вниз. Цвета не из палитры темы — кнопка одинаковая в обеих,
+                // это её роль, как раньше была одинаково белой.
+                .background(DarkSurface)
+                .background(Brush.verticalGradient(listOf(Violet.copy(alpha = 0.32f), Violet.copy(alpha = 0.10f))))
                 .clickable { uriHandler.openUri(url) }
                 .padding(vertical = 16.dp),
             horizontalArrangement = Arrangement.Center,
@@ -229,20 +234,19 @@ private fun PillButton(@DrawableRes icon: Int, text: String, url: String) {
             Icon(
                 painterResource(icon),
                 contentDescription = null,
-                tint = INK,
+                tint = Color.White,
                 modifier = Modifier.size(20.dp),
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium,
-                color = INK,
+                color = Color.White,
                 modifier = Modifier.padding(start = 10.dp),
             )
         }
     }
 }
 
-private val INK = Color(0xFF121213)
 
 /**
  * Разделитель внутри карточки — с отступом под иконку, как в референсе.

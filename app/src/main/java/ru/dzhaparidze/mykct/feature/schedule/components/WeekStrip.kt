@@ -84,7 +84,8 @@ private fun DayItem(
     ) {
         Text(
             text = day.date.dayOfWeek.getDisplayName(TextStyle.SHORT, RU).replaceFirstChar { it.uppercase() },
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.SemiBold,
             color = if (day.isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
@@ -92,8 +93,11 @@ private fun DayItem(
 
         Box(
             modifier = Modifier
-                // круг занимает всю ширину ячейки — в референсе он крупный, почти впритык
+                // Ширина ячейки, но не больше 56dp: на широком экране круг во всю ячейку
+                // спорит с числом внутри, а долей ограничивать нельзя — на узком экране
+                // с семью днями число и точки перестают помещаться в круг.
                 .fillMaxWidth()
+                .widthIn(max = 56.dp)
                 .aspectRatio(1f)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),

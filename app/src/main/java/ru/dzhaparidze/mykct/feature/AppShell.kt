@@ -43,6 +43,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.ThemeMode
@@ -53,8 +54,13 @@ import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
 
 enum class Screen { SCHEDULE, HOME, SETTINGS }
 
-/** Высота, которую навбар отъедает у контента снизу: экраны докладывают её сами. */
-val NAV_BAR_INSET = 108.dp
+/**
+ * Высота, которую навбар отъедает у контента снизу: экраны докладывают её сами.
+ * Сама капсула плюс системная навигация под ней — без неё жест-бар съедал нижние
+ * 24–48 dp контента, и последний элемент экрана оказывался под навбаром.
+ */
+@Composable
+fun navBarInset(): Dp = 108.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
 /**
  * Оболочка приложения: экран + плавающий навбар поверх него.

@@ -37,7 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.Selection
-import ru.dzhaparidze.mykct.feature.NAV_BAR_INSET
+import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.DayTimeline
 import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
@@ -212,7 +212,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
                 )
             }
 
-            Spacer(Modifier.height(NAV_BAR_INSET))
+            Spacer(Modifier.height(navBarInset()))
         }
     }
     }

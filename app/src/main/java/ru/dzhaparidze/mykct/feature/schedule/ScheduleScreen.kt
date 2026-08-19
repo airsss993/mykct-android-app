@@ -38,6 +38,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.Selection
+import ru.dzhaparidze.mykct.data.api.Streak
+import ru.dzhaparidze.mykct.feature.home.HomeViewModel
+import ru.dzhaparidze.mykct.feature.home.StreakFlame
+import ru.dzhaparidze.mykct.feature.home.StreakSheet
 import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.DayTimeline
 import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
@@ -139,6 +143,12 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
         }
     }
     var groupSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var streakOpen by rememberSaveable { mutableStateOf(false) }
+
+    // Стрик и посещаемость грузит «Главная»; ViewModel одна на приложение (владелец —
+    // активити), поэтому огонёк берёт готовые данные, а не ходит в сеть второй раз.
+    val homeViewModel: HomeViewModel = viewModel()
+    val home by homeViewModel.state.collectAsStateWithLifecycle()
 
     val accent = MaterialTheme.colorScheme.primary
     val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -159,6 +169,8 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
     ) {
         Hero(
             state = state,
+            streak = home.streak,
+            onOpenStreak = { streakOpen = true },
             onOpenGroups = { groupSheetOpen = true },
             onPrevWeek = { viewModel.shiftWeek(-1) },
             onNextWeek = { viewModel.shiftWeek(1) },
@@ -242,6 +254,18 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
         )
     }
 
+    home.streak?.let { streak ->
+        if (streakOpen) {
+            StreakSheet(
+                streak = streak,
+                records = home.records,
+                stats = home.stats,
+                weekStart = home.weekStart,
+                onDismiss = { streakOpen = false },
+            )
+        }
+    }
+
     state.details?.let { details ->
         LessonSheet(details = details, onDismiss = viewModel::closeLesson)
     }
@@ -254,6 +278,8 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 @Composable
 private fun Hero(
     state: ScheduleUiState,
+    streak: Streak?,
+    onOpenStreak: () -> Unit,
     onOpenGroups: () -> Unit,
     onPrevWeek: () -> Unit,
     onNextWeek: () -> Unit,
@@ -274,6 +300,11 @@ private fun Hero(
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.weight(1f),
             )
+            // Огонёк появляется только у вошедшего: без токена стрика просто нет.
+            if (streak != null) {
+                StreakFlame(onClick = onOpenStreak)
+                Spacer(Modifier.width(4.dp))
+            }
             GroupPill(label = state.selection.label(), onClick = onOpenGroups)
         }
 

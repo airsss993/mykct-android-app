@@ -50,7 +50,7 @@ private val MONTHS_GENITIVE = listOf(
     "июля", "августа", "сентября", "октября", "ноября", "декабря",
 )
 
-private fun LocalDate.dayMonth() = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 1]}"
+internal fun LocalDate.dayMonth() = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 1]}"
 
 private fun LocalDate.dayTitle() =
     "${dayOfWeek.getDisplayName(TextStyle.FULL, RU).replaceFirstChar { it.uppercase() }}, ${dayMonth()}"
@@ -62,7 +62,7 @@ private fun weekRange(monday: LocalDate): String {
 }
 
 /** «5 дней», «1 день», «22 дня». */
-private fun days(count: Int): String {
+internal fun days(count: Int): String {
     val word = when {
         count % 100 in 11..14 -> "дней"
         count % 10 == 1 -> "день"

@@ -337,6 +337,18 @@ private fun PersonCard(
             }
             Tint(solid = backdrop == null)
 
+            if (avatar != null && wideShot) {
+                Image(
+                    painter = painterResource(avatar),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    alignment = Alignment.BottomEnd,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .fillMaxWidth(0.58f),
+                )
+            }
+
             if (avatar == null) {
                 Text(
                     text = name.initials(),
@@ -376,7 +388,10 @@ private fun PersonCard(
             }
         }
 
-        if (avatar != null) {
+        // Широкий кадр прижат к правой кромке и обрезан формой карточки — растушёвка
+        // ему не нужна, срез совпадает с её краем. Портрет остаётся снаружи: он
+        // выступает над верхней кромкой, внутри его срезало бы.
+        if (avatar != null && !wideShot) {
             Image(
                 painter = painterResource(avatar),
                 contentDescription = null,
@@ -384,9 +399,8 @@ private fun PersonCard(
                 alignment = Alignment.BottomCenter,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = if (wideShot) 4.dp else 20.dp)
-                    .then(if (wideShot) Modifier.fillMaxWidth(0.56f) else Modifier.fillMaxHeight())
-                    .fadeEdges(FADE_HEIGHT),
+                    .padding(end = 20.dp)
+                    .fillMaxHeight(),
             )
         }
     }
@@ -443,44 +457,6 @@ private fun BoxScope.Tint(solid: Boolean) {
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)),
     )
 }
-
-/**
- * Растушёвка нижней и правой кромок: снимок обрывается ровной линией там, где
- * кончается кадр (колёса снизу, нос машины справа), и это читается как срез.
- * Гасим альфу к этим краям — фото растворяется в размытом фоне карточки.
- *
- * Нужен offscreen-слой: без него `BlendMode.DstIn` применится ко всему, что уже
- * нарисовано под картинкой, и выест фон карточки.
- */
-private fun Modifier.fadeEdges(fade: Dp): Modifier = this
-    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-    .drawWithContent {
-        drawContent()
-        val px = fade.toPx()
-
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(Color.Black, Color.Transparent),
-                startY = size.height - px,
-                endY = size.height,
-            ),
-            topLeft = Offset(0f, size.height - px),
-            size = Size(size.width, px),
-            blendMode = BlendMode.DstIn,
-        )
-        drawRect(
-            brush = Brush.horizontalGradient(
-                colors = listOf(Color.Black, Color.Transparent),
-                startX = size.width - px,
-                endX = size.width,
-            ),
-            topLeft = Offset(size.width - px, 0f),
-            size = Size(px, size.height),
-            blendMode = BlendMode.DstIn,
-        )
-    }
-
-private val FADE_HEIGHT = 18.dp
 
 /** Размытие требует Android 12; ниже пятна остаются чёткими кругами. */
 private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S

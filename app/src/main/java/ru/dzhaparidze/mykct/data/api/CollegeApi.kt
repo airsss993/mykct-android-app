@@ -10,7 +10,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -33,12 +32,13 @@ class CollegeApi(
 
     suspend fun attendance(start: LocalDate, end: LocalDate): List<AttendanceRecord> = apiCall {
         auth.withToken { token ->
-            val dto: List<AttendanceDto> = Http.client.get("$baseUrl/api/v1/attendance") {
+            // список может прийти голым `null`, а не `[]` — см. AttendanceService в college-app-core
+            val dto: List<AttendanceDto>? = Http.client.get("$baseUrl/api/v1/attendance") {
                 bearer(token)
                 parameter("start", start.toString())
                 parameter("end", end.toString())
             }.decode()
-            dto.mapNotNull { it.toRecord() }.sortedWith(compareBy({ it.date }, { it.start }))
+            dto.orEmpty().mapNotNull { it.toRecord() }.sortedWith(compareBy({ it.date }, { it.start }))
         }
     }
 
@@ -53,7 +53,8 @@ class CollegeApi(
     suspend fun subjects(): List<Subject> = apiCall {
         auth.withToken { token ->
             Http.client.get("$baseUrl/api/v1/performance/subjects") { bearer(token) }
-                .decode<List<SubjectDto>>()
+                .decode<List<SubjectDto>?>()
+                .orEmpty()
                 .map { Subject(id = it.suId, title = it.title) }
         }
     }
@@ -113,7 +114,6 @@ private data class StreakDto(
     @SerialName("longest_streak") val longest: Int = 0,
     @SerialName("total_days_attended") val daysAttended: Int = 0,
     @SerialName("total_school_days") val schoolDays: Int = 0,
-    @SerialName("attendance_rate") val rate: Double = 0.0,
     @SerialName("last_attended_date") val lastAttended: String? = null,
     @SerialName("period_start") val periodStart: String? = null,
     @SerialName("period_end") val periodEnd: String? = null,
@@ -124,7 +124,8 @@ private fun StreakDto.toStreak() = Streak(
     longest = longest,
     daysAttended = daysAttended,
     schoolDays = schoolDays,
-    rate = rate,
+    // attendance_rate бэкенд отдаёт долей (0.5 = 50%), а не процентами — считаем сами
+    rate = if (schoolDays > 0) daysAttended * 100.0 / schoolDays else 0.0,
     lastAttended = date(lastAttended),
     periodStart = date(periodStart),
     periodEnd = date(periodEnd),
@@ -154,13 +155,10 @@ private fun ScoreDto.toScore() = Score(
 )
 
 /**
- * Портал отдаёт баллы вложенной картой `{предмет: {занятие: [оценки]}}`, но на пустом
- * ответе может прийти и голый массив — разбираем оба вида, иначе экран падает на ровном месте.
+ * Баллы приходят вложенной картой `{предмет: {занятие: [оценки]}}`, пустой ответ — `{}`
+ * (`PerformanceService.GetScore` в college-app-core). Предмет запрашивается один, берём первый.
  */
 private fun parseScores(body: JsonElement): List<SubjectLesson> = when (body) {
-    is JsonArray -> listOf(SubjectLesson("", body.map { Http.json.decodeFromJsonElement(ScoreDto.serializer(), it).toScore() }))
-        .filter { it.scores.isNotEmpty() }
-
     is JsonObject -> body.values.filterIsInstance<JsonObject>().firstOrNull().orEmpty()
         .map { (lesson, scores) ->
             SubjectLesson(

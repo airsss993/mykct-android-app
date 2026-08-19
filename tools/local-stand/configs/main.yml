@@ -1,0 +1,13 @@
+server:
+  host: "127.0.0.1"
+  port: 8500
+  maxHeaderBytes: 1
+  readTimeout: 30s
+  writeTimeout: 30s
+
+portal:
+  url: "http://127.0.0.1:9911"
+
+auth:
+  serviceURL: "http://127.0.0.1:9911/stub"
+  timeout: 5s

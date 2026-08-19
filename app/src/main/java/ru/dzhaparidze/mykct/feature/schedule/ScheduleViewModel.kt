@@ -11,6 +11,9 @@ import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.ApiScheduleRepository
 import ru.dzhaparidze.mykct.data.ScheduleRepository
+import ru.dzhaparidze.mykct.data.ScheduleSettings
+import ru.dzhaparidze.mykct.data.ScheduleSettingsStore
+import ru.dzhaparidze.mykct.data.ScheduleView
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.data.SelectionStore
 import java.time.DayOfWeek
@@ -31,12 +34,20 @@ data class LessonDetails(
     val error: String? = null,
 )
 
+/** Один день диапазона: заголовок + его пары. */
+data class DaySchedule(
+    val date: LocalDate,
+    val lessons: List<Lesson>,
+)
+
 data class ScheduleUiState(
     val weekStart: LocalDate,
     val selectedDate: LocalDate,
     val selection: Selection,
+    val settings: ScheduleSettings = ScheduleSettings(),
     val days: List<DayCell> = emptyList(),
-    val lessons: List<Lesson> = emptyList(),
+    /** Дни, которые сейчас показаны: один, три или вся неделя — по [ScheduleSettings.view]. */
+    val visible: List<DaySchedule> = emptyList(),
     val isLoading: Boolean = true,
     /** Текст ошибки от сети; null — всё в порядке. */
     val error: String? = null,
@@ -47,10 +58,16 @@ data class ScheduleUiState(
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
 
     private val store = SelectionStore(application)
+    private val settingsStore = ScheduleSettingsStore(application)
     private val repository: ScheduleRepository = ApiScheduleRepository()
 
     private val _state = MutableStateFlow(
-        ScheduleUiState(weekStart = mondayOf(today()), selectedDate = today(), selection = store.load()),
+        ScheduleUiState(
+            weekStart = mondayOf(today()),
+            selectedDate = today(),
+            selection = store.load(),
+            settings = settingsStore.load(),
+        ),
     )
     val state: StateFlow<ScheduleUiState> = _state.asStateFlow()
 
@@ -64,6 +81,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 if (selection == _state.value.selection) return@collect
                 _state.update { it.copy(selection = selection) }
                 loadWeek()
+            }
+        }
+        // Вид и «пропускать выходные» — чистый пересчёт: неделя уже в weekLessons
+        viewModelScope.launch {
+            ScheduleSettingsStore.changed.collect { settings ->
+                if (settings == _state.value.settings) return@collect
+                _state.update { it.copy(settings = settings) }
+                applyWeek()
             }
         }
     }
@@ -132,7 +157,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         isLoading = false,
                         error = e.message ?: "Не удалось загрузить расписание",
                         days = emptyList(),
-                        lessons = emptyList(),
+                        visible = emptyList(),
                     )
                 }
             }
@@ -144,8 +169,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val today = today()
         val byDate = weekLessons.groupBy { it.date }
 
-        val days = (0..6).map { offset ->
-            val date = state.weekStart.plusDays(offset.toLong())
+        val dates = (0..6).map { state.weekStart.plusDays(it.toLong()) }
+            .filter { !state.settings.skipWeekends || it.dayOfWeek.value <= 5 }
+
+        val days = dates.map { date ->
             DayCell(
                 date = date,
                 lessonCount = byDate[date].orEmpty().size,
@@ -153,10 +180,21 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             )
         }
 
-        val lessons = byDate[state.selectedDate].orEmpty().sortedBy { it.start }
+        // Диапазон никогда не вылезает за неделю: дальше данных всё равно нет, их
+        // грузит loadWeek() целиком неделями. Выходные уже выброшены из dates, так что
+        // «3 дня» с включённой настройкой — это три рабочих дня, как в iOS.
+        val visibleDates = when (state.settings.view) {
+            ScheduleView.WEEK -> dates
+            else -> dates.dropWhile { it < state.selectedDate }.take(state.settings.view.days)
+        // выбран выходной, а они скрыты — показываем хвост недели, а не пустоту
+        }.ifEmpty { dates.takeLast(state.settings.view.days) }
+
+        val visible = visibleDates.map { date ->
+            DaySchedule(date = date, lessons = byDate[date].orEmpty().sortedBy { it.start })
+        }
 
         _state.update {
-            it.copy(days = days, lessons = lessons, isLoading = false, error = null)
+            it.copy(days = days, visible = visible, isLoading = false, error = null)
         }
     }
 

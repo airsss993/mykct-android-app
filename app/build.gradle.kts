@@ -40,6 +40,10 @@ android {
             "AUTH_BASE_URL",
             "\"${getEnvVariable("AUTH_BASE_URL", getEnvVariable("API_BASE_URL", "http://localhost:8500"))}\"",
         )
+        // Боевого сервера пока нет: debug по умолчанию отвечает сам себе заглушкой
+        // (app/src/debug/.../net/Engine.kt). USE_MOCKS=false в local.properties —
+        // и сборка снова пойдёт в сеть. В release заглушки нет ни при каком значении.
+        buildConfigField("boolean", "USE_MOCKS", getEnvVariable("USE_MOCKS", "true"))
     }
 
     signingConfigs {
@@ -109,6 +113,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.ktor.client.mock)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

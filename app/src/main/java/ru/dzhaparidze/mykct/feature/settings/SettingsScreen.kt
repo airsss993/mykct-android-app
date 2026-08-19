@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -47,6 +48,9 @@ import ru.dzhaparidze.mykct.data.SelectionStore
 import ru.dzhaparidze.mykct.data.auth.AuthService
 import ru.dzhaparidze.mykct.data.selectionOf
 import ru.dzhaparidze.mykct.ui.theme.Danger
+import ru.dzhaparidze.mykct.data.ScheduleSettings
+import ru.dzhaparidze.mykct.data.ScheduleSettingsStore
+import ru.dzhaparidze.mykct.data.ScheduleView
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.dotGrid
@@ -105,6 +109,8 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, onL
                 }
             }
         }
+
+        ScheduleSection()
 
         SectionTitle("О приложении")
         Card {
@@ -175,6 +181,70 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, onL
  * Аккаунт: кто вошёл, перенос группы из профиля в расписание и выход.
  * Без входа — одна строка «Войти», она же открывает форму поверх настроек.
  */
+/**
+ * Вид расписания и «пропускать выходные» — то же, что в iOS. Хранилище своё, а не
+ * общее с выбором группы: группа — параметр запроса, а это чистая подача на экране.
+ */
+@Composable
+private fun ScheduleSection() {
+    val context = LocalContext.current
+    val store = remember { ScheduleSettingsStore(context) }
+    var settings by remember { mutableStateOf(store.load()) }
+
+    fun apply(new: ScheduleSettings) {
+        settings = new
+        store.save(new)
+    }
+
+    SectionTitle("Расписание")
+    Card {
+        ScheduleView.entries.forEachIndexed { index, view ->
+            if (index > 0) Divider()
+            SettingsRow(
+                icon = view.icon(),
+                text = view.title,
+                modifier = Modifier.selectable(
+                    selected = settings.view == view,
+                    role = Role.RadioButton,
+                    onClick = { apply(settings.copy(view = view)) },
+                ),
+            ) {
+                if (settings.view == view) {
+                    Icon(
+                        painterResource(R.drawable.ic_check),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+        }
+
+        Divider()
+
+        // toggleable на всей строке, а сам Switch без своего onCheckedChange —
+        // иначе у строки и переключателя два разных таргета
+        SettingsRow(
+            icon = R.drawable.ic_home,
+            text = "Пропускать выходные",
+            modifier = Modifier.toggleable(
+                value = settings.skipWeekends,
+                role = Role.Switch,
+                onValueChange = { apply(settings.copy(skipWeekends = it)) },
+            ),
+        ) {
+            Switch(checked = settings.skipWeekends, onCheckedChange = null)
+        }
+    }
+}
+
+@DrawableRes
+private fun ScheduleView.icon(): Int = when (this) {
+    ScheduleView.TODAY -> R.drawable.ic_clock
+    ScheduleView.THREE_DAYS -> R.drawable.ic_list
+    ScheduleView.WEEK -> R.drawable.ic_calendar
+}
+
 @Composable
 private fun AccountSection(onLogin: () -> Unit) {
     val context = LocalContext.current

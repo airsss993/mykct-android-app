@@ -2,7 +2,6 @@ package ru.dzhaparidze.mykct.data.net
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.statement.HttpResponse
@@ -24,6 +23,9 @@ class ApiException(val status: Int?, message: String) : Exception(message)
 /**
  * Один HTTP-клиент на приложение. `expectSuccess = false` намеренно: коды разбираем
  * сами в [decode], потому что бэкенд кладёт текст ошибки в тело `{"error": "..."}`.
+ *
+ * Движок берётся из `httpEngine()` — он свой у debug и release: в debug это заглушка
+ * вместо сервера, пока боевого адреса нет.
  */
 object Http {
 
@@ -34,7 +36,7 @@ object Http {
     }
 
     val client: HttpClient by lazy {
-        HttpClient(OkHttp) {
+        HttpClient(httpEngine()) {
             expectSuccess = false
             install(ContentNegotiation) { json(json) }
             install(HttpTimeout) {

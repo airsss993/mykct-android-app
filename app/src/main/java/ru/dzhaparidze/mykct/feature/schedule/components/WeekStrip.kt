@@ -28,13 +28,14 @@ private val RU = Locale.forLanguageTag("ru-RU")
 
 /**
  * Полоса недели из референса: подпись дня, круг с числом, точки = количество пар.
- * В референсе полоса скроллится, но у нас неделя фиксированная (пн–вс) и целиком
- * влезает в ширину — круги делят её поровну.
+ * В референсе полоса скроллится, но у нас неделя целиком влезает в ширину — круги делят
+ * её поровну. Дней бывает пять или семь: настройка «пропускать выходные» режет сб и вс.
+ * Выделен весь показанный диапазон, поэтому [selectedDates], а не одна дата.
  */
 @Composable
 fun WeekStrip(
     days: List<DayCell>,
-    selectedDate: LocalDate,
+    selectedDates: Set<LocalDate>,
     onSelect: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -45,7 +46,7 @@ fun WeekStrip(
         days.forEach { day ->
             DayItem(
                 day = day,
-                isSelected = day.date == selectedDate,
+                isSelected = day.date in selectedDates,
                 onClick = { onSelect(day.date) },
                 modifier = Modifier.weight(1f),
             )

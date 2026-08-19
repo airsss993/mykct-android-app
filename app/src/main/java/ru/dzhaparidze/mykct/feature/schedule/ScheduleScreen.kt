@@ -69,11 +69,12 @@ private fun LocalDate.dayTitle(): String =
     "${dayOfWeek.getDisplayName(TextStyle.FULL, RU).replaceFirstChar { it.uppercase() }}, ${dayMonth()}"
 
 /** «11 – 17 августа», а через границу месяца — «28 июля – 3 августа». */
-private fun weekRange(weekStart: LocalDate): String {
-    val end = weekStart.plusDays(6)
-    val start = if (weekStart.month == end.month) weekStart.dayOfMonth.toString() else weekStart.dayMonth()
-    return "$start – ${end.dayMonth()}"
+private fun dateRange(from: LocalDate, to: LocalDate): String {
+    val start = if (from.month == to.month) from.dayOfMonth.toString() else from.dayMonth()
+    return "$start – ${to.dayMonth()}"
 }
+
+private fun weekRange(weekStart: LocalDate): String = dateRange(weekStart, weekStart.plusDays(6))
 
 /** «1 пара», «4 пары», «11 пар». */
 private fun lessonsCount(count: Int): String {
@@ -166,7 +167,8 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
         Column(modifier = Modifier.fillMaxWidth()) {
             WeekStrip(
                 days = state.days,
-                selectedDate = state.selectedDate,
+                // подсвечен весь показанный диапазон, а не только «точка входа» в него
+                selectedDates = state.visible.map { it.date }.toSet(),
                 onSelect = viewModel::selectDate,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
@@ -191,7 +193,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
                     }
                 }
 
-                state.lessons.isEmpty() -> Placeholder {
+                state.visible.all { it.lessons.isEmpty() } -> Placeholder {
                     Text(
                         text = "Пар нет",
                         style = MaterialTheme.typography.titleMedium,
@@ -204,12 +206,25 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
                     )
                 }
 
-                else -> DayTimeline(
-                    lessons = state.lessons,
-                    now = if (state.selectedDate == LocalDate.now()) now else null,
-                    onLessonClick = viewModel::openLesson,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
+                // Многодневный вид — это те же таймлайны подряд: у каждого дня своя
+                // сетка времени, поэтому склеивать их в один нельзя.
+                else -> state.visible.forEach { day ->
+                    if (state.visible.size > 1) {
+                        DayHeader(date = day.date, lessons = day.lessons)
+                    }
+                    if (day.lessons.isEmpty()) {
+                        // Пустой день внутри диапазона молча пропускать нельзя:
+                        // иначе «3 дня» без пар в среду выглядят как потерянный день.
+                        if (state.visible.size > 1) EmptyDay()
+                    } else {
+                        DayTimeline(
+                            lessons = day.lessons,
+                            now = if (day.date == LocalDate.now()) now else null,
+                            onLessonClick = viewModel::openLesson,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(navBarInset()))
@@ -273,15 +288,18 @@ private fun Hero(
             text = when {
                 state.isLoading -> "Загружаем…"
                 state.error != null -> "Нет данных"
-                state.lessons.isEmpty() -> "Пар нет"
-                else -> lessonsCount(state.lessons.size)
+                state.visible.sumOf { it.lessons.size } == 0 -> "Пар нет"
+                else -> lessonsCount(state.visible.sumOf { it.lessons.size })
             },
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = state.selectedDate.dayTitle() + state.lessons.dayHours(),
+            // Один день — «Понедельник, 17 августа · 9:00 – 15:40», диапазон — «17 – 21 августа»
+            text = state.visible.singleOrNull()
+                ?.let { it.date.dayTitle() + it.lessons.dayHours() }
+                ?: state.visible.dateRange(),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -295,6 +313,44 @@ private fun Hero(
             HeroAction(R.drawable.ic_refresh, "Обновить", onRefresh, Modifier.weight(1f))
         }
     }
+}
+
+/** Заголовок дня в многодневном виде: «Понедельник, 17 августа» и число пар. */
+@Composable
+private fun DayHeader(date: LocalDate, lessons: List<Lesson>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .padding(top = 8.dp, bottom = 12.dp),
+    ) {
+        Text(
+            text = date.dayTitle(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = if (date == LocalDate.now()) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onBackground
+            },
+        )
+        Text(
+            text = if (lessons.isEmpty()) "Пар нет" else lessonsCount(lessons.size) + lessons.dayHours(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun EmptyDay() {
+    Spacer(Modifier.height(8.dp))
+}
+
+/** «17 – 21 августа» для показанного диапазона — тем же правилом, что и неделя в шапке. */
+private fun List<DaySchedule>.dateRange(): String {
+    val first = firstOrNull()?.date ?: return ""
+    return dateRange(first, last().date)
 }
 
 /** « · 9:00 – 15:40» для непустого дня, иначе ничего. */

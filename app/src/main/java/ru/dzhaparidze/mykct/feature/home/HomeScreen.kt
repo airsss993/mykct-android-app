@@ -44,6 +44,7 @@ import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.feature.schedule.drawAmbientGlow
 import ru.dzhaparidze.mykct.ui.HeroAction
+import ru.dzhaparidze.mykct.ui.PullToRefresh
 import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.SegmentedSwitch
 import ru.dzhaparidze.mykct.ui.ShinyPill
@@ -142,6 +143,15 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
             .drawBehind { drawAmbientGlow(accent, darkTheme) }
             .dotGrid(),
     ) {
+        // `isRefreshing` только поверх уже показанных данных: на первой загрузке
+        // крутится свой индикатор в теле экрана, и два спиннера сразу читались бы
+        // как подвисание.
+        PullToRefresh(
+            isRefreshing = state.isLoading &&
+                (state.records.isNotEmpty() || state.subjects.isNotEmpty()),
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize(),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -170,6 +180,7 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
             }
 
             Spacer(Modifier.height(navBarInset()))
+        }
         }
     }
 
@@ -311,7 +322,6 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
         HeroAction(R.drawable.ic_calendar, "Сегодня", viewModel::goToCurrentWeek, Modifier.weight(1f))
         HeroAction(R.drawable.ic_chevron_left, "Назад", { viewModel.shiftWeek(-1) }, Modifier.weight(1f), "Предыдущая неделя")
         HeroAction(R.drawable.ic_chevron_right, "Вперёд", { viewModel.shiftWeek(1) }, Modifier.weight(1f), "Следующая неделя")
-        HeroAction(R.drawable.ic_refresh, "Обновить", viewModel::refresh, Modifier.weight(1f))
     }
 
     Spacer(Modifier.height(24.dp))
@@ -358,14 +368,6 @@ private fun PerformanceTab(state: HomeUiState, viewModel: HomeViewModel) {
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-
-    Spacer(Modifier.height(24.dp))
-
-    // Ряд из одного действия: недельной навигации у полугодия нет, а «Обновить»
-    // нужно и здесь — иначе за ним пришлось бы уходить на соседнюю вкладку.
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        HeroAction(R.drawable.ic_refresh, "Обновить", viewModel::refresh, Modifier.width(72.dp))
-    }
 
     Spacer(Modifier.height(24.dp))
 

@@ -48,6 +48,7 @@ import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
 import ru.dzhaparidze.mykct.ui.HeroAction
+import ru.dzhaparidze.mykct.ui.PullToRefresh
 import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.hairline
@@ -164,6 +165,14 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             .drawBehind { drawAmbientGlow(accent, darkTheme) }
             .dotGrid(),
     ) {
+    // `isRefreshing` только поверх уже показанной недели: на первой загрузке
+    // крутится свой индикатор в теле экрана, и два спиннера сразу читались бы
+    // как подвисание.
+    PullToRefresh(
+        isRefreshing = state.isLoading && state.days.isNotEmpty(),
+        onRefresh = viewModel::retry,
+        modifier = Modifier.fillMaxSize(),
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -177,7 +186,6 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             onPrevWeek = { viewModel.shiftWeek(-1) },
             onNextWeek = { viewModel.shiftWeek(1) },
             onToday = viewModel::goToToday,
-            onRefresh = viewModel::retry,
         )
 
         // Отдельного «листа» больше нет: контент лежит на том же фоне, что и шапка.
@@ -247,6 +255,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
         }
     }
     }
+    }
 
     if (groupSheetOpen) {
         GroupSheet(
@@ -286,7 +295,6 @@ private fun Hero(
     onPrevWeek: () -> Unit,
     onNextWeek: () -> Unit,
     onToday: () -> Unit,
-    onRefresh: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -340,8 +348,7 @@ private fun Hero(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             HeroAction(R.drawable.ic_calendar, "Сегодня", onToday, Modifier.weight(1f))
             HeroAction(R.drawable.ic_chevron_left, "Назад", onPrevWeek, Modifier.weight(1f), "Предыдущая неделя")
-            HeroAction(R.drawable.ic_chevron_right, "Вперёд", onNextWeek, Modifier.weight(1f), "Следующая неделя")
-            HeroAction(R.drawable.ic_refresh, "Обновить", onRefresh, Modifier.weight(1f))
+            HeroAction(R.drawable.ic_chevron_right, "Вперёд", onNextWeek, Modifier.weight(1f))
         }
     }
 }

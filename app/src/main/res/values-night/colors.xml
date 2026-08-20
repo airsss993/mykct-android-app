@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Тёмный вариант подложки окна, см. DarkBackground в Color.kt -->
+    <color name="window_background">#FF0C0C11</color>
+</resources>

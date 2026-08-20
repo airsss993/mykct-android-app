@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MyKCT" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      Подложка окна красится в фон темы, а не остаётся белой от Material.Light:
+      она видна и на запуске, и в любой момент, когда контент полупрозрачен —
+      при переходе между экранами белая пелена просвечивала сквозь оба кадра.
+    -->
+    <style name="Theme.MyKCT" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>

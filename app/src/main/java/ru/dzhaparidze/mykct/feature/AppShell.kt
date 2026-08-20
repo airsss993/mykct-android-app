@@ -2,7 +2,10 @@ package ru.dzhaparidze.mykct.feature
 
 import android.os.Build
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.tween
@@ -90,12 +93,21 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
                     drawLayer(backdrop)
                 },
         ) {
-        // Экраны сменяются наплывом, а не подменой кадра: без перехода переключение
-        // навбара выглядит как перезапуск приложения. Именно `Crossfade`, а не общий
-        // `Fade` из `ui/Loading.kt`: тот разносит уход и появление по времени, и между
-        // ними на весь экран видно пустое окно — у состояний внутри экрана этого не
-        // заметно, а у полноэкранных кадров это вспышка.
-        Crossfade(targetState = screen, animationSpec = tween(220), label = "screen") { current ->
+        // Экраны сменяются наплывом: сначала старый гаснет, потом проявляется новый.
+        // Одновременный `Crossfade` не годится — в середине оба кадра полупрозрачны,
+        // текст ложится на текст, а сквозь них просвечивает подложка окна.
+        // Заливка фоном обязательна по той же причине: между уходом и появлением
+        // на весь экран видно окно, и без неё там мелькает белая пелена.
+        AnimatedContent(
+            targetState = screen,
+            transitionSpec = {
+                fadeIn(tween(200, delayMillis = 120)) togetherWith fadeOut(tween(120))
+            },
+            label = "screen",
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) { current ->
             when (current) {
                 Screen.SCHEDULE -> ScheduleScreen()
                 Screen.HOME -> HomeScreen(onLogin = { loginOpen = true })

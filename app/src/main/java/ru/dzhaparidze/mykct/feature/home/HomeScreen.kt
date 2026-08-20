@@ -8,6 +8,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import ru.dzhaparidze.mykct.data.api.AttendanceStats
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -292,8 +299,16 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
     val stats = state.stats
     val empty = state.records.isEmpty()
 
-    HeroSummary(
-        caption = "Неделя ${weekRange(state.weekStart)}",
+    Text(
+        text = "Неделя ${weekRange(state.weekStart)}",
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
+
+    AttendanceRing(
+        stats = stats,
         // Пока данных нет, «0%» — враньё: у пустой недели и у прогулянной он одинаков.
         value = when {
             state.isLoading && empty -> "Загружаем…"
@@ -301,11 +316,9 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
             empty -> "Отметок нет"
             else -> "${stats.percent}%"
         },
-        subtitle = if (empty) "За эту неделю колледж ничего не отметил"
-        else "Был на ${stats.present} из ${lessons(stats.total)}",
+        caption = if (empty) "" else "Был на ${stats.present} из ${lessons(stats.total)}",
+        hasData = !empty,
     )
-
-    Spacer(Modifier.height(20.dp))
 
     WeekNav(
         onToday = viewModel::goToCurrentWeek,
@@ -345,25 +358,14 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
 private fun PerformanceTab(state: HomeUiState, viewModel: HomeViewModel) {
     val empty = state.subjects.isEmpty()
 
-    Text(
-        text = "Текущее полугодие",
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Text(
-        text = when {
+    HeroSummary(
+        caption = "Текущее полугодие",
+        value = when {
             state.isLoading && empty -> "Загружаем…"
             empty -> "Нет данных"
             else -> subjects(state.subjects.size)
         },
-        fontSize = 34.sp,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
-    Text(
-        text = "Нажми на предмет — покажем баллы по занятиям",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        subtitle = "Нажми на предмет — покажем баллы по занятиям",
     )
 
     Spacer(Modifier.height(24.dp))
@@ -400,6 +402,88 @@ private fun Empty(text: String) {
     )
 }
 
+/** Зазор между секторами кольца: без него круглые торцы соседних цветов слипаются. */
+private const val RING_GAP = 6f
+
+/**
+ * Кольцо посещаемости: процент крупно в центре, вокруг — доли присутствий, увольнений
+ * и прогулов. Три сектора, а не одна дуга прогресса: «56%» ничего не говорит о том,
+ * из чего сложились остальные 44 — прогулял студент или отпросился.
+ */
+@Composable
+private fun AttendanceRing(
+    stats: AttendanceStats,
+    value: String,
+    caption: String,
+    hasData: Boolean,
+) {
+    val total = stats.total.coerceAtLeast(1)
+    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+
+    // Доли едут анимацией: при смене недели кольцо перетекает, а не подменяется рывком.
+    val shares = listOf(stats.present to Green, stats.excused to Warning, stats.absent to Danger)
+        .map { (count, color) ->
+            animateFloatAsState(
+                targetValue = if (hasData) count.toFloat() / total else 0f,
+                animationSpec = tween(600),
+                label = "ring",
+            ).value to color
+        }
+
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.size(216.dp)) {
+            val stroke = 20.dp.toPx()
+            // Дуга рисуется по средней линии штриха, иначе половина толщины срежется краем.
+            val box = Size(size.minDimension - stroke, size.minDimension - stroke)
+            val topLeft = Offset(stroke / 2f, stroke / 2f)
+
+            drawArc(track, 0f, 360f, false, topLeft, box, style = Stroke(stroke))
+
+            var angle = -90f
+            shares.forEach { (share, color) ->
+                val sweep = share * 360f
+                if (sweep > 1f) {
+                    drawArc(
+                        color = color,
+                        startAngle = angle + RING_GAP / 2f,
+                        sweepAngle = (sweep - RING_GAP).coerceAtLeast(1f),
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = box,
+                        style = Stroke(stroke, cap = StrokeCap.Round),
+                    )
+                }
+                angle += sweep
+            }
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 40.dp),
+        ) {
+            Text(
+                text = value,
+                // Слова вместо процента в тот же кегль не влезают — им свой размер.
+                fontSize = if (hasData) 48.sp else 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+            if (caption.isNotEmpty()) {
+                Text(
+                    text = caption,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun StatsRow(state: HomeUiState) {
     val stats = state.stats
@@ -407,7 +491,6 @@ private fun StatsRow(state: HomeUiState) {
         Stat("Был", stats.present.toString(), Green, Modifier.weight(1f))
         Stat("Ув.", stats.excused.toString(), Warning, Modifier.weight(1f))
         Stat("Н/У", stats.absent.toString(), Danger, Modifier.weight(1f))
-        Stat("Всего", "${stats.percent}%", MaterialTheme.colorScheme.primary, Modifier.weight(1f))
     }
 }
 

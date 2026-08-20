@@ -309,7 +309,7 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
     )
 
     AttendanceRing(
-        records = state.records,
+        stats = stats,
         // Пока данных нет, «0%» — враньё: у пустой недели и у прогулянной он одинаков.
         value = when {
             state.isLoading && empty -> "Загружаем…"
@@ -403,25 +403,34 @@ private fun Empty(text: String) {
     )
 }
 
+/** Штрихов в кольце всегда столько: на неделе с тремя парами три штриха выглядели дырой. */
+private const val RING_TICKS = 48
+
 /**
- * Кольцо посещаемости: процент крупно в центре, вокруг — по штриху на каждую пару
- * недели, покрашенному в цвет отметки. Сплошные сектора показывали только доли,
- * а штрихи заодно показывают, сколько всего было пар и где именно провал.
+ * Кольцо посещаемости: процент крупно в центре, вокруг — шкала из штрихов. Длина
+ * цветного участка пропорциональна долям (был / уволен / прогулял), а число штрихов
+ * не зависит от числа пар — кольцо одинаково плотное и на шести парах, и на двадцати.
  */
 @Composable
 private fun AttendanceRing(
-    records: List<AttendanceRecord>,
+    stats: AttendanceStats,
     value: String,
     caption: String,
     hasData: Boolean,
 ) {
     val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-    val marks = records.sortedWith(compareBy({ it.date }, { it.start })).map { it.attendance.color() }
 
-    // Штрихи зажигаются по кругу, а не появляются разом: при смене недели видно,
+    // Границы считаются нарастающим итогом в целых штрихах: округляй каждую долю
+    // отдельно — и на круге потеряется или прибавится штрих.
+    val total = stats.total.coerceAtLeast(1)
+    val present = stats.present * RING_TICKS / total
+    val excused = (stats.present + stats.excused) * RING_TICKS / total
+    val absent = (stats.present + stats.excused + stats.absent) * RING_TICKS / total
+
+    // Шкала заполняется по кругу, а не появляется разом: при смене недели видно,
     // что кольцо пересобралось.
     val shown by animateFloatAsState(
-        targetValue = if (hasData) marks.size.toFloat() else 0f,
+        targetValue = if (hasData) RING_TICKS.toFloat() else 0f,
         animationSpec = tween(700),
         label = "ring",
     )
@@ -431,25 +440,29 @@ private fun AttendanceRing(
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.size(216.dp)) {
-            // Штрихов ровно столько, сколько пар: лишние читались бы как пары без отметки.
-            // Пустая неделя всё равно рисует кольцо — иначе на месте сводки дырка.
-            val count = if (marks.isEmpty()) 24 else marks.size
-            val length = 20.dp.toPx()
+            val length = 16.dp.toPx()
             val outerRadius = size.minDimension / 2f
-            val step = 360f / count
+            val step = 360f / RING_TICKS
 
-            repeat(count) { index ->
+            repeat(RING_TICKS) { index ->
                 val angle = Math.toRadians((-90f + step * index).toDouble())
                 val dx = cos(angle).toFloat()
                 val dy = sin(angle).toFloat()
+                val color = when {
+                    index >= shown -> track
+                    index < present -> Green
+                    index < excused -> Warning
+                    index < absent -> Danger
+                    else -> track
+                }
                 drawLine(
-                    color = marks.getOrNull(index)?.takeIf { index < shown } ?: track,
+                    color = color,
                     start = Offset(
                         center.x + dx * (outerRadius - length),
                         center.y + dy * (outerRadius - length),
                     ),
                     end = Offset(center.x + dx * outerRadius, center.y + dy * outerRadius),
-                    strokeWidth = 7.dp.toPx(),
+                    strokeWidth = 4.dp.toPx(),
                     cap = StrokeCap.Round,
                 )
             }

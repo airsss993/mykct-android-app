@@ -13,7 +13,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -105,12 +108,15 @@ fun phaseOf(isLoading: Boolean, error: String?, isEmpty: Boolean = false): Phase
  * `AnimatedContent` держит оба кадра одновременно, и без разнесения по времени они
  * просвечивают друг сквозь друга. `SizeTransform(clip = false)` — из-за разной высоты
  * состояний: без него высокий контент подрезается по высоте индикатора.
+ *
+ * Содержимое кладётся в колонку, а не в `Box` от `AnimatedContent`: состояние экрана —
+ * это почти всегда несколько элементов подряд, а в `Box` они лягут друг на друга.
  */
 @Composable
 fun <T> Fade(
     target: T,
     modifier: Modifier = Modifier,
-    content: @Composable (T) -> Unit,
+    content: @Composable ColumnScope.(T) -> Unit,
 ) {
     AnimatedContent(
         targetState = target,
@@ -120,5 +126,5 @@ fun <T> Fade(
                 fadeOut(tween(90)) using SizeTransform(clip = false)
         },
         label = "fade",
-    ) { content(it) }
+    ) { Column(modifier = Modifier.fillMaxWidth()) { content(it) } }
 }

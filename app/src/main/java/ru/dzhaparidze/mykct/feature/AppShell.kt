@@ -2,6 +2,7 @@ package ru.dzhaparidze.mykct.feature
 
 import android.os.Build
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.tween
@@ -89,15 +90,22 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
                     drawLayer(backdrop)
                 },
         ) {
-        when (screen) {
-            Screen.SCHEDULE -> ScheduleScreen()
-            Screen.HOME -> HomeScreen(onLogin = { loginOpen = true })
+        // Экраны сменяются наплывом, а не подменой кадра: без перехода переключение
+        // навбара выглядит как перезапуск приложения. Именно `Crossfade`, а не общий
+        // `Fade` из `ui/Loading.kt`: тот разносит уход и появление по времени, и между
+        // ними на весь экран видно пустое окно — у состояний внутри экрана этого не
+        // заметно, а у полноэкранных кадров это вспышка.
+        Crossfade(targetState = screen, animationSpec = tween(220), label = "screen") { current ->
+            when (current) {
+                Screen.SCHEDULE -> ScheduleScreen()
+                Screen.HOME -> HomeScreen(onLogin = { loginOpen = true })
 
-            Screen.SETTINGS -> SettingsScreen(
-                themeMode = themeMode,
-                onThemeChange = onThemeChange,
-                onLogin = { loginOpen = true },
-            )
+                Screen.SETTINGS -> SettingsScreen(
+                    themeMode = themeMode,
+                    onThemeChange = onThemeChange,
+                    onLogin = { loginOpen = true },
+                )
+            }
         }
         }
 

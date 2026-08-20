@@ -86,9 +86,7 @@ fun ScoresSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
-                    Phase.Content -> Column(modifier = Modifier.fillMaxWidth()) {
-                        lessons.forEach { lesson -> LessonScores(lesson) }
-                    }
+                    Phase.Content -> lessons.forEach { lesson -> LessonScores(lesson) }
                 }
             }
         }

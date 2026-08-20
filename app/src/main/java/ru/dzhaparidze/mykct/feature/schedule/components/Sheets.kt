@@ -161,25 +161,23 @@ fun LessonSheet(details: LessonDetails, onDismiss: () -> Unit) {
                         )
                         Phase.Error -> Caption(details.error ?: "")
                         // Ключи сырые: схемы у /classdetails нет, см. flattenDetails
-                        else -> Column(modifier = Modifier.fillMaxWidth()) {
-                            details.rows.forEach { (key, value) ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
-                                    Text(
-                                        text = key,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    Text(
-                                        text = value,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                }
+                        else -> details.rows.forEach { (key, value) ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                Text(
+                                    text = key,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(
+                                    text = value,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f),
+                                )
                             }
                         }
                     }

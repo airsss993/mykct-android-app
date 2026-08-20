@@ -246,22 +246,20 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 
                     // Многодневный вид — это те же таймлайны подряд: у каждого дня своя
                     // сетка времени, поэтому склеивать их в один нельзя.
-                    Phase.Content -> Column(modifier = Modifier.fillMaxWidth()) {
-                        state.visible.forEachIndexed { index, day ->
-                            if (state.visible.size > 1) {
-                                // Пустой день внутри диапазона молча пропускать нельзя: иначе
-                                // «3 дня» без пар в среду выглядят как потерянный день — поэтому
-                                // полоса дня рисуется всегда, а «Пар нет» пишется в ней самой.
-                                DayHeader(date = day.date, lessons = day.lessons, first = index == 0)
-                            }
-                            if (day.lessons.isNotEmpty()) {
-                                DayTimeline(
-                                    lessons = day.lessons,
-                                    now = if (day.date == LocalDate.now()) now else null,
-                                    onLessonClick = viewModel::openLesson,
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                )
-                            }
+                    Phase.Content -> state.visible.forEachIndexed { index, day ->
+                        if (state.visible.size > 1) {
+                            // Пустой день внутри диапазона молча пропускать нельзя: иначе
+                            // «3 дня» без пар в среду выглядят как потерянный день — поэтому
+                            // полоса дня рисуется всегда, а «Пар нет» пишется в ней самой.
+                            DayHeader(date = day.date, lessons = day.lessons, first = index == 0)
+                        }
+                        if (day.lessons.isNotEmpty()) {
+                            DayTimeline(
+                                lessons = day.lessons,
+                                now = if (day.date == LocalDate.now()) now else null,
+                                onLessonClick = viewModel::openLesson,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
                         }
                     }
                 }

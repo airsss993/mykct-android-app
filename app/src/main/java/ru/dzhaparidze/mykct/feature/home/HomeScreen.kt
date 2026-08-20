@@ -349,7 +349,7 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
 
             Phase.Empty -> Empty("За эту неделю отметок нет")
 
-            Phase.Content -> Column(modifier = Modifier.fillMaxWidth()) {
+            Phase.Content -> {
                 StatsRow(state)
                 Spacer(Modifier.height(16.dp))
                 state.records.groupBy { it.date }.toSortedMap().forEach { (date, records) ->
@@ -395,10 +395,8 @@ private fun PerformanceTab(state: HomeUiState, viewModel: HomeViewModel) {
             Phase.Loading -> Loading()
             Phase.Empty -> Empty("Колледж не отдал ни одного предмета")
             // Ошибку успеваемости показывает вкладка посещаемости: `error` в состоянии один.
-            else -> Column(modifier = Modifier.fillMaxWidth()) {
-                state.subjects.forEach { subject ->
-                    SubjectRow(subject) { viewModel.openSubject(subject) }
-                }
+            else -> state.subjects.forEach { subject ->
+                SubjectRow(subject) { viewModel.openSubject(subject) }
             }
         }
     }

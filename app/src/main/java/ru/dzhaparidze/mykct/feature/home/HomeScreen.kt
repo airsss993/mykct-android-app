@@ -1,6 +1,13 @@
 package ru.dzhaparidze.mykct.feature.home
 
-import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +18,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,8 +41,11 @@ import ru.dzhaparidze.mykct.data.api.Attendance
 import ru.dzhaparidze.mykct.data.api.AttendanceRecord
 import ru.dzhaparidze.mykct.data.api.Subject
 import ru.dzhaparidze.mykct.feature.navBarInset
+import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.feature.schedule.drawAmbientGlow
+import ru.dzhaparidze.mykct.ui.HeroAction
 import ru.dzhaparidze.mykct.ui.ScreenTitle
+import ru.dzhaparidze.mykct.ui.SegmentedSwitch
 import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.hairline
@@ -50,6 +64,9 @@ private val MONTHS_GENITIVE = listOf(
     "января", "февраля", "марта", "апреля", "мая", "июня",
     "июля", "августа", "сентября", "октября", "ноября", "декабря",
 )
+
+/** Разделы экрана: посещаемость и успеваемость показываются по очереди, а не подряд. */
+private val TABS = listOf("Посещаемость", "Успеваемость")
 
 internal fun LocalDate.dayMonth() = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 1]}"
 
@@ -73,6 +90,28 @@ internal fun days(count: Int): String {
     return "$count $word"
 }
 
+/** «1 пара», «4 пары», «11 пар». */
+private fun lessons(count: Int): String {
+    val word = when {
+        count % 100 in 11..14 -> "пар"
+        count % 10 == 1 -> "пара"
+        count % 10 in 2..4 -> "пары"
+        else -> "пар"
+    }
+    return "$count $word"
+}
+
+/** «1 предмет», «3 предмета», «12 предметов». */
+private fun subjects(count: Int): String {
+    val word = when {
+        count % 100 in 11..14 -> "предметов"
+        count % 10 == 1 -> "предмет"
+        count % 10 in 2..4 -> "предмета"
+        else -> "предметов"
+    }
+    return "$count $word"
+}
+
 private fun Attendance.color() = when (this) {
     Attendance.PRESENT -> Green
     Attendance.EXCUSED -> Warning
@@ -81,12 +120,17 @@ private fun Attendance.color() = when (this) {
 }
 
 /**
- * «Главная»: посещаемость, стрик и успеваемость. Всё это бэкенд отдаёт только с токеном,
+ * «Главная»: посещаемость и успеваемость. Всё это бэкенд отдаёт только с токеном,
  * поэтому без входа экран показывает приглашение войти, а не пустые карточки.
+ *
+ * Верстка повторяет расписание: тот же фон со светом, тот же `ScreenTitle` с огоньком
+ * стрика, та же сводка крупным числом и тот же ряд круглых действий. Стрик отдельной
+ * карточкой больше не дублируется — он живёт в огоньке и его листе.
  */
 @Composable
 fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var streakOpen by rememberSaveable { mutableStateOf(false) }
 
     val accent = MaterialTheme.colorScheme.primary
     val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -105,7 +149,14 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp),
         ) {
-            ScreenTitle(text = "Главная")
+            ScreenTitle(text = "Главная") {
+                // Огонёк — только у вошедшего: без токена стрика просто нет.
+                if (state.streak != null) {
+                    StreakFlame(onClick = { streakOpen = true })
+                    Spacer(Modifier.width(4.dp))
+                }
+                state.user?.username?.let { UserPill(it) }
+            }
 
             when {
                 state.isBootstrapping -> Box(
@@ -122,6 +173,18 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
         }
     }
 
+    state.streak?.let { streak ->
+        if (streakOpen) {
+            StreakSheet(
+                streak = streak,
+                records = state.records,
+                stats = state.stats,
+                weekStart = state.weekStart,
+                onDismiss = { streakOpen = false },
+            )
+        }
+    }
+
     state.openSubject?.let { subject ->
         ScoresSheet(
             subject = subject,
@@ -129,6 +192,35 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
             isLoading = state.scoresLoading,
             error = state.scoresError,
             onDismiss = viewModel::closeSubject,
+        )
+    }
+}
+
+/** Логин в шапке — той же пилюлей, что группа в расписании, чтобы строки совпали. */
+@Composable
+private fun UserPill(login: String) {
+    Row(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+            .widthIn(max = 200.dp)
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_person),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = login,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -156,44 +248,80 @@ private fun SignInInvite(onLogin: () -> Unit) {
 
 @Composable
 private fun Authorized(state: HomeUiState, viewModel: HomeViewModel) {
-    val user = state.user
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+
+    Spacer(Modifier.height(20.dp))
+
+    SegmentedSwitch(items = TABS, selected = tab, onSelect = { tab = it })
+
+    Spacer(Modifier.height(24.dp))
+
+    // Разделы уезжают в ту сторону, куда переключили, — движение повторяет ход бегунка.
+    // `SizeTransform(clip = false)`: у вкладок разная высота, и без него список
+    // подрезается по высоте соседа на всё время перехода.
+    AnimatedContent(
+        targetState = tab,
+        transitionSpec = {
+            val dx = if (targetState > initialState) 1 else -1
+            (slideInHorizontally(tween(220)) { dx * it / 6 } + fadeIn(tween(220))) togetherWith
+                (slideOutHorizontally(tween(220)) { -dx * it / 6 } + fadeOut(tween(160))) using
+                SizeTransform(clip = false)
+        },
+        label = "home-tab",
+    ) { current ->
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (current == 0) AttendanceTab(state, viewModel) else PerformanceTab(state, viewModel)
+        }
+    }
+}
+
+/** Посещаемость за неделю: сводка, недельная навигация, счётчики и отметки по дням. */
+@Composable
+private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
+    val stats = state.stats
+    val empty = state.records.isEmpty()
 
     Text(
-        text = user?.username.orEmpty(),
+        text = "Неделя ${weekRange(state.weekStart)}",
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+        // Пока данных нет, «0%» — враньё: у пустой недели и у прогулянной он одинаков.
+        text = when {
+            state.isLoading && empty -> "Загружаем…"
+            state.error != null -> "Нет данных"
+            empty -> "Отметок нет"
+            else -> "${stats.percent}%"
+        },
+        fontSize = 34.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onBackground,
+    )
+    Text(
+        text = if (empty) "За эту неделю колледж ничего не отметил"
+        else "Был на ${stats.present} из ${lessons(stats.total)}",
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 4.dp),
     )
 
-    Spacer(Modifier.height(20.dp))
+    Spacer(Modifier.height(24.dp))
 
-    StreakCard(state)
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        HeroAction(R.drawable.ic_calendar, "Сегодня", viewModel::goToCurrentWeek, Modifier.weight(1f))
+        HeroAction(R.drawable.ic_chevron_left, "Назад", { viewModel.shiftWeek(-1) }, Modifier.weight(1f), "Предыдущая неделя")
+        HeroAction(R.drawable.ic_chevron_right, "Вперёд", { viewModel.shiftWeek(1) }, Modifier.weight(1f), "Следующая неделя")
+        HeroAction(R.drawable.ic_refresh, "Обновить", viewModel::refresh, Modifier.weight(1f))
+    }
 
-    Spacer(Modifier.height(20.dp))
-
-    WeekNav(
-        title = weekRange(state.weekStart),
-        onPrev = { viewModel.shiftWeek(-1) },
-        onNext = { viewModel.shiftWeek(1) },
-        onToday = viewModel::goToCurrentWeek,
-    )
-
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(24.dp))
 
     when {
-        state.isLoading && state.records.isEmpty() -> Box(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-            contentAlignment = Alignment.Center,
-        ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+        state.isLoading && empty -> Loading()
 
         state.error != null -> ErrorBlock(state.error ?: "", onRetry = viewModel::refresh)
 
-        state.records.isEmpty() -> Text(
-            text = "За эту неделю отметок нет",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 24.dp),
-        )
+        empty -> Empty("За эту неделю отметок нет")
 
         else -> {
             StatsRow(state)
@@ -203,58 +331,69 @@ private fun Authorized(state: HomeUiState, viewModel: HomeViewModel) {
             }
         }
     }
+}
 
-    if (state.subjects.isNotEmpty()) {
-        Spacer(Modifier.height(24.dp))
-        Text(
-            text = "Успеваемость",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Spacer(Modifier.height(12.dp))
-        state.subjects.forEach { subject ->
+/** Успеваемость: предметы полугодия, баллы по каждому — в листе по нажатию. */
+@Composable
+private fun PerformanceTab(state: HomeUiState, viewModel: HomeViewModel) {
+    val empty = state.subjects.isEmpty()
+
+    Text(
+        text = "Текущее полугодие",
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+        text = when {
+            state.isLoading && empty -> "Загружаем…"
+            empty -> "Нет данных"
+            else -> subjects(state.subjects.size)
+        },
+        fontSize = 34.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onBackground,
+    )
+    Text(
+        text = "Нажми на предмет — покажем баллы по занятиям",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    Spacer(Modifier.height(24.dp))
+
+    // Ряд из одного действия: недельной навигации у полугодия нет, а «Обновить»
+    // нужно и здесь — иначе за ним пришлось бы уходить на соседнюю вкладку.
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        HeroAction(R.drawable.ic_refresh, "Обновить", viewModel::refresh, Modifier.width(72.dp))
+    }
+
+    Spacer(Modifier.height(24.dp))
+
+    when {
+        state.isLoading && empty -> Loading()
+        empty -> Empty("Колледж не отдал ни одного предмета")
+        else -> state.subjects.forEach { subject ->
             SubjectRow(subject) { viewModel.openSubject(subject) }
         }
     }
 }
 
-/** Стрик: главное число крупно, остальное — подписью, как в шапке расписания. */
 @Composable
-private fun StreakCard(state: HomeUiState) {
-    val streak = state.streak
-    Card(
-        modifier = Modifier.fillMaxWidth().hairline(RoundedCornerShape(24.dp)),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = "Стрик посещений",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = if (streak == null) "—" else days(streak.current),
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            if (streak != null) {
-                Text(
-                    text = "Лучший — ${days(streak.longest)} · посещаемость ${streak.rate.toInt()}%",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = "${streak.daysAttended} из ${streak.schoolDays} учебных дней" +
-                        (streak.lastAttended?.let { ", последний — ${it.dayMonth()}" } ?: ""),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-        }
-    }
+private fun Loading() {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+        contentAlignment = Alignment.Center,
+    ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+}
+
+@Composable
+private fun Empty(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(vertical = 24.dp),
+    )
 }
 
 @Composable
@@ -332,6 +471,7 @@ private fun DayBlock(date: LocalDate, records: List<AttendanceRecord>) {
     }
 }
 
+/** Иконка предмета — та же, что водяным знаком на карточке пары в расписании. */
 @Composable
 private fun SubjectRow(subject: Subject, onClick: () -> Unit) {
     Row(
@@ -345,51 +485,29 @@ private fun SubjectRow(subject: Subject, onClick: () -> Unit) {
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(subjectIcon(subject.title)),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
         Text(
             text = subject.title,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
         )
         Icon(
             painterResource(R.drawable.ic_chevron_right),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-@Composable
-private fun WeekNav(title: String, onPrev: () -> Unit, onNext: () -> Unit, onToday: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f),
-        )
-        Round(R.drawable.ic_chevron_left, "Предыдущая неделя", onPrev)
-        Spacer(Modifier.width(8.dp))
-        Round(R.drawable.ic_calendar, "Текущая неделя", onToday)
-        Spacer(Modifier.width(8.dp))
-        Round(R.drawable.ic_chevron_right, "Следующая неделя", onNext)
-    }
-}
-
-@Composable
-private fun Round(@DrawableRes icon: Int, label: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painterResource(icon),
-            contentDescription = label,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp),
         )

@@ -1,22 +1,46 @@
 package ru.dzhaparidze.mykct.ui
 
+import androidx.annotation.DrawableRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 
 /**
  * Точечная сетка на фоне — фактура вместо плоской заливки, как в референсе нодового
@@ -87,5 +111,116 @@ fun ScreenTitle(
             modifier = Modifier.weight(1f),
         )
         trailing()
+    }
+}
+
+/**
+ * Круглая кнопка действия под сводкой экрана. Живёт здесь, а не в расписании:
+ * тот же ряд стоит на «Главной», и разъехавшиеся размеры сразу читаются как
+ * два разных экрана.
+ */
+@Composable
+fun HeroAction(
+    @DrawableRes icon: Int,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    description: String = label,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = description,
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+    }
+}
+
+/**
+ * Переключатель разделов внутри экрана: капсула с бегунком под активным пунктом,
+ * залитым тем же `AccentGradient`, что и активный пункт навбара.
+ *
+ * Бегунок едет, а не перекрашивается на месте: без движения переключение читается
+ * как перерисовка всего экрана, а не как переход между соседними разделами.
+ * Ряби нет — под пальцем градиент, и она с ним спорит (см. DESIGN.md).
+ */
+@Composable
+fun SegmentedSwitch(
+    items: List<String>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // -1 — левый край, +1 — правый: `BiasAlignment` кладёт бегунок в долю ширины,
+    // поэтому переключатель не зависит от числа пунктов и ширины экрана.
+    val bias by animateFloatAsState(
+        targetValue = if (items.size < 2) 0f else -1f + 2f * selected / (items.size - 1),
+        animationSpec = tween(220),
+        label = "segment",
+    )
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surface)
+            .hairline(CircleShape)
+            .padding(4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(1f / items.size)
+                .fillMaxHeight()
+                .align(BiasAlignment(bias, 0f))
+                .background(AccentGradient, CircleShape),
+        )
+        Row(modifier = Modifier.fillMaxSize()) {
+            items.forEachIndexed { index, title ->
+                val color by animateColorAsState(
+                    targetValue = if (index == selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    animationSpec = tween(220),
+                    label = "segment-label",
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(CircleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) { onSelect(index) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = color,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
     }
 }

@@ -47,6 +47,7 @@ import ru.dzhaparidze.mykct.feature.schedule.components.DayTimeline
 import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
+import ru.dzhaparidze.mykct.ui.HeroAction
 import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.hairline
@@ -427,45 +428,6 @@ private fun GroupPill(label: String, onClick: () -> Unit) {
             modifier = Modifier
                 .padding(start = 4.dp)
                 .size(18.dp),
-        )
-    }
-}
-
-/** Круглая полупрозрачная кнопка с подписью — ряд действий из референса. */
-@Composable
-private fun HeroAction(
-    @DrawableRes icon: Int,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    description: String = label,
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = description,
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(24.dp),
-            )
-        }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp),
         )
     }
 }

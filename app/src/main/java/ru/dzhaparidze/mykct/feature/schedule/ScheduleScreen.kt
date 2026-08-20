@@ -47,7 +47,11 @@ import ru.dzhaparidze.mykct.feature.schedule.components.DayTimeline
 import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
+import ru.dzhaparidze.mykct.ui.Fade
 import ru.dzhaparidze.mykct.ui.HeroAction
+import ru.dzhaparidze.mykct.ui.Phase
+import ru.dzhaparidze.mykct.ui.Swirl
+import ru.dzhaparidze.mykct.ui.phaseOf
 import ru.dzhaparidze.mykct.ui.PullToRefresh
 import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.dotGrid
@@ -200,53 +204,65 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 
             Spacer(Modifier.height(24.dp))
 
-            when {
-                state.isLoading -> Placeholder { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+            // Ошибка и «пар нет» приходят на место индикатора плавно: неделя грузится
+            // за доли секунды, и без перехода экран дёргается на каждом переключении.
+            Fade(
+                target = phaseOf(
+                    isLoading = state.isLoading,
+                    error = state.error,
+                    isEmpty = state.visible.all { it.lessons.isEmpty() },
+                ),
+            ) { phase ->
+                when (phase) {
+                    Phase.Loading -> Placeholder { Swirl() }
 
-                state.error != null -> Placeholder {
-                    Text(
-                        text = state.error ?: "Не удалось загрузить расписание",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = viewModel::retry) {
-                        Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Повторить")
-                    }
-                }
-
-                state.visible.all { it.lessons.isEmpty() } -> Placeholder {
-                    Text(
-                        text = "Пар нет",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = "Отдыхай",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                // Многодневный вид — это те же таймлайны подряд: у каждого дня своя
-                // сетка времени, поэтому склеивать их в один нельзя.
-                else -> state.visible.forEachIndexed { index, day ->
-                    if (state.visible.size > 1) {
-                        // Пустой день внутри диапазона молча пропускать нельзя: иначе
-                        // «3 дня» без пар в среду выглядят как потерянный день — поэтому
-                        // полоса дня рисуется всегда, а «Пар нет» пишется в ней самой.
-                        DayHeader(date = day.date, lessons = day.lessons, first = index == 0)
-                    }
-                    if (day.lessons.isNotEmpty()) {
-                        DayTimeline(
-                            lessons = day.lessons,
-                            now = if (day.date == LocalDate.now()) now else null,
-                            onLessonClick = viewModel::openLesson,
-                            modifier = Modifier.padding(horizontal = 16.dp),
+                    Phase.Error -> Placeholder {
+                        Text(
+                            text = state.error ?: "Не удалось загрузить расписание",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
                         )
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = viewModel::retry) {
+                            Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Повторить")
+                        }
+                    }
+
+                    Phase.Empty -> Placeholder {
+                        Text(
+                            text = "Пар нет",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = "Отдыхай",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    // Многодневный вид — это те же таймлайны подряд: у каждого дня своя
+                    // сетка времени, поэтому склеивать их в один нельзя.
+                    Phase.Content -> Column(modifier = Modifier.fillMaxWidth()) {
+                        state.visible.forEachIndexed { index, day ->
+                            if (state.visible.size > 1) {
+                                // Пустой день внутри диапазона молча пропускать нельзя: иначе
+                                // «3 дня» без пар в среду выглядят как потерянный день — поэтому
+                                // полоса дня рисуется всегда, а «Пар нет» пишется в ней самой.
+                                DayHeader(date = day.date, lessons = day.lessons, first = index == 0)
+                            }
+                            if (day.lessons.isNotEmpty()) {
+                                DayTimeline(
+                                    lessons = day.lessons,
+                                    now = if (day.date == LocalDate.now()) now else null,
+                                    onLessonClick = viewModel::openLesson,
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                )
+                            }
+                        }
                     }
                 }
             }

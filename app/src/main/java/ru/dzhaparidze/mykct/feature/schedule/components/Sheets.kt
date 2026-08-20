@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -28,6 +27,10 @@ import ru.dzhaparidze.mykct.data.Groups
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.feature.schedule.LessonDetails
 import java.time.format.DateTimeFormatter
+import ru.dzhaparidze.mykct.ui.Fade
+import ru.dzhaparidze.mykct.ui.Phase
+import ru.dzhaparidze.mykct.ui.Swirl
+import ru.dzhaparidze.mykct.ui.phaseOf
 
 private val SHEET_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
 
@@ -151,31 +154,33 @@ fun LessonSheet(details: LessonDetails, onDismiss: () -> Unit) {
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                when {
-                    details.isLoading -> CircularProgressIndicator(
-                        modifier = Modifier.padding(top = 12.dp).size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    details.error != null -> Caption(details.error)
-                    // Ключи сырые: схемы у /classdetails нет, см. flattenDetails
-                    else -> details.rows.forEach { (key, value) ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Text(
-                                text = key,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Text(
-                                text = value,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.weight(1f),
-                            )
+                Fade(target = phaseOf(details.isLoading, details.error)) { phase ->
+                    when (phase) {
+                        Phase.Loading -> Swirl(
+                            modifier = Modifier.padding(top = 12.dp).size(20.dp),
+                        )
+                        Phase.Error -> Caption(details.error ?: "")
+                        // Ключи сырые: схемы у /classdetails нет, см. flattenDetails
+                        else -> Column(modifier = Modifier.fillMaxWidth()) {
+                            details.rows.forEach { (key, value) ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Text(
+                                        text = key,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Text(
+                                        text = value,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                            }
                         }
                     }
                 }

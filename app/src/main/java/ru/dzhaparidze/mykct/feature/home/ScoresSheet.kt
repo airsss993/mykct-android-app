@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -20,6 +19,10 @@ import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.data.api.Score
 import ru.dzhaparidze.mykct.data.api.Subject
 import ru.dzhaparidze.mykct.data.api.SubjectLesson
+import ru.dzhaparidze.mykct.ui.Fade
+import ru.dzhaparidze.mykct.ui.Phase
+import ru.dzhaparidze.mykct.ui.Swirl
+import ru.dzhaparidze.mykct.ui.phaseOf
 import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.ui.theme.Danger
 import ru.dzhaparidze.mykct.ui.theme.Green
@@ -64,25 +67,29 @@ fun ScoresSheet(
 
             Spacer(Modifier.height(16.dp))
 
-            when {
-                isLoading -> Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+            Fade(target = phaseOf(isLoading, error, lessons.isEmpty())) { phase ->
+                when (phase) {
+                    Phase.Loading -> Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { Swirl() }
 
-                error != null -> Text(
-                    text = error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                    Phase.Error -> Text(
+                        text = error ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
 
-                lessons.isEmpty() -> Text(
-                    text = "За это полугодие баллов нет",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                    Phase.Empty -> Text(
+                        text = "За это полугодие баллов нет",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
 
-                else -> lessons.forEach { lesson -> LessonScores(lesson) }
+                    Phase.Content -> Column(modifier = Modifier.fillMaxWidth()) {
+                        lessons.forEach { lesson -> LessonScores(lesson) }
+                    }
+                }
             }
         }
     }

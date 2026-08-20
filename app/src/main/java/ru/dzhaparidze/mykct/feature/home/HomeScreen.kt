@@ -43,7 +43,11 @@ import ru.dzhaparidze.mykct.data.api.Subject
 import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.feature.schedule.drawAmbientGlow
+import ru.dzhaparidze.mykct.ui.Fade
 import ru.dzhaparidze.mykct.ui.HeroAction
+import ru.dzhaparidze.mykct.ui.Phase
+import ru.dzhaparidze.mykct.ui.Swirl
+import ru.dzhaparidze.mykct.ui.phaseOf
 import ru.dzhaparidze.mykct.ui.PullToRefresh
 import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.SegmentedSwitch
@@ -168,15 +172,20 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
                 state.user?.username?.let { UserPill(it) }
             }
 
-            when {
-                state.isBootstrapping -> Box(
-                    modifier = Modifier.fillMaxWidth().padding(top = 120.dp),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator(color = accent) }
+            // Первый кадр экрана — индикатор поверх пустоты; он гаснет, и на его месте
+            // проявляется либо приглашение войти, либо данные. Мгновенная подмена
+            // читалась как мигание: автологин отвечает за доли секунды.
+            Fade(target = state.isBootstrapping to state.isAuthenticated) { (loading, authorized) ->
+                when {
+                    loading -> Box(
+                        modifier = Modifier.fillMaxWidth().padding(top = 120.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { Swirl(color = accent) }
 
-                !state.isAuthenticated -> SignInInvite(onLogin = onLogin)
+                    !authorized -> SignInInvite(onLogin = onLogin)
 
-                else -> Authorized(state = state, viewModel = viewModel)
+                    else -> Authorized(state = state, viewModel = viewModel)
+                }
             }
 
             Spacer(Modifier.height(navBarInset()))
@@ -326,18 +335,26 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
 
     Spacer(Modifier.height(24.dp))
 
-    when {
-        state.isLoading && empty -> Loading()
+    Fade(
+        target = phaseOf(
+            isLoading = state.isLoading && empty,
+            error = state.error,
+            isEmpty = empty,
+        ),
+    ) { phase ->
+        when (phase) {
+            Phase.Loading -> Loading()
 
-        state.error != null -> ErrorBlock(state.error ?: "", onRetry = viewModel::refresh)
+            Phase.Error -> ErrorBlock(state.error ?: "", onRetry = viewModel::refresh)
 
-        empty -> Empty("За эту неделю отметок нет")
+            Phase.Empty -> Empty("За эту неделю отметок нет")
 
-        else -> {
-            StatsRow(state)
-            Spacer(Modifier.height(16.dp))
-            state.records.groupBy { it.date }.toSortedMap().forEach { (date, records) ->
-                DayBlock(date, records)
+            Phase.Content -> Column(modifier = Modifier.fillMaxWidth()) {
+                StatsRow(state)
+                Spacer(Modifier.height(16.dp))
+                state.records.groupBy { it.date }.toSortedMap().forEach { (date, records) ->
+                    DayBlock(date, records)
+                }
             }
         }
     }
@@ -371,11 +388,18 @@ private fun PerformanceTab(state: HomeUiState, viewModel: HomeViewModel) {
 
     Spacer(Modifier.height(24.dp))
 
-    when {
-        state.isLoading && empty -> Loading()
-        empty -> Empty("Колледж не отдал ни одного предмета")
-        else -> state.subjects.forEach { subject ->
-            SubjectRow(subject) { viewModel.openSubject(subject) }
+    Fade(
+        target = phaseOf(isLoading = state.isLoading && empty, error = null, isEmpty = empty),
+    ) { phase ->
+        when (phase) {
+            Phase.Loading -> Loading()
+            Phase.Empty -> Empty("Колледж не отдал ни одного предмета")
+            // Ошибку успеваемости показывает вкладка посещаемости: `error` в состоянии один.
+            else -> Column(modifier = Modifier.fillMaxWidth()) {
+                state.subjects.forEach { subject ->
+                    SubjectRow(subject) { viewModel.openSubject(subject) }
+                }
+            }
         }
     }
 }
@@ -385,7 +409,7 @@ private fun Loading() {
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
         contentAlignment = Alignment.Center,
-    ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+    ) { Swirl() }
 }
 
 @Composable

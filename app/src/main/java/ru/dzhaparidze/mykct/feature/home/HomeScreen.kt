@@ -11,7 +11,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import ru.dzhaparidze.mykct.data.api.AttendanceStats
@@ -61,6 +60,8 @@ import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.ui.theme.Danger
 import ru.dzhaparidze.mykct.ui.theme.Green
 import ru.dzhaparidze.mykct.ui.theme.Warning
+import kotlin.math.cos
+import kotlin.math.sin
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -308,7 +309,7 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
     )
 
     AttendanceRing(
-        stats = stats,
+        records = state.records,
         // Пока данных нет, «0%» — враньё: у пустой недели и у прогулянной он одинаков.
         value = when {
             state.isLoading && empty -> "Загружаем…"
@@ -402,67 +403,61 @@ private fun Empty(text: String) {
     )
 }
 
-/** Зазор между секторами кольца: без него круглые торцы соседних цветов слипаются. */
-private const val RING_GAP = 6f
-
 /**
- * Кольцо посещаемости: процент крупно в центре, вокруг — доли присутствий, увольнений
- * и прогулов. Три сектора, а не одна дуга прогресса: «56%» ничего не говорит о том,
- * из чего сложились остальные 44 — прогулял студент или отпросился.
+ * Кольцо посещаемости: процент крупно в центре, вокруг — по штриху на каждую пару
+ * недели, покрашенному в цвет отметки. Сплошные сектора показывали только доли,
+ * а штрихи заодно показывают, сколько всего было пар и где именно провал.
  */
 @Composable
 private fun AttendanceRing(
-    stats: AttendanceStats,
+    records: List<AttendanceRecord>,
     value: String,
     caption: String,
     hasData: Boolean,
 ) {
-    val total = stats.total.coerceAtLeast(1)
-    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+    val marks = records.sortedWith(compareBy({ it.date }, { it.start })).map { it.attendance.color() }
 
-    // Доли едут анимацией: при смене недели кольцо перетекает, а не подменяется рывком.
-    val shares = listOf(stats.present to Green, stats.excused to Warning, stats.absent to Danger)
-        .map { (count, color) ->
-            animateFloatAsState(
-                targetValue = if (hasData) count.toFloat() / total else 0f,
-                animationSpec = tween(600),
-                label = "ring",
-            ).value to color
-        }
+    // Штрихи зажигаются по кругу, а не появляются разом: при смене недели видно,
+    // что кольцо пересобралось.
+    val shown by animateFloatAsState(
+        targetValue = if (hasData) marks.size.toFloat() else 0f,
+        animationSpec = tween(700),
+        label = "ring",
+    )
 
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.size(216.dp)) {
-            val stroke = 20.dp.toPx()
-            // Дуга рисуется по средней линии штриха, иначе половина толщины срежется краем.
-            val box = Size(size.minDimension - stroke, size.minDimension - stroke)
-            val topLeft = Offset(stroke / 2f, stroke / 2f)
+            // Штрихов ровно столько, сколько пар: лишние читались бы как пары без отметки.
+            // Пустая неделя всё равно рисует кольцо — иначе на месте сводки дырка.
+            val count = if (marks.isEmpty()) 24 else marks.size
+            val length = 20.dp.toPx()
+            val outerRadius = size.minDimension / 2f
+            val step = 360f / count
 
-            drawArc(track, 0f, 360f, false, topLeft, box, style = Stroke(stroke))
-
-            var angle = -90f
-            shares.forEach { (share, color) ->
-                val sweep = share * 360f
-                if (sweep > 1f) {
-                    drawArc(
-                        color = color,
-                        startAngle = angle + RING_GAP / 2f,
-                        sweepAngle = (sweep - RING_GAP).coerceAtLeast(1f),
-                        useCenter = false,
-                        topLeft = topLeft,
-                        size = box,
-                        style = Stroke(stroke, cap = StrokeCap.Round),
-                    )
-                }
-                angle += sweep
+            repeat(count) { index ->
+                val angle = Math.toRadians((-90f + step * index).toDouble())
+                val dx = cos(angle).toFloat()
+                val dy = sin(angle).toFloat()
+                drawLine(
+                    color = marks.getOrNull(index)?.takeIf { index < shown } ?: track,
+                    start = Offset(
+                        center.x + dx * (outerRadius - length),
+                        center.y + dy * (outerRadius - length),
+                    ),
+                    end = Offset(center.x + dx * outerRadius, center.y + dy * outerRadius),
+                    strokeWidth = 7.dp.toPx(),
+                    cap = StrokeCap.Round,
+                )
             }
         }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 40.dp),
+            modifier = Modifier.padding(horizontal = 44.dp),
         ) {
             Text(
                 text = value,

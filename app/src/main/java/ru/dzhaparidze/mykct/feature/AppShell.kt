@@ -3,6 +3,8 @@ package ru.dzhaparidze.mykct.feature
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
+import ru.dzhaparidze.mykct.feature.schedule.drawAmbientGlow
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -84,29 +86,35 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
     // у себя под пластиной. Настоящего backdrop-blur в Compose нет, это его ручная сборка.
     val backdrop = rememberGraphicsLayer()
 
+    val accent = MaterialTheme.colorScheme.primary
+    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
     Box(modifier = Modifier.fillMaxSize()) {
+        // Фон, свет по кромкам и точечная сетка — общие для всех экранов и живут здесь,
+        // а не внутри каждого: при смене экрана подложка не участвует в переходе,
+        // меняется только содержимое. Раньше фон рисовал каждый экран сам, поэтому
+        // гас вместе с ним — и в середине перехода экран целиком уходил в чёрный.
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .drawBehind { drawAmbientGlow(accent, darkTheme) }
+                .dotGrid()
                 .drawWithContent {
                     backdrop.record { this@drawWithContent.drawContent() }
                     drawLayer(backdrop)
                 },
         ) {
-        // Экраны сменяются наплывом: сначала старый гаснет, потом проявляется новый.
-        // Одновременный `Crossfade` не годится — в середине оба кадра полупрозрачны,
-        // текст ложится на текст, а сквозь них просвечивает подложка окна.
-        // Заливка фоном обязательна по той же причине: между уходом и появлением
-        // на весь экран видно окно, и без неё там мелькает белая пелена.
+        // Содержимое сменяется по очереди: старое гаснет 120 мс, новое проявляется 180 мс.
+        // Одновременный наплыв кладёт текст на текст, а разнести по времени можно только
+        // потому, что подложка не анимируется — в паузе видно фон со светом, а не пустоту.
         AnimatedContent(
             targetState = screen,
             transitionSpec = {
-                fadeIn(tween(200, delayMillis = 120)) togetherWith fadeOut(tween(120))
+                fadeIn(tween(180, delayMillis = 120)) togetherWith fadeOut(tween(120))
             },
             label = "screen",
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+            modifier = Modifier.fillMaxSize(),
         ) { current ->
             when (current) {
                 Screen.SCHEDULE -> ScheduleScreen()

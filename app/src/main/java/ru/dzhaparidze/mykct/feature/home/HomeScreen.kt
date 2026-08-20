@@ -25,9 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,7 +50,6 @@ import ru.dzhaparidze.mykct.ui.PullToRefresh
 import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.SegmentedSwitch
 import ru.dzhaparidze.mykct.ui.ShinyPill
-import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.ui.theme.Danger
 import ru.dzhaparidze.mykct.ui.theme.Green
@@ -138,15 +135,9 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
     var streakOpen by rememberSaveable { mutableStateOf(false) }
 
     val accent = MaterialTheme.colorScheme.primary
-    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .drawBehind { drawAmbientGlow(accent, darkTheme) }
-            .dotGrid(),
-    ) {
+    // Фон, свет и сетка — в `AppShell`, общие на все экраны.
+    Box(modifier = Modifier.fillMaxSize()) {
         // `isRefreshing` только поверх уже показанных данных: на первой загрузке
         // крутится свой индикатор в теле экрана, и два спиннера сразу читались бы
         // как подвисание.

@@ -19,12 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +52,6 @@ import ru.dzhaparidze.mykct.ui.Swirl
 import ru.dzhaparidze.mykct.ui.phaseOf
 import ru.dzhaparidze.mykct.ui.PullToRefresh
 import ru.dzhaparidze.mykct.ui.ScreenTitle
-import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.ui.theme.VioletIndigo
@@ -157,18 +154,9 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
     val homeViewModel: HomeViewModel = viewModel()
     val home by homeViewModel.state.collectAsStateWithLifecycle()
 
-    val accent = MaterialTheme.colorScheme.primary
-    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-
-    // Свет живёт в фоне всего экрана, а не в отдельной плашке шапки: рисуется под
-    // прокруткой, поэтому не уезжает вместе с контентом.
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .drawBehind { drawAmbientGlow(accent, darkTheme) }
-            .dotGrid(),
-    ) {
+    // Фон, свет и сетка — общие для всех экранов и живут в `AppShell`: при смене
+    // экрана меняется только содержимое, подложка остаётся на месте.
+    Box(modifier = Modifier.fillMaxSize()) {
     // `isRefreshing` только поверх уже показанной недели: на первой загрузке
     // крутится свой индикатор в теле экрана, и два спиннера сразу читались бы
     // как подвисание.

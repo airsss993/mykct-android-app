@@ -19,6 +19,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import ru.dzhaparidze.mykct.R
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -120,44 +125,94 @@ fun ScreenTitle(
 }
 
 /**
- * Круглая кнопка действия под сводкой экрана. Живёт здесь, а не в расписании:
- * тот же ряд стоит на «Главной», и разъехавшиеся размеры сразу читаются как
- * два разных экрана.
+ * Сводка в шапке экрана: подпись, крупное число и строка под ним. Живёт здесь, а не
+ * в каждом экране: одинаковая сводка стоит и в расписании, и на «Главной», и
+ * разъехавшиеся кегли сразу читаются как два разных экрана.
  */
 @Composable
-fun HeroAction(
-    @DrawableRes icon: Int,
-    label: String,
-    onClick: () -> Unit,
+fun HeroSummary(caption: String, value: String, subtitle: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(
+            text = caption,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            fontSize = 44.sp,
+            lineHeight = 52.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * Навигация по неделям под сводкой. Раньше это были три круга по 52dp с подписями —
+ * блок высотой почти в сотню точек ради двух стрелок. Теперь одна строка: «Сегодня»
+ * слева, стрелки справа — как в календарях.
+ */
+@Composable
+fun WeekNav(
+    onToday: () -> Unit,
+    onPrev: () -> Unit,
+    onNext: () -> Unit,
     modifier: Modifier = Modifier,
-    description: String = label,
 ) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .size(52.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
+                .clickable(onClick = onToday)
+                .padding(start = 16.dp, end = 20.dp, top = 11.dp, bottom = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(icon),
-                contentDescription = description,
+                painter = painterResource(R.drawable.ic_calendar),
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = "Сегодня",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(start = 8.dp),
             )
         }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp),
+
+        Spacer(Modifier.weight(1f))
+
+        NavArrow(R.drawable.ic_chevron_left, "Предыдущая неделя", onPrev)
+        Spacer(Modifier.width(10.dp))
+        NavArrow(R.drawable.ic_chevron_right, "Следующая неделя", onNext)
+    }
+}
+
+@Composable
+private fun NavArrow(@DrawableRes icon: Int, description: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = description,
+            tint = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.size(22.dp),
         )
     }
 }

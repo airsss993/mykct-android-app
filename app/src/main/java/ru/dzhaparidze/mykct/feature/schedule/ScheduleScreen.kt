@@ -46,7 +46,8 @@ import ru.dzhaparidze.mykct.feature.schedule.components.GroupSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.LessonSheet
 import ru.dzhaparidze.mykct.feature.schedule.components.WeekStrip
 import ru.dzhaparidze.mykct.ui.Fade
-import ru.dzhaparidze.mykct.ui.HeroAction
+import ru.dzhaparidze.mykct.ui.HeroSummary
+import ru.dzhaparidze.mykct.ui.WeekNav
 import ru.dzhaparidze.mykct.ui.Phase
 import ru.dzhaparidze.mykct.ui.Swirl
 import ru.dzhaparidze.mykct.ui.phaseOf
@@ -286,7 +287,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
 
 /**
  * Градиентная шапка по референсу: строка заголовка с пилюлей выбора, крупная сводка дня
- * на месте «баланса» и ряд круглых действий под ней.
+ * на месте «баланса» и навигация по неделям под ней.
  */
 @Composable
 private fun Hero(
@@ -318,40 +319,25 @@ private fun Hero(
 
         Spacer(Modifier.height(24.dp))
 
-        Text(
-            text = "Неделя ${weekRange(state.weekStart)}",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
+        HeroSummary(
+            caption = "Неделя ${weekRange(state.weekStart)}",
             // Крупная строка на месте баланса из референса: сколько пар в выбранном дне.
             // Во время загрузки «Пар нет» — враньё, пока данных ещё нет.
-            text = when {
+            value = when {
                 state.isLoading -> "Загружаем…"
                 state.error != null -> "Нет данных"
                 state.visible.sumOf { it.lessons.size } == 0 -> "Пар нет"
                 else -> lessonsCount(state.visible.sumOf { it.lessons.size })
             },
-            fontSize = 34.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Text(
             // Один день — «Понедельник, 17 августа · 9:00 – 15:40», диапазон — «17 – 21 августа»
-            text = state.visible.singleOrNull()
+            subtitle = state.visible.singleOrNull()
                 ?.let { it.date.dayTitle() + it.lessons.dayHours() }
                 ?: state.visible.dateRange(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            HeroAction(R.drawable.ic_calendar, "Сегодня", onToday, Modifier.weight(1f))
-            HeroAction(R.drawable.ic_chevron_left, "Назад", onPrevWeek, Modifier.weight(1f), "Предыдущая неделя")
-            HeroAction(R.drawable.ic_chevron_right, "Вперёд", onNextWeek, Modifier.weight(1f))
-        }
+        WeekNav(onToday = onToday, onPrev = onPrevWeek, onNext = onNextWeek)
     }
 }
 

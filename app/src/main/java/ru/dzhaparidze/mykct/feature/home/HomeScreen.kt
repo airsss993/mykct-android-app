@@ -41,7 +41,8 @@ import ru.dzhaparidze.mykct.data.api.Subject
 import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.ui.Fade
-import ru.dzhaparidze.mykct.ui.HeroAction
+import ru.dzhaparidze.mykct.ui.HeroSummary
+import ru.dzhaparidze.mykct.ui.WeekNav
 import ru.dzhaparidze.mykct.ui.Phase
 import ru.dzhaparidze.mykct.ui.Swirl
 import ru.dzhaparidze.mykct.ui.phaseOf
@@ -125,7 +126,7 @@ private fun Attendance.color() = when (this) {
  * поэтому без входа экран показывает приглашение войти, а не пустые карточки.
  *
  * Верстка повторяет расписание: тот же фон со светом, тот же `ScreenTitle` с огоньком
- * стрика, та же сводка крупным числом и тот же ряд круглых действий. Стрик отдельной
+ * стрика, та же сводка крупным числом и та же навигация по неделям. Стрик отдельной
  * карточкой больше не дублируется — он живёт в огоньке и его листе.
  */
 @Composable
@@ -291,37 +292,26 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
     val stats = state.stats
     val empty = state.records.isEmpty()
 
-    Text(
-        text = "Неделя ${weekRange(state.weekStart)}",
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Text(
+    HeroSummary(
+        caption = "Неделя ${weekRange(state.weekStart)}",
         // Пока данных нет, «0%» — враньё: у пустой недели и у прогулянной он одинаков.
-        text = when {
+        value = when {
             state.isLoading && empty -> "Загружаем…"
             state.error != null -> "Нет данных"
             empty -> "Отметок нет"
             else -> "${stats.percent}%"
         },
-        fontSize = 34.sp,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
-    Text(
-        text = if (empty) "За эту неделю колледж ничего не отметил"
+        subtitle = if (empty) "За эту неделю колледж ничего не отметил"
         else "Был на ${stats.present} из ${lessons(stats.total)}",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(20.dp))
 
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        HeroAction(R.drawable.ic_calendar, "Сегодня", viewModel::goToCurrentWeek, Modifier.weight(1f))
-        HeroAction(R.drawable.ic_chevron_left, "Назад", { viewModel.shiftWeek(-1) }, Modifier.weight(1f), "Предыдущая неделя")
-        HeroAction(R.drawable.ic_chevron_right, "Вперёд", { viewModel.shiftWeek(1) }, Modifier.weight(1f), "Следующая неделя")
-    }
+    WeekNav(
+        onToday = viewModel::goToCurrentWeek,
+        onPrev = { viewModel.shiftWeek(-1) },
+        onNext = { viewModel.shiftWeek(1) },
+    )
 
     Spacer(Modifier.height(24.dp))
 
@@ -428,11 +418,11 @@ private fun Stat(label: String, value: String, color: Color, modifier: Modifier 
             .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surface)
             .hairline(RoundedCornerShape(18.dp))
-            .padding(vertical = 12.dp),
+            .padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = value, style = MaterialTheme.typography.titleMedium, color = color)
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = value, style = MaterialTheme.typography.titleLarge, color = color)
+        Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

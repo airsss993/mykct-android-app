@@ -40,7 +40,6 @@ import ru.dzhaparidze.mykct.data.api.AttendanceRecord
 import ru.dzhaparidze.mykct.data.api.Subject
 import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
-import ru.dzhaparidze.mykct.feature.schedule.drawAmbientGlow
 import ru.dzhaparidze.mykct.ui.Fade
 import ru.dzhaparidze.mykct.ui.HeroAction
 import ru.dzhaparidze.mykct.ui.Phase
@@ -437,52 +436,113 @@ private fun Stat(label: String, value: String, color: Color, modifier: Modifier 
     }
 }
 
+/** Короткая метка для пилюли: полное «Не был (Н/У)» в строку не помещается. */
+private val Attendance.short: String
+    get() = when (this) {
+        Attendance.PRESENT -> "Был"
+        Attendance.EXCUSED -> "Ув."
+        Attendance.ABSENT -> "Н/У"
+        Attendance.UNKNOWN -> "—"
+    }
+
+/**
+ * День посещаемости — одна карточка со строками, а не стопка отдельных плашек:
+ * у четырёх пар подряд рамки и скругления превращались в рябь. Статус показывают
+ * иконка предмета в тонированном круге и пилюля справа — цветной точки для этого
+ * мало, она читается как маркер списка, а не как оценка присутствия.
+ */
 @Composable
 private fun DayBlock(date: LocalDate, records: List<AttendanceRecord>) {
     Column(modifier = Modifier.padding(bottom = 16.dp)) {
-        Text(
-            text = date.dayTitle(),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        records.forEach { record ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .hairline(RoundedCornerShape(18.dp))
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(record.attendance.color()),
-                )
-                Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                    Text(
-                        text = record.title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = listOfNotNull(
-                            record.start?.format(TIME)?.let { "$it – ${record.end?.format(TIME) ?: ""}" },
-                            record.room.takeIf { it.isNotBlank() },
-                            record.attendance.title,
-                        ).joinToString(" · "),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = date.dayTitle(),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = "${records.count { it.attendance == Attendance.PRESENT }} из ${records.size}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .hairline(RoundedCornerShape(20.dp)),
+        ) {
+            records.forEachIndexed { index, record ->
+                // Разделитель начинается после иконки, иначе строки не читаются списком.
+                if (index > 0) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 64.dp)
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
                     )
                 }
+                RecordRow(record)
             }
         }
+    }
+}
+
+@Composable
+private fun RecordRow(record: AttendanceRecord) {
+    val color = record.attendance.color()
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(subjectIcon(record.title)),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Text(
+                text = record.title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = listOfNotNull(
+                    record.start?.let { "${it.format(TIME)} – ${record.end?.format(TIME) ?: ""}" },
+                    record.room.takeIf { it.isNotBlank() },
+                ).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            text = record.attendance.short,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.12f))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+        )
     }
 }
 

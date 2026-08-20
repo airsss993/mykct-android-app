@@ -95,7 +95,7 @@ fun LessonCard(
             )
 
             Icon(
-                painter = painterResource(lesson.backgroundIcon()),
+                painter = painterResource(subjectIcon(lesson.title)),
                 contentDescription = null,
                 tint = Color.White.copy(alpha = 0.13f),
                 modifier = Modifier
@@ -162,17 +162,63 @@ private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 /**
  * Водяной знак по названию предмета. Названия приходят с портала свободным текстом,
- * так что это подбор по ключевому слову с запасным вариантом, а не справочник.
+ * так что это подбор по ключевому слову, а не справочник: неизвестный предмет получает
+ * `ic_school`. Порядок правил значим — частные слова стоят раньше общих, иначе
+ * «Физическая культура» уходит в физику, «Русский язык» — в иностранный,
+ * а «Языки программирования» — в перевод.
  */
 @DrawableRes
-private fun Lesson.backgroundIcon(): Int {
-    val name = title.lowercase()
+internal fun subjectIcon(title: String): Int {
+    val n = title.lowercase().replace('ё', 'е')
     return when {
-        "физич" in name || "физкультур" in name -> R.drawable.ic_fitness
-        "английск" in name || "язык" in name -> R.drawable.ic_translate
-        "баз" in name && "данных" in name -> R.drawable.ic_list
-        "операционн" in name || "сет" in name -> R.drawable.ic_memory
-        "разработ" in name || "модул" in name || "программ" in name -> R.drawable.ic_code
+        // Физкультура — до физики: «физическая» есть в обоих названиях.
+        "физкультур" in n || "физическ" in n || "спорт" in n -> R.drawable.ic_fitness
+
+        // Профильный цикл
+        ("баз" in n && "данн" in n) || "субд" in n || "sql" in n -> R.drawable.ic_database
+        "сет" in n || "маршрутизац" in n || "телекоммуникац" in n -> R.drawable.ic_network
+        "операционн" in n || "linux" in n || "windows" in n -> R.drawable.ic_terminal
+        "алгоритм" in n || "структур данных" in n || "дискретн" in n -> R.drawable.ic_algorithm
+        "тестирован" in n || "отладк" in n || "качеств" in n -> R.drawable.ic_bug
+        "мобильн" in n || "android" in n || "ios" in n -> R.drawable.ic_mobile
+        "веб" in n || "web" in n || "сайт" in n || "html" in n || "фронтенд" in n -> R.drawable.ic_web
+        "криптограф" in n || ("безопасн" in n && ("информ" in n || "данн" in n)) ||
+            ("защит" in n && "информ" in n) -> R.drawable.ic_security
+        "разработ" in n || "программ" in n || "модул" in n || "информатик" in n ->
+            R.drawable.ic_code
+        "аппаратн" in n || "эвм" in n || "архитектур" in n || "схемотехник" in n ->
+            R.drawable.ic_memory
+
+        // Языки — русский до иностранного, иностранный после «программирования» выше.
+        "русск" in n || "литератур" in n || "родн" in n -> R.drawable.ic_book
+        "английск" in n || "иностран" in n || "язык" in n -> R.drawable.ic_translate
+
+        // Математика и естественные науки
+        "статистик" in n || "вероятност" in n -> R.drawable.ic_statistics
+        "математик" in n || "матем" in n || "численн метод" in n -> R.drawable.ic_math
+        "астроном" in n -> R.drawable.ic_astronomy
+        "физик" in n || "хими" in n -> R.drawable.ic_science
+        "биолог" in n || "естествознан" in n || "эколог" in n -> R.drawable.ic_biology
+        "географ" in n -> R.drawable.ic_public
+
+        // Гуманитарный цикл
+        "истори" in n -> R.drawable.ic_history
+        "обществ" in n || "правов" in n || "юрид" in n || "законодат" in n -> R.drawable.ic_law
+        "психолог" in n || "общени" in n || "этик" in n -> R.drawable.ic_psychology
+        "эконом" in n || "финанс" in n || "предпринимат" in n || "бухгалт" in n ||
+            "менеджмент" in n || "маркетинг" in n -> R.drawable.ic_economics
+
+        // Организационное
+        "жизнедеятельн" in n || "обж" in n || "охран труда" in n || "медицин" in n ->
+            R.drawable.ic_safety
+        "черчени" in n || "график" in n || "дизайн" in n || "инженерн" in n ->
+            R.drawable.ic_design
+        "практик" in n || "производствен" in n || "стажировк" in n -> R.drawable.ic_practice
+        "проект" in n || "курсов" in n || "диплом" in n || "вкр" in n -> R.drawable.ic_assignment
+        "экзамен" in n || "зачет" in n || "консультац" in n || "аттестац" in n ->
+            R.drawable.ic_exam
+        "классн час" in n || "куратор" in n || "собрани" in n -> R.drawable.ic_groups
+
         else -> R.drawable.ic_school
     }
 }

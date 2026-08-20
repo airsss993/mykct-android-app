@@ -82,7 +82,9 @@ fun DayTimeline(
                 onClick = { onLessonClick(lesson) },
                 modifier = Modifier
                     .offset(y = SLOT_HEIGHT * top)
-                    .padding(start = GUTTER, bottom = 6.dp)
+                    // Отступа снизу быть не может: он съедал у карточки 6dp высоты,
+                    // и её нижняя кромка не доходила до отметки конца пары.
+                    .padding(start = GUTTER)
                     // ponytail: min, а не фиксированная высота — длинное название темы
                     // иначе обрежется. Растянувшаяся карточка может наехать на следующую;
                     // если начнёт мешать — резать текст по maxLines, а не жёстко фиксировать высоту.

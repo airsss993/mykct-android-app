@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -33,15 +34,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ru.dzhaparidze.mykct.ui.theme.DarkSurface
 import ru.dzhaparidze.mykct.ui.theme.Violet
+import ru.dzhaparidze.mykct.ui.theme.VioletDeep
+import ru.dzhaparidze.mykct.ui.theme.VioletLight
 import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import kotlin.math.hypot
 
 /**
- * Главное действие экрана: пилюля во всю ширину из тёмного стекла в акцентном цвете,
- * с бегущей по кромке conic-подсветкой (референс shiny-cta).
+ * Главное действие экрана: пилюля во всю ширину, залитая акцентным градиентом
+ * по диагонали (светлая лаванда — глубокий индиго), с бегущей по кромке
+ * conic-подсветкой (референс shiny-cta).
  *
  * Sweep-градиент в Compose повернуть нечем, поэтому крутится не градиент, а холст:
  * `rotate` вокруг центра кнопки. Рисуем квадрат со стороной в диагональ —
@@ -66,7 +70,8 @@ fun ShinyPill(
     // Выключенная кнопка не светится: подсветка — приглашение нажать.
     val glow = if (enabled) 1f else 0f
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    // Выключенная гасится целиком: на светлой заливке одного бледного текста мало.
+    Box(modifier = modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.45f)) {
         if (CAN_BLUR && enabled) {
             Box(
                 modifier = Modifier
@@ -81,6 +86,9 @@ fun ShinyPill(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(CircleShape)
+                // Подложка под кромкой: без неё в паузе между пробегами подсветки
+                // сквозь 2dp рамки просвечивал фон экрана и кнопка казалась с зазором.
+                .background(VioletDeep)
                 .drawBehind {
                     val side = hypot(size.width, size.height)
                     rotate(angle) {
@@ -101,11 +109,13 @@ fun ShinyPill(
                 }
                 .padding(2.dp)
                 .clip(CircleShape)
-                // Near-black основа плюс фиолетовая плёнка сверху вниз.
-                .background(DarkSurface)
+                // Светлая заливка: градиент по диагонали, от блика в левом верхнем углу
+                // к глубокому индиго справа внизу.
                 .background(
-                    Brush.verticalGradient(
-                        listOf(Violet.copy(alpha = 0.32f), Violet.copy(alpha = 0.10f)),
+                    Brush.linearGradient(
+                        0.00f to VioletTint,
+                        0.35f to VioletLight,
+                        1.00f to VioletDeep,
                     ),
                 )
                 .clickable(enabled = enabled, onClick = onClick)
@@ -113,7 +123,7 @@ fun ShinyPill(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val content = if (enabled) Color.White else Color.White.copy(alpha = 0.4f)
+            val content = Color.White
             if (icon != null) {
                 Icon(
                     painterResource(icon),
@@ -125,6 +135,7 @@ fun ShinyPill(
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = content,
                 modifier = Modifier.padding(start = if (icon != null) 10.dp else 0.dp),
             )

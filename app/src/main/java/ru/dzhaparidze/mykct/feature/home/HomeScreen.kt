@@ -1,5 +1,6 @@
 package ru.dzhaparidze.mykct.feature.home
 
+import android.os.Build
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -36,6 +37,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -406,6 +411,53 @@ private fun Empty(text: String) {
 /** Штрихов в кольце всегда столько: на неделе с тремя парами три штриха выглядели дырой. */
 private const val RING_TICKS = 48
 
+private val RING_SIZE = 216.dp
+
+/** Размытие свечения требует Android 12; ниже кольцо остаётся без ореола. */
+private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+/**
+ * Штрихи шкалы по кругу. [glow] — слой свечения: трек не рисуется (светиться нечему),
+ * а цветные идут в полсилы, иначе после размытия ореол забивает сами штрихи.
+ */
+private fun DrawScope.drawRingTicks(
+    shown: Float,
+    present: Int,
+    excused: Int,
+    absent: Int,
+    track: Color,
+    stroke: Dp,
+    glow: Boolean,
+) {
+    val length = 16.dp.toPx()
+    val outerRadius = size.minDimension / 2f
+    val step = 360f / RING_TICKS
+
+    repeat(RING_TICKS) { index ->
+        val angle = Math.toRadians((-90f + step * index).toDouble())
+        val dx = cos(angle).toFloat()
+        val dy = sin(angle).toFloat()
+        val color = when {
+            index >= shown -> track
+            index < present -> Green
+            index < excused -> Warning
+            index < absent -> Danger
+            else -> track
+        }
+        if (glow && color == track) return@repeat
+        drawLine(
+            color = if (glow) color.copy(alpha = 0.7f) else color,
+            start = Offset(
+                center.x + dx * (outerRadius - length),
+                center.y + dy * (outerRadius - length),
+            ),
+            end = Offset(center.x + dx * outerRadius, center.y + dy * outerRadius),
+            strokeWidth = stroke.toPx(),
+            cap = StrokeCap.Round,
+        )
+    }
+}
+
 /**
  * Кольцо посещаемости: процент крупно в центре, вокруг — шкала из штрихов. Длина
  * цветного участка пропорциональна долям (был / уволен / прогулял), а число штрихов
@@ -439,33 +491,21 @@ private fun AttendanceRing(
         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(modifier = Modifier.size(216.dp)) {
-            val length = 16.dp.toPx()
-            val outerRadius = size.minDimension / 2f
-            val step = 360f / RING_TICKS
-
-            repeat(RING_TICKS) { index ->
-                val angle = Math.toRadians((-90f + step * index).toDouble())
-                val dx = cos(angle).toFloat()
-                val dy = sin(angle).toFloat()
-                val color = when {
-                    index >= shown -> track
-                    index < present -> Green
-                    index < excused -> Warning
-                    index < absent -> Danger
-                    else -> track
-                }
-                drawLine(
-                    color = color,
-                    start = Offset(
-                        center.x + dx * (outerRadius - length),
-                        center.y + dy * (outerRadius - length),
-                    ),
-                    end = Offset(center.x + dx * outerRadius, center.y + dy * outerRadius),
-                    strokeWidth = 4.dp.toPx(),
-                    cap = StrokeCap.Round,
-                )
+        // Свечение — та же шкала под основной, размытая целым слоем. Штрихи стоят
+        // вплотную, поэтому «ореол» из широкой полупрозрачной черты под каждой сливался
+        // в сплошной тёмный обод; blur даёт мягкий свет и не липнет к соседям.
+        if (CAN_BLUR) {
+            Canvas(
+                modifier = Modifier
+                    .size(RING_SIZE)
+                    .blur(10.dp, BlurredEdgeTreatment.Unbounded),
+            ) {
+                drawRingTicks(shown, present, excused, absent, track, 5.dp, glow = true)
             }
+        }
+
+        Canvas(modifier = Modifier.size(RING_SIZE)) {
+            drawRingTicks(shown, present, excused, absent, track, 4.dp, glow = false)
         }
 
         Column(

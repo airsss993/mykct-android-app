@@ -33,6 +33,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -79,6 +80,8 @@ fun ShinyPill(
         1.00f to VioletInk,
     )
 
+    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
     // Выключенная гасится целиком: на светлой заливке одного бледного текста мало.
     Box(modifier = modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.45f)) {
         if (CAN_BLUR && enabled) {
@@ -95,29 +98,36 @@ fun ShinyPill(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(CircleShape)
-                // Под кромкой — та же заливка: сквозь прозрачную рамку просвечивал фон
-                // экрана, а сплошной VioletDeep в светлой теме читался тёмной обводкой.
-                .background(fill)
-                .drawBehind {
-                    val side = hypot(size.width, size.height)
-                    rotate(angle) {
-                        drawRect(
-                            brush = Brush.sweepGradient(
-                                0.00f to Color.Transparent,
-                                0.06f to Violet.copy(alpha = glow),
-                                0.12f to VioletTint.copy(alpha = glow),
-                                0.18f to Violet.copy(alpha = glow),
-                                0.24f to Color.Transparent,
-                                1.00f to Color.Transparent,
-                                center = center,
-                            ),
-                            topLeft = Offset((size.width - side) / 2f, (size.height - side) / 2f),
-                            size = Size(side, side),
-                        )
-                    }
-                }
-                .padding(2.dp)
-                .clip(CircleShape)
+                // Кромка с бегущей подсветкой — только в тёмной теме. На светлом фоне
+                // рамка вокруг заливки читается тёмной обводкой (внутрь заливки идёт
+                // белая плёнка, а на кромку нет), и блик по ней выглядит мусором.
+                .then(
+                    if (!darkTheme) Modifier else Modifier
+                        .background(fill)
+                        .drawBehind {
+                            val side = hypot(size.width, size.height)
+                            rotate(angle) {
+                                drawRect(
+                                    brush = Brush.sweepGradient(
+                                        0.00f to Color.Transparent,
+                                        0.06f to Violet.copy(alpha = glow),
+                                        0.12f to VioletTint.copy(alpha = glow),
+                                        0.18f to Violet.copy(alpha = glow),
+                                        0.24f to Color.Transparent,
+                                        1.00f to Color.Transparent,
+                                        center = center,
+                                    ),
+                                    topLeft = Offset(
+                                        (size.width - side) / 2f,
+                                        (size.height - side) / 2f,
+                                    ),
+                                    size = Size(side, side),
+                                )
+                            }
+                        }
+                        .padding(2.dp)
+                        .clip(CircleShape),
+                )
                 .background(fill)
                 // Стеклянный блик: белая плёнка сверху, к середине сходит на нет.
                 .background(

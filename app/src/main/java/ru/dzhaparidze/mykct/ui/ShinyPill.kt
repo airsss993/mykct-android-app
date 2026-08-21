@@ -38,7 +38,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.ui.theme.Violet
-import ru.dzhaparidze.mykct.ui.theme.VioletDeep
 import ru.dzhaparidze.mykct.ui.theme.VioletInk
 import ru.dzhaparidze.mykct.ui.theme.VioletLight
 import ru.dzhaparidze.mykct.ui.theme.VioletTint
@@ -72,6 +71,14 @@ fun ShinyPill(
     // Выключенная кнопка не светится: подсветка — приглашение нажать.
     val glow = if (enabled) 1f else 0f
 
+    // Заливка строго по горизонтали: блик слева, глубокий индиго справа. По диагонали
+    // светлая остановка размазывалась по всей кнопке и градиент читался плоским.
+    val fill = Brush.horizontalGradient(
+        0.00f to VioletTint,
+        0.28f to VioletLight,
+        1.00f to VioletInk,
+    )
+
     // Выключенная гасится целиком: на светлой заливке одного бледного текста мало.
     Box(modifier = modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.45f)) {
         if (CAN_BLUR && enabled) {
@@ -88,9 +95,9 @@ fun ShinyPill(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(CircleShape)
-                // Подложка под кромкой: без неё в паузе между пробегами подсветки
-                // сквозь 2dp рамки просвечивал фон экрана и кнопка казалась с зазором.
-                .background(VioletDeep)
+                // Под кромкой — та же заливка: сквозь прозрачную рамку просвечивал фон
+                // экрана, а сплошной VioletDeep в светлой теме читался тёмной обводкой.
+                .background(fill)
                 .drawBehind {
                     val side = hypot(size.width, size.height)
                     rotate(angle) {
@@ -111,16 +118,7 @@ fun ShinyPill(
                 }
                 .padding(2.dp)
                 .clip(CircleShape)
-                // Заливка строго по горизонтали: блик слева, глубокий индиго справа.
-                // По диагонали светлая остановка размазывалась по всей кнопке и
-                // градиент читался плоской заливкой.
-                .background(
-                    Brush.horizontalGradient(
-                        0.00f to VioletTint,
-                        0.28f to VioletLight,
-                        1.00f to VioletInk,
-                    ),
-                )
+                .background(fill)
                 // Стеклянный блик: белая плёнка сверху, к середине сходит на нет.
                 .background(
                     Brush.verticalGradient(

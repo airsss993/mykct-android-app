@@ -80,6 +80,13 @@ fun ShinyPill(
         1.00f to VioletInk,
     )
 
+    // Стеклянный блик: белая плёнка сверху, к середине сходит на нет.
+    val sheen = Brush.verticalGradient(
+        0.0f to Color.White.copy(alpha = 0.30f),
+        0.5f to Color.White.copy(alpha = 0.05f),
+        1.0f to Color.Transparent,
+    )
+
     val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     // Выключенная гасится целиком: на светлой заливке одного бледного текста мало.
@@ -98,45 +105,36 @@ fun ShinyPill(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(CircleShape)
-                // Кромка с бегущей подсветкой — только в тёмной теме. На светлом фоне
-                // рамка вокруг заливки читается тёмной обводкой (внутрь заливки идёт
-                // белая плёнка, а на кромку нет), и блик по ней выглядит мусором.
-                .then(
-                    if (!darkTheme) Modifier else Modifier
-                        .background(fill)
-                        .drawBehind {
-                            val side = hypot(size.width, size.height)
-                            rotate(angle) {
-                                drawRect(
-                                    brush = Brush.sweepGradient(
-                                        0.00f to Color.Transparent,
-                                        0.06f to Violet.copy(alpha = glow),
-                                        0.12f to VioletTint.copy(alpha = glow),
-                                        0.18f to Violet.copy(alpha = glow),
-                                        0.24f to Color.Transparent,
-                                        1.00f to Color.Transparent,
-                                        center = center,
-                                    ),
-                                    topLeft = Offset(
-                                        (size.width - side) / 2f,
-                                        (size.height - side) / 2f,
-                                    ),
-                                    size = Size(side, side),
-                                )
-                            }
-                        }
-                        .padding(2.dp)
-                        .clip(CircleShape),
-                )
+                // Кромка, по которой бежит подсветка. Заливка и плёнка на ней те же,
+                // что внутри: без плёнки кромка выходила насыщеннее кнопки и в светлой
+                // теме читалась тёмной обводкой.
                 .background(fill)
-                // Стеклянный блик: белая плёнка сверху, к середине сходит на нет.
-                .background(
-                    Brush.verticalGradient(
-                        0.0f to Color.White.copy(alpha = 0.30f),
-                        0.5f to Color.White.copy(alpha = 0.05f),
-                        1.0f to Color.Transparent,
-                    ),
-                )
+                .background(sheen)
+                .drawBehind {
+                    val side = hypot(size.width, size.height)
+                    rotate(angle) {
+                        drawRect(
+                            brush = Brush.sweepGradient(
+                                0.00f to Color.Transparent,
+                                0.06f to Violet.copy(alpha = glow),
+                                0.12f to VioletTint.copy(alpha = glow),
+                                0.18f to Violet.copy(alpha = glow),
+                                0.24f to Color.Transparent,
+                                1.00f to Color.Transparent,
+                                center = center,
+                            ),
+                            topLeft = Offset(
+                                (size.width - side) / 2f,
+                                (size.height - side) / 2f,
+                            ),
+                            size = Size(side, side),
+                        )
+                    }
+                }
+                .padding(2.dp)
+                .clip(CircleShape)
+                .background(fill)
+                .background(sheen)
                 // Кромка стекла: в тёмной теме светлая сверху и гаснет книзу, в светлой
                 // наоборот — тёмная и чуть плотнее снизу, иначе кнопка сливается с фоном.
                 .border(

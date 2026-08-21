@@ -14,6 +14,9 @@ val VioletIndigo = Color(0xFF4A54C9)
 val VioletLight = Color(0xFF9B8CFF)   // верхняя остановка градиента
 val VioletDeep = Color(0xFF4B3FBF)    // нижняя остановка градиента
 val VioletSoft = Color(0xFFE8E5FF)    // светлая заливка под акцент в светлой теме
+// Правый край кнопки: насыщеннее и темнее VioletDeep. На VioletDeep градиент кнопки
+// читался плоским — контраста между краями не хватало.
+val VioletInk = Color(0xFF3F1FD6)
 
 /**
  * Фирменный градиент: шапка, активный пункт навбара, выбранный день, карточки пар.

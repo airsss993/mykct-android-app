@@ -8,6 +8,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.ui.theme.Violet
 import ru.dzhaparidze.mykct.ui.theme.VioletDeep
+import ru.dzhaparidze.mykct.ui.theme.VioletInk
 import ru.dzhaparidze.mykct.ui.theme.VioletLight
 import ru.dzhaparidze.mykct.ui.theme.VioletTint
 import kotlin.math.hypot
@@ -109,14 +111,31 @@ fun ShinyPill(
                 }
                 .padding(2.dp)
                 .clip(CircleShape)
-                // Светлая заливка: градиент по диагонали, от блика в левом верхнем углу
-                // к глубокому индиго справа внизу.
+                // Заливка строго по горизонтали: блик слева, глубокий индиго справа.
+                // По диагонали светлая остановка размазывалась по всей кнопке и
+                // градиент читался плоской заливкой.
                 .background(
-                    Brush.linearGradient(
+                    Brush.horizontalGradient(
                         0.00f to VioletTint,
-                        0.35f to VioletLight,
-                        1.00f to VioletDeep,
+                        0.28f to VioletLight,
+                        1.00f to VioletInk,
                     ),
+                )
+                // Стеклянный блик: белая плёнка сверху, к середине сходит на нет.
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.White.copy(alpha = 0.30f),
+                        0.5f to Color.White.copy(alpha = 0.05f),
+                        1.0f to Color.Transparent,
+                    ),
+                )
+                // Кромка стекла: светлая сверху, почти пропадает снизу.
+                .border(
+                    width = 1.dp,
+                    brush = Brush.verticalGradient(
+                        listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0.10f)),
+                    ),
+                    shape = CircleShape,
                 )
                 .clickable(enabled = enabled, onClick = onClick)
                 .padding(vertical = 16.dp),

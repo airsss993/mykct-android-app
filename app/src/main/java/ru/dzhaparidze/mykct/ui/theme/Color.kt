@@ -25,9 +25,11 @@ val VioletInk = Color(0xFF3F1FD6)
  */
 val AccentGradient = Brush.linearGradient(listOf(VioletTint, VioletLight, Violet, VioletDeep))
 
-val Green = Color(0xFF22C55E)         // кольцо прогресса, «в плюсе», «был на паре»
-val Warning = Color(0xFFF5A623)       // пропуск по уважительной
-val Danger = Color(0xFFE0575B)        // ошибка, пропуск без уважительной
+// Статусы взяты светлее и насыщеннее, чем обычная веб-палитра: на near-black фоне
+// #22C55E / #F5A623 / #E0575B выглядели тусклыми, будто выключенные.
+val Green = Color(0xFF30D97C)         // кольцо прогресса, «в плюсе», «был на паре»
+val Warning = Color(0xFFFFAE1A)       // пропуск по уважительной
+val Danger = Color(0xFFFF5A63)        // ошибка, пропуск без уважительной
 
 // Светлая тема
 val LightBackground = Color(0xFFF4F4F8)

@@ -137,12 +137,19 @@ fun ShinyPill(
                         1.0f to Color.Transparent,
                     ),
                 )
-                // Кромка стекла: светлая сверху, почти пропадает снизу.
+                // Кромка стекла: в тёмной теме светлая сверху и гаснет книзу, в светлой
+                // наоборот — тёмная и чуть плотнее снизу, иначе кнопка сливается с фоном.
                 .border(
                     width = 1.dp,
-                    brush = Brush.verticalGradient(
-                        listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0.10f)),
-                    ),
+                    brush = if (darkTheme) {
+                        Brush.verticalGradient(
+                            listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0.10f)),
+                        )
+                    } else {
+                        Brush.verticalGradient(
+                            listOf(VioletInk.copy(alpha = 0.25f), VioletInk.copy(alpha = 0.45f)),
+                        )
+                    },
                     shape = CircleShape,
                 )
                 .clickable(enabled = enabled, onClick = onClick)

@@ -53,7 +53,8 @@ import kotlin.math.hypot
  * `rotate` вокруг центра кнопки. Рисуем квадрат со стороной в диагональ —
  * прямоугольник по размеру кнопки при повороте открывал бы углы.
  *
- * Цвета не из палитры темы: кнопка одинаковая в светлой и тёмной, это её роль.
+ * Цвета не из палитры темы: заливка одинаковая в светлой и тёмной, это её роль.
+ * [shine] выключает бегущую кромку — внутри листа она отвлекает от выбора.
  */
 @Composable
 fun ShinyPill(
@@ -62,13 +63,20 @@ fun ShinyPill(
     modifier: Modifier = Modifier,
     @DrawableRes icon: Int? = null,
     enabled: Boolean = true,
+    shine: Boolean = true,
 ) {
-    val angle by rememberInfiniteTransition(label = "shine").animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing)),
-        label = "angle",
-    )
+    // Анимация живёт только когда кромка видна: без этого пилюля пересобирается
+    // каждый кадр даже с выключенной подсветкой или неактивной кнопкой.
+    val angle = if (shine && enabled) {
+        rememberInfiniteTransition(label = "shine").animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(tween(3000, easing = LinearEasing)),
+            label = "angle",
+        ).value
+    } else {
+        0f
+    }
     // Выключенная кнопка не светится: подсветка — приглашение нажать.
     val glow = if (enabled) 1f else 0f
 
@@ -108,31 +116,34 @@ fun ShinyPill(
                 // Кромка, по которой бежит подсветка. Заливка и плёнка на ней те же,
                 // что внутри: без плёнки кромка выходила насыщеннее кнопки и в светлой
                 // теме читалась тёмной обводкой.
-                .background(fill)
-                .background(sheen)
-                .drawBehind {
-                    val side = hypot(size.width, size.height)
-                    rotate(angle) {
-                        drawRect(
-                            brush = Brush.sweepGradient(
-                                0.00f to Color.Transparent,
-                                0.06f to Violet.copy(alpha = glow),
-                                0.12f to VioletTint.copy(alpha = glow),
-                                0.18f to Violet.copy(alpha = glow),
-                                0.24f to Color.Transparent,
-                                1.00f to Color.Transparent,
-                                center = center,
-                            ),
-                            topLeft = Offset(
-                                (size.width - side) / 2f,
-                                (size.height - side) / 2f,
-                            ),
-                            size = Size(side, side),
-                        )
-                    }
-                }
-                .padding(2.dp)
-                .clip(CircleShape)
+                .then(
+                    if (!shine) Modifier else Modifier
+                        .background(fill)
+                        .background(sheen)
+                        .drawBehind {
+                            val side = hypot(size.width, size.height)
+                            rotate(angle) {
+                                drawRect(
+                                    brush = Brush.sweepGradient(
+                                        0.00f to Color.Transparent,
+                                        0.06f to Violet.copy(alpha = glow),
+                                        0.12f to VioletTint.copy(alpha = glow),
+                                        0.18f to Violet.copy(alpha = glow),
+                                        0.24f to Color.Transparent,
+                                        1.00f to Color.Transparent,
+                                        center = center,
+                                    ),
+                                    topLeft = Offset(
+                                        (size.width - side) / 2f,
+                                        (size.height - side) / 2f,
+                                    ),
+                                    size = Size(side, side),
+                                )
+                            }
+                        }
+                        .padding(2.dp)
+                        .clip(CircleShape),
+                )
                 .background(fill)
                 .background(sheen)
                 // Кромка стекла: в тёмной теме светлая сверху и гаснет книзу, в светлой

@@ -14,6 +14,9 @@ object Groups {
     val all: List<String> = listOf(25 to 4, 24 to 4, 23 to 3, 22 to 2)
         .flatMap { (year, count) -> (1..count).map { "ИТ$year-1$it" } }
 
+    /** Те же группы, разложенные по наборам: 2025 → [ИТ25-11..14], порядок от старшего. */
+    val bySet: Map<Int, List<String>> = all.groupBy { 2000 + yearOf(it) }
+
     /** Набор 25 делится на «Подгр1..4», наборы постарше — на профили. */
     fun subgroups(group: String): List<Named> = when (yearOf(group)) {
         25 -> numbered(4)

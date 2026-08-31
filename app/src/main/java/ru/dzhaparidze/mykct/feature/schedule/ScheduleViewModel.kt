@@ -80,7 +80,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             SelectionStore.changed.collect { selection ->
                 if (selection == _state.value.selection) return@collect
                 _state.update { it.copy(selection = selection) }
-                loadWeek()
+                loadWeek(silent = true)
             }
         }
         // Вид и «пропускать выходные» — чистый пересчёт: неделя уже в weekLessons
@@ -101,7 +101,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun shiftWeek(weeks: Long) {
         val weekStart = _state.value.weekStart.plusWeeks(weeks)
         _state.update { it.copy(weekStart = weekStart, selectedDate = weekStart) }
-        loadWeek()
+        loadWeek(silent = true)
     }
 
     fun goToToday() {
@@ -111,7 +111,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             selectDate(today)
         } else {
             _state.update { it.copy(weekStart = weekStart, selectedDate = today) }
-            loadWeek()
+            loadWeek(silent = true)
         }
     }
 
@@ -119,7 +119,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         if (selection == _state.value.selection) return
         _state.update { it.copy(selection = selection) }
         store.save(selection)
-        loadWeek()
+        loadWeek(silent = true)
     }
 
     fun retry() = loadWeek()
@@ -144,9 +144,14 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun closeLesson() = _state.update { it.copy(details = null) }
 
-    private fun loadWeek() {
+    /**
+     * @param silent не гасить уже показанную неделю индикатором. Смена недели, дня и
+     * группы отвечает за доли секунды, и мелькающий спиннер на месте сетки читается
+     * как рывок; старые пары держатся на экране, пока не приедут новые.
+     */
+    private fun loadWeek(silent: Boolean = false) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = !silent || it.days.isEmpty(), error = null) }
             try {
                 weekLessons = repository.weekSchedule(_state.value.weekStart, _state.value.selection)
                 applyWeek()

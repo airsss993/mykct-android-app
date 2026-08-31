@@ -284,7 +284,7 @@ private fun Chip(text: String, @DrawableRes icon: Int? = null) {
             }
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 color = Color.White,
             )
         }

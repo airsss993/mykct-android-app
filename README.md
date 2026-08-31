@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="screenshots/promo.jpg" alt="МойКЦТ" width="820"/>
+<img src="banner.png" alt="МойКЦТ" width="820"/>
 
 # МойКЦТ
 
@@ -29,14 +29,6 @@
 | **Стрик** | Счётчик недель без пропусков — прямо в шапке расписания |
 | **Успеваемость** | Оценки по предметам за выбранный период |
 | **Темы** | Светлая, тёмная и системная. Свой шрифт, свои иконки предметов, никакого dynamic color |
-
-## Экраны
-
-<div align="center">
-<img src="screenshots/schedule.png" width="260" alt="Расписание"/>
-<img src="screenshots/home.png" width="260" alt="Посещаемость"/>
-<img src="screenshots/settings.png" width="260" alt="Настройки"/>
-</div>
 
 ## Стек
 

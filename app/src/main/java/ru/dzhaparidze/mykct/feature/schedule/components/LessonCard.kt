@@ -279,12 +279,12 @@ private fun Chip(text: String, @DrawableRes icon: Int? = null) {
                     painter = painterResource(it),
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(13.dp),
+                    modifier = Modifier.size(14.dp),
                 )
             }
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = Color.White,
             )
         }

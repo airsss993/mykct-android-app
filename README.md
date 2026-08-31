@@ -46,31 +46,6 @@
 - **core library desugaring** — `java.time` работает начиная с Android 7
 - Юнит-тесты на JUnit 4 + `kotlinx-coroutines-test`, сеть в тестах подменяется `MockEngine`
 
-## Сборка
-
-```bash
-git clone https://github.com/airsss993/mykct-android-app.git
-cd mykct-android-app
-./gradlew :app:assembleDebug
-```
-
-Адрес API задаётся в `local.properties` (или переменными окружения) — в репозиторий он не попадает:
-
-```properties
-API_BASE_URL=https://example.org
-AUTH_BASE_URL=https://example.org   # если авторизация живёт отдельно
-```
-
-Debug-сборка по умолчанию отвечает сама себе заглушкой (`USE_MOCKS`), так что запустить и посмотреть приложение можно без сервера.
-
-| Команда | Что делает |
-|---|---|
-| `./gradlew :app:testDebugUnitTest` | юнит-тесты |
-| `./gradlew :app:assembleDebug` | debug APK |
-| `./gradlew :app:assembleRelease` | подписанный релизный APK |
-
-**Требования:** Android 7.0 (API 24) и выше, JDK 21.
-
 ## Лицензия
 
 MIT — см. [LICENSE](LICENSE). Лицензии сторонних библиотек: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

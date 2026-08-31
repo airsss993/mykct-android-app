@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="screenshots/promo.png" alt="МойКЦТ" width="820"/>
+<img src="screenshots/promo.jpg" alt="МойКЦТ" width="820"/>
 
 # МойКЦТ
 

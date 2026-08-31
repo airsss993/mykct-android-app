@@ -1,62 +1,81 @@
-# 📱 МойКЦТ
-
-> Мобильное приложение для студентов Колледжа Цифровых Технологий
-
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
-[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.5+-green.svg)](https://developer.android.com/jetpack/compose)
-[![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg)](https://android-arsenal.com/api?level=24)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/airsss993/mykct-android-app)
-
-## 📸 Скриншоты
-
 <div align="center">
-  <img src="screenshots/AllinOne.png" width="5997" alt="Приложение"/>
+
+<img src="screenshots/promo.png" alt="МойКЦТ" width="820"/>
+
+# МойКЦТ
+
+**Расписание, посещаемость и оценки Колледжа Цифровых Технологий — в одном приложении**
+
+[![RuStore](https://img.shields.io/badge/RuStore-установить-0077FF?style=for-the-badge)](https://www.rustore.ru/catalog/app/ru.dzhaparidze.collegeapp)
+[![Google Play](https://img.shields.io/badge/Google_Play-установить-34A853?style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=ru.dzhaparidze.collegeapp)
+
+![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Compose-Material_3-4285F4?logo=jetpackcompose&logoColor=white)
+![Android](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
 </div>
-
-## ✨ Возможности
-
-- 📅 **Просмотр расписания** — актуальное расписание занятий на сегодня, 3 дня или всю неделю
-- 🎯 **Персонализация** — выбор группы и подгруппы для отображения вашего расписания
-- 📆 **Гибкий выбор дат** — просмотр расписания за произвольный период
-- 🌓 **Темы оформления** — светлая, тёмная тема и автоматическое переключение по системной теме
-- 🎨 **Современный дизайн** — интерфейс на базе Material Design 3
-
-## 🛠 Технологии
-
-Приложение построено на современном стеке Android-разработки:
-
-- **Язык:** Kotlin
-- **UI:** Jetpack Compose
-- **Архитектура:** MVVM (Model-View-ViewModel)
-- **Сетевое взаимодействие:** Ktor Client
-- **Material Design:** Material 3
-
-## 📋 Требования
-
-- Android 7.0 (API 24) или выше
-
-## 🚀 Установка
-
-### Скачать готовое приложение
-
-**RuStore**:
-
-[![RuStore](https://img.shields.io/badge/RuStore-Скачать-red.svg)](https://www.rustore.ru/catalog/app/ru.dzhaparidze.collegeapp)
-
-**Google Play**:
-
-Версия для Google Play появится позже, после завершения тестирования.
-
-## 🤝 Вклад в проект
-
-Приветствуются любые предложения по улучшению приложения!
-
-## 📄 Лицензия
-
-Этот проект разработан для студентов Колледжа Цифровых Технологий.
 
 ---
 
+## Что умеет
+
+| | |
+|---|---|
+| **Расписание** | Неделя целиком, три дня или один — на выбор. Пары нарисованы на временной сетке: высота карточки равна длительности, идущая пара подсвечена и показывает, сколько осталось |
+| **Своя группа** | Группа, подгруппа, профиль и английская группа — расписание сразу подстраивается под конкретного студента |
+| **Детали пары** | Тема, преподаватель, кабинет и подгруппы — по нажатию на карточку |
+| **Посещаемость** | Кольцо за неделю, разбивка «был / уважительная / неуважительная» и список пар по дням |
+| **Стрик** | Счётчик недель без пропусков — прямо в шапке расписания |
+| **Успеваемость** | Оценки по предметам за выбранный период |
+| **Темы** | Светлая, тёмная и системная. Свой шрифт, свои иконки предметов, никакого dynamic color |
+
+## Экраны
+
 <div align="center">
-  Сделано с ❤️ для студентов КЦТ
+<img src="screenshots/schedule.png" width="260" alt="Расписание"/>
+<img src="screenshots/home.png" width="260" alt="Посещаемость"/>
+<img src="screenshots/settings.png" width="260" alt="Настройки"/>
+</div>
+
+## Стек
+
+- **Kotlin 2.2** + **Jetpack Compose** (Material 3, Compose BOM)
+- **MVVM** без DI- и navigation-библиотек: зависимости собираются руками, навигация — на `when` по enum
+- **Ktor Client 3.5** + **kotlinx.serialization** для сети
+- **core library desugaring** — `java.time` работает начиная с Android 7
+- Юнит-тесты на JUnit 4 + `kotlinx-coroutines-test`, сеть в тестах подменяется `MockEngine`
+
+## Сборка
+
+```bash
+git clone https://github.com/airsss993/mykct-android-app.git
+cd mykct-android-app
+./gradlew :app:assembleDebug
+```
+
+Адрес API задаётся в `local.properties` (или переменными окружения) — в репозиторий он не попадает:
+
+```properties
+API_BASE_URL=https://example.org
+AUTH_BASE_URL=https://example.org   # если авторизация живёт отдельно
+```
+
+Debug-сборка по умолчанию отвечает сама себе заглушкой (`USE_MOCKS`), так что запустить и посмотреть приложение можно без сервера.
+
+| Команда | Что делает |
+|---|---|
+| `./gradlew :app:testDebugUnitTest` | юнит-тесты |
+| `./gradlew :app:assembleDebug` | debug APK |
+| `./gradlew :app:assembleRelease` | подписанный релизный APK |
+
+**Требования:** Android 7.0 (API 24) и выше, JDK 21.
+
+## Лицензия
+
+MIT — см. [LICENSE](LICENSE). Лицензии сторонних библиотек: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+
+<div align="center">
+<br/>
+Сделано для студентов КЦТ
 </div>

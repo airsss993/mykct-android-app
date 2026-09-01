@@ -87,7 +87,7 @@ private suspend fun schedule(request: HttpRequestData): JsonElement {
         profileSubgroup = query["profile_subgroup"],
     )
 
-    val lessons = MockScheduleRepository().weekSchedule(monday, selection)
+    val lessons = MockScheduleRepository().weekSchedule(monday, selection).lessons
     return buildJsonObject {
         putJsonArray("events") {
             lessons.forEach { lesson ->
@@ -107,7 +107,7 @@ private suspend fun schedule(request: HttpRequestData): JsonElement {
                                 lesson.subgroups.forEachIndexed { index, subgroup ->
                                     add(
                                         buildJsonObject {
-                                            put("SClID", "${lesson.id}-$index")
+                                            put("SClID", subgroup.classId.ifBlank { "${lesson.id}-$index" })
                                             put("SGrID", subgroup.id)
                                             put("SGCaID", subgroup.room)
                                             put("STopic", subgroup.topic)
@@ -140,7 +140,7 @@ private fun classDetails(request: HttpRequestData): JsonElement = buildJsonObjec
 private suspend fun attendance(request: HttpRequestData): JsonElement {
     val start = request.url.parameters["start"]?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
         ?: LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    val lessons = MockScheduleRepository().weekSchedule(start, Selection())
+    val lessons = MockScheduleRepository().weekSchedule(start, Selection()).lessons
 
     return buildJsonArray {
         lessons.forEach { lesson ->
@@ -173,7 +173,7 @@ private fun Lesson.status(): Int {
 
 private suspend fun subjects(): JsonElement {
     val monday = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    val titles = MockScheduleRepository().weekSchedule(monday, Selection()).map { it.title }.distinct()
+    val titles = MockScheduleRepository().weekSchedule(monday, Selection()).lessons.map { it.title }.distinct()
     return buildJsonArray {
         titles.forEachIndexed { index, title ->
             add(

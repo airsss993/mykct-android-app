@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.data.Lesson
+import ru.dzhaparidze.mykct.data.LessonSubgroup
+import ru.dzhaparidze.mykct.data.splitOwn
 import ru.dzhaparidze.mykct.data.ApiScheduleRepository
 import ru.dzhaparidze.mykct.data.ScheduleRepository
 import ru.dzhaparidze.mykct.data.ScheduleSettings
@@ -29,10 +31,15 @@ data class DayCell(
 /** Открытая пара и её детали с портала: грузятся по нажатию, а не вместе с неделей. */
 data class LessonDetails(
     val lesson: Lesson,
+    /** Раскрытая подгруппа; null — открыта сама пара. */
+    val selected: LessonSubgroup? = null,
     val rows: List<Pair<String, String>> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
-)
+) {
+    /** Чьи детали показаны: занятие подгруппы (SClID) или пара целиком (ClID). */
+    val detailsId: String get() = selected?.classId?.ifBlank { null } ?: lesson.id
+}
 
 /** Один день диапазона: заголовок + его пары. */
 data class DaySchedule(
@@ -53,6 +60,9 @@ data class ScheduleUiState(
     val error: String? = null,
     /** null — лист с парой закрыт. */
     val details: LessonDetails? = null,
+    /** Портал не ответил и показан снимок: [fetchedAt] — когда его сняли. */
+    val isStale: Boolean = false,
+    val fetchedAt: LocalDate? = null,
 )
 
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
@@ -126,11 +136,28 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun openLesson(lesson: Lesson) {
         _state.update { it.copy(details = LessonDetails(lesson)) }
+        loadDetails()
+    }
+
+    /** Раскрытие подгруппы в листе: повторное нажатие по той же — закрывает. */
+    fun selectSubgroup(subgroup: LessonSubgroup?) {
+        val details = _state.value.details ?: return
+        if (details.selected == subgroup) return
+        _state.update {
+            it.copy(details = details.copy(selected = subgroup, rows = emptyList(), isLoading = true, error = null))
+        }
+        loadDetails()
+    }
+
+    fun closeLesson() = _state.update { it.copy(details = null) }
+
+    private fun loadDetails() {
+        val id = _state.value.details?.detailsId ?: return
         viewModelScope.launch {
-            val result = runCatching { repository.classDetails(lesson.id) }
+            val result = runCatching { repository.classDetails(id) }
             _state.update { state ->
-                // пока грузили, могли закрыть лист или открыть другую пару — ответ уже не нужен
-                if (state.details?.lesson?.id != lesson.id) return@update state
+                // пока грузили, могли закрыть лист, открыть другую пару или другую подгруппу
+                if (state.details?.detailsId != id) return@update state
                 state.copy(
                     details = state.details.copy(
                         rows = result.getOrDefault(emptyList()),
@@ -142,8 +169,6 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun closeLesson() = _state.update { it.copy(details = null) }
-
     /**
      * @param silent не гасить уже показанную неделю индикатором. Смена недели, дня и
      * группы отвечает за доли секунды, и мелькающий спиннер на месте сетки читается
@@ -153,7 +178,12 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             _state.update { it.copy(isLoading = !silent || it.days.isEmpty(), error = null) }
             try {
-                weekLessons = repository.weekSchedule(_state.value.weekStart, _state.value.selection)
+                val selection = _state.value.selection
+                val week = repository.weekSchedule(_state.value.weekStart, selection)
+                // Разворачиваем параллельные пары один раз здесь: дальше и таймлайн,
+                // и счётчик пар в шапке работают с обычными парами.
+                weekLessons = week.lessons.splitOwn(selection)
+                _state.update { it.copy(isStale = week.isStale, fetchedAt = week.fetchedAt) }
                 applyWeek()
             } catch (e: Exception) {
                 weekLessons = emptyList()
@@ -163,6 +193,8 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         error = e.message ?: "Не удалось загрузить расписание",
                         days = emptyList(),
                         visible = emptyList(),
+                        isStale = false,
+                        fetchedAt = null,
                     )
                 }
             }

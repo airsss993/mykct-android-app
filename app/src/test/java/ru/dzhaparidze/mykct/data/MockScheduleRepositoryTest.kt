@@ -13,7 +13,7 @@ class MockScheduleRepositoryTest {
     private val repository = MockScheduleRepository()
 
     private fun week(selection: Selection = Selection()) = runBlocking {
-        repository.weekSchedule(monday, selection)
+        repository.weekSchedule(monday, selection).lessons
     }
 
     @Test

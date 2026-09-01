@@ -42,6 +42,14 @@ class SubjectIconTest {
     }
 
     @Test
+    fun `сокращения портала берутся из справочника точных названий`() {
+        // ни одно ключевое слово их не ловит — без справочника все были бы ic_school
+        assertEquals(R.drawable.ic_algorithm, subjectIcon("АиСД"))
+        assertEquals(R.drawable.ic_assignment, subjectIcon("ОКРиУП"))
+        assertEquals(R.drawable.ic_bug, subjectIcon(" РевьюКодаGD "))
+    }
+
+    @Test
     fun `неизвестный предмет получает общую иконку`() {
         assertEquals(R.drawable.ic_school, subjectIcon("Пара"))
     }

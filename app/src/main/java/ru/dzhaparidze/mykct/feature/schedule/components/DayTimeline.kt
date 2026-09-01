@@ -42,7 +42,9 @@ fun DayTimeline(
     if (lessons.isEmpty()) return
 
     val gridStart = lessons.first().start.truncatedTo(java.time.temporal.ChronoUnit.HOURS)
-    val gridEnd = lessons.last().end.roundUpToSlot()
+    // Именно max, а не конец последней по началу пары: короткая пара, начавшаяся позже
+    // длинной, обрезала бы сетку, и длинная вылезала бы за неё.
+    val gridEnd = lessons.maxOf { it.end }.roundUpToSlot()
     val slots = (minutesBetween(gridStart, gridEnd) / SLOT_MINUTES).coerceAtLeast(1)
 
     Box(modifier = modifier.height(SLOT_HEIGHT * slots)) {
@@ -68,28 +70,39 @@ fun DayTimeline(
             )
         }
 
-        lessons.forEach { lesson ->
-            val top = minutesBetween(gridStart, lesson.start).toFloat() / SLOT_MINUTES
-            val span = minutesBetween(lesson.start, lesson.end).toFloat() / SLOT_MINUTES
+        // Раскладываются не пары, а слоты: у студента в одно время могут идти два-три
+        // своих занятия (см. splitOwn), и по offset(y) они встали бы друг на друга —
+        // видно было бы только верхнее. Одинаковый слот = один ряд, ширина делится поровну.
+        lessons.groupBy { it.start to it.end }.forEach { (slot, row) ->
+            val (start, end) = slot
+            val top = minutesBetween(gridStart, start).toFloat() / SLOT_MINUTES
+            val span = minutesBetween(start, end).toFloat() / SLOT_MINUTES
+            val isNow = now != null && !now.isBefore(start) && now.isBefore(end)
 
-            val isNow = now != null && !now.isBefore(lesson.start) && now.isBefore(lesson.end)
-
-            LessonCard(
-                lesson = lesson,
-                isPast = now != null && !lesson.end.isAfter(now),
-                isNow = isNow,
-                remaining = if (isNow) minutesBetween(now!!, lesson.end) else null,
-                onClick = { onLessonClick(lesson) },
+            Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .offset(y = SLOT_HEIGHT * top)
                     // Отступа снизу быть не может: он съедал у карточки 6dp высоты,
                     // и её нижняя кромка не доходила до отметки конца пары.
-                    .padding(start = GUTTER)
-                    // ponytail: min, а не фиксированная высота — длинное название темы
-                    // иначе обрежется. Растянувшаяся карточка может наехать на следующую;
-                    // если начнёт мешать — резать текст по maxLines, а не жёстко фиксировать высоту.
-                    .heightIn(min = SLOT_HEIGHT * span),
-            )
+                    .padding(start = GUTTER),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                row.forEach { lesson ->
+                    LessonCard(
+                        lesson = lesson,
+                        isPast = now != null && !end.isAfter(now),
+                        isNow = isNow,
+                        onClick = { onLessonClick(lesson) },
+                        modifier = Modifier
+                            .weight(1f)
+                            // ponytail: min, а не фиксированная высота — длинное название темы
+                            // иначе обрежется. Растянувшаяся карточка может наехать на следующую;
+                            // если начнёт мешать — резать текст по maxLines, а не жёстко фиксировать высоту.
+                            .heightIn(min = SLOT_HEIGHT * span),
+                    )
+                }
+            }
         }
     }
 }

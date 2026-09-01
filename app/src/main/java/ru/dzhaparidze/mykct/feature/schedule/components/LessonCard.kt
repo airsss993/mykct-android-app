@@ -2,6 +2,9 @@ package ru.dzhaparidze.mykct.feature.schedule.components
 
 import android.os.Build
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,6 +14,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -22,11 +27,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.ui.theme.VioletLight
 import ru.dzhaparidze.mykct.ui.theme.VioletTint
+import java.time.Duration
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
@@ -39,7 +47,6 @@ fun LessonCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isNow: Boolean = false,
-    remaining: Int? = null,
 ) {
     // Монохром по референсу: все карточки в фирменном градиенте, предметы различает
     // водяной знак, а не цвет. `colorHex` с портала намеренно игнорируется.
@@ -119,7 +126,8 @@ fun LessonCard(
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text = lesson.title,
+                    // склеенные названия подгрупп, если пара делится, иначе своё название
+                    text = lesson.displayTitle,
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     maxLines = 2,
@@ -139,21 +147,22 @@ fun LessonCard(
 
                 Spacer(Modifier.height(8.dp))
 
-                // FlowRow, а не Row: на узком экране «Идёт · осталось N мин» рядом с
-                // «Подгруппы: N» не влезает в строку и второй чип обрезается.
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    if (remaining != null) {
-                        Chip(text = "Идёт · осталось $remaining мин", icon = R.drawable.ic_clock)
+                if (isNow) {
+                    // Свои часы на идущей паре: общий тик экрана ходит раз в минуту, и
+                    // поднимать его частоту ради одной карточки — перерисовывать весь
+                    // экран каждую секунду. Тикает только та карточка, которая идёт.
+                    val at by produceState(LocalTime.now(), lesson.id) {
+                        while (true) {
+                            value = LocalTime.now()
+                            delay(1000)
+                        }
                     }
-                    if (lesson.room.isNotBlank()) {
-                        Chip(text = lesson.room, icon = R.drawable.ic_place)
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Chips(lesson = lesson, secondsLeft = secondsLeft(lesson, at))
+                        Progress(fraction = progressFraction(lesson, at))
                     }
-                    if (lesson.subgroups.isNotEmpty()) {
-                        Chip(text = "Подгруппы: ${lesson.subgroups.size}", icon = R.drawable.ic_list)
-                    }
+                } else {
+                    Chips(lesson = lesson, secondsLeft = null)
                 }
             }
         }
@@ -165,15 +174,83 @@ fun LessonCard(
 private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 /**
- * Водяной знак по названию предмета. Названия приходят с портала свободным текстом,
- * так что это подбор по ключевому слову, а не справочник: неизвестный предмет получает
- * `ic_school`. Порядок правил значим — частные слова стоят раньше общих, иначе
- * «Физическая культура» уходит в физику, «Русский язык» — в иностранный,
- * а «Языки программирования» — в перевод.
+ * FlowRow, а не Row: на узком экране «Идёт · осталось N мин» рядом с «Подгруппы: N»
+ * не влезает в строку и второй чип обрезается.
+ */
+@Composable
+private fun Chips(lesson: Lesson, secondsLeft: Int?) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (secondsLeft != null) {
+            Chip(text = "Идёт · осталось ${remainingText(secondsLeft)}", icon = R.drawable.ic_clock)
+        }
+        if (lesson.room.isNotBlank()) {
+            Chip(text = lesson.room, icon = R.drawable.ic_place)
+        }
+        if (lesson.subgroups.isNotEmpty()) {
+            Chip(text = "Подгруппы: ${lesson.subgroups.size}", icon = R.drawable.ic_list)
+        }
+    }
+}
+
+/** Сколько пары прошло: белая капсула по подложке, доезжает ровно за секунду тика. */
+@Composable
+private fun Progress(fraction: Float) {
+    val width by animateFloatAsState(
+        targetValue = fraction,
+        animationSpec = tween(1000, easing = LinearEasing),
+        label = "lesson-progress",
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(4.dp)
+            .background(Color.White.copy(alpha = 0.25f), CircleShape),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(width)
+                .fillMaxHeight()
+                .background(Color.White, CircleShape),
+        )
+    }
+}
+
+/** До конца пары, с округлением вверх: на последней секунде честнее «1 с», чем «0 с». */
+internal fun secondsLeft(lesson: Lesson, at: LocalTime): Int {
+    val millis = Duration.between(at, lesson.end).toMillis()
+    return if (millis <= 0) 0 else ((millis + 999) / 1000).toInt()
+}
+
+/** Доля прошедшего времени пары, 0..1. */
+internal fun progressFraction(lesson: Lesson, at: LocalTime): Float {
+    val total = Duration.between(lesson.start, lesson.end).toMillis()
+    if (total <= 0) return 1f
+    return (Duration.between(lesson.start, at).toMillis().toFloat() / total).coerceIn(0f, 1f)
+}
+
+/** Последнюю минуту отсчёт идёт секундами — иначе «осталось 0 мин» висит целую минуту. */
+internal fun remainingText(seconds: Int): String =
+    if (seconds < 60) "$seconds с" else "${seconds / 60} мин"
+
+
+/**
+ * Водяной знак по названию предмета. Сначала точное совпадание с названиями портала
+ * ([PORTAL_ICONS]): «АиСД», «ОКРиУП», «РевьюКодаGD» ни под какое ключевое слово не
+ * подходят и без справочника все получали бы `ic_school`. Что не нашлось — разбирается
+ * по ключевому слову: названия приходят свободным текстом, и полного списка не бывает.
+ *
+ * Порядок правил значим — частные слова стоят раньше общих, иначе «Физическая культура»
+ * уходит в физику, «Русский язык» — в иностранный, а «Языки программирования» — в перевод.
  */
 @DrawableRes
 internal fun subjectIcon(title: String): Int {
-    val n = title.lowercase().replace('ё', 'е')
+    val name = title.trim()
+    PORTAL_ICONS[name]?.let { return it }
+
+    val n = name.lowercase().replace('ё', 'е')
     return when {
         // Физкультура — до физики: «физическая» есть в обоих названиях.
         "физкультур" in n || "физическ" in n || "спорт" in n -> R.drawable.ic_fitness
@@ -227,8 +304,146 @@ internal fun subjectIcon(title: String): Int {
     }
 }
 
+
+/**
+ * Названия предметов с портала за 2025/26 — то же соответствие, что в iOS
+ * (`SubjectIcon.icons`), но символов там 110, а иконок здесь 25: близкие предметы
+ * делят одну. Пополняется вместе с порталом, обычно каждый сентябрь.
+ *
+ * ponytail: палитра сознательно сужена. Нужны свои символы под каждое название —
+ * это ~85 новых vector drawable, таблица тогда меняется значениями, а не строением.
+ */
+private val PORTAL_ICONS: Map<String, Int> = mapOf(
+    // Общеобразовательный цикл
+    "Математика" to R.drawable.ic_math,
+    "ЭлВышМат" to R.drawable.ic_math,
+    "ДискрМат" to R.drawable.ic_algorithm,
+    "ТеорВер" to R.drawable.ic_statistics,
+    "ЧислМетоды" to R.drawable.ic_math,
+    "Физика" to R.drawable.ic_science,
+    "Химия" to R.drawable.ic_science,
+    "Биология" to R.drawable.ic_biology,
+    "Астрономия" to R.drawable.ic_astronomy,
+    "История" to R.drawable.ic_history,
+    "Обществознание" to R.drawable.ic_law,
+    "Философия" to R.drawable.ic_psychology,
+    "РусЯз" to R.drawable.ic_book,
+    "Литер" to R.drawable.ic_book,
+    "АнглЯз" to R.drawable.ic_translate,
+    "АнглЯзПро" to R.drawable.ic_translate,
+    "Физкульт" to R.drawable.ic_fitness,
+    "Физкультура" to R.drawable.ic_fitness,
+    "ОБиЗР" to R.drawable.ic_safety,
+    "ЭлДок" to R.drawable.ic_assignment,
+    "ФинГрамота" to R.drawable.ic_economics,
+    "ПОПД" to R.drawable.ic_law,
+    "Предпринимат" to R.drawable.ic_economics,
+    "ПсихОбщен" to R.drawable.ic_psychology,
+    "КритМыш" to R.drawable.ic_psychology,
+    "ИнжМыш" to R.drawable.ic_design,
+    "АктМаст" to R.drawable.ic_groups,
+    "ИстТехно" to R.drawable.ic_history,
+    "ЛичБренд" to R.drawable.ic_person,
+    "КреативМ" to R.drawable.ic_design,
+    "ТехДокиРус" to R.drawable.ic_assignment,
+    "ОКРиУП" to R.drawable.ic_assignment,
+
+    // Профильный цикл
+    "РазработкаПО" to R.drawable.ic_code,
+    "ВведениеООП" to R.drawable.ic_code,
+    "ПрогрC#" to R.drawable.ic_code,
+    "АиСД" to R.drawable.ic_algorithm,
+    "Hardware" to R.drawable.ic_memory,
+    "ОперСистемы" to R.drawable.ic_terminal,
+    "КомпСети" to R.drawable.ic_network,
+    "СУБД" to R.drawable.ic_database,
+    "СУБД-проектирование" to R.drawable.ic_database,
+    "ИнфоБез" to R.drawable.ic_security,
+    "ОсновыML" to R.drawable.ic_memory,
+    "АрхПаттерны3" to R.drawable.ic_algorithm,
+    "ПарадигмыПроект" to R.drawable.ic_algorithm,
+    "React" to R.drawable.ic_web,
+    "UML-BE" to R.drawable.ic_algorithm,
+    "UML-FE" to R.drawable.ic_algorithm,
+    "УчПроект.BE" to R.drawable.ic_code,
+    "УчПроект.FE" to R.drawable.ic_web,
+    "МикросервисыBE" to R.drawable.ic_network,
+    "МикросервисыFE" to R.drawable.ic_network,
+    "BE-Production" to R.drawable.ic_terminal,
+    "Тестирование" to R.drawable.ic_bug,
+    "ТестИнтерф" to R.drawable.ic_bug,
+    "ТестИнтерфейс" to R.drawable.ic_bug,
+    "ТестИнтерфейсов" to R.drawable.ic_bug,
+    "РазрИнтерф" to R.drawable.ic_design,
+    "ИнстРазрИнтерф" to R.drawable.ic_design,
+    "РазрИгрИнтерф" to R.drawable.ic_design,
+
+    // Дизайн
+    "Веб-Дизайн" to R.drawable.ic_web,
+    "ГрафДизайн" to R.drawable.ic_design,
+    "ДизИнтерфейсов" to R.drawable.ic_design,
+    "ДизДиджитал" to R.drawable.ic_mobile,
+    "ДизМедиа" to R.drawable.ic_design,
+    "СтилиДизайн" to R.drawable.ic_design,
+    "Композиция" to R.drawable.ic_design,
+    "Колористика" to R.drawable.ic_design,
+    "2D-КомпГраф" to R.drawable.ic_design,
+    "3D-КомпГраф" to R.drawable.ic_design,
+    "3D-Интерфейсы" to R.drawable.ic_design,
+    "UX/UI дизайн" to R.drawable.ic_design,
+    "АналитикаUX" to R.drawable.ic_statistics,
+
+    // Разработка игр
+    "GameDev-2(1)" to R.drawable.ic_code,
+    "GameDev-2(2)" to R.drawable.ic_code,
+    "GameDev-3(3)" to R.drawable.ic_code,
+    "GameDev-практ" to R.drawable.ic_practice,
+    "РазработкаИгрП" to R.drawable.ic_code,
+    "РевьюКодаGD" to R.drawable.ic_bug,
+    "РевьюИгроКейс2" to R.drawable.ic_bug,
+    "РевьюИгроКейс3" to R.drawable.ic_bug,
+    "МаркетингGD" to R.drawable.ic_economics,
+
+    // Проектная деятельность
+    "Проект" to R.drawable.ic_assignment,
+    "Проект-3" to R.drawable.ic_assignment,
+    "ПрофПредмет" to R.drawable.ic_school,
+    "ВведСпец" to R.drawable.ic_school,
+    "УпрИТ-проект" to R.drawable.ic_assignment,
+    "ВидыПроект" to R.drawable.ic_assignment,
+    "ФормПроекта" to R.drawable.ic_assignment,
+    "КейсыПроектов" to R.drawable.ic_assignment,
+    "ПроектированиеБП" to R.drawable.ic_assignment,
+    "ПроектыБП" to R.drawable.ic_assignment,
+    "ПсихологияБП" to R.drawable.ic_psychology,
+    "МаркетингПМ" to R.drawable.ic_economics,
+    "ИТ-инфр-проект" to R.drawable.ic_network,
+    "ИТ-инфр-разв" to R.drawable.ic_network,
+    "ИТ-инфр-экспл" to R.drawable.ic_terminal,
+
+    // Практики и мероприятия
+    "ПроизвПракт.01" to R.drawable.ic_practice,
+    "УчПракт03" to R.drawable.ic_practice,
+    "УчПракт04" to R.drawable.ic_practice,
+    "УчПракт06" to R.drawable.ic_practice,
+    "УчПракт.БП" to R.drawable.ic_practice,
+    "УчПракт.UI" to R.drawable.ic_practice,
+    "Демоэкзамен" to R.drawable.ic_exam,
+    "Предзащита" to R.drawable.ic_exam,
+    "Нормоконтроль" to R.drawable.ic_assignment,
+    "В.Сборы" to R.drawable.ic_safety,
+    "Буткемп" to R.drawable.ic_practice,
+    "Выставка" to R.drawable.ic_groups,
+    "ФорумБудущего" to R.drawable.ic_groups,
+    "ОргСобрание" to R.drawable.ic_groups,
+    "Подгруппы" to R.drawable.ic_list,
+    "Подгруппы-2к" to R.drawable.ic_list,
+    "Подгруппы-3к" to R.drawable.ic_list,
+    "АлгоТруд-3" to R.drawable.ic_person,
+)
+
 @Composable
-private fun TimePill(text: String, showCheck: Boolean, accent: Color) {
+internal fun TimePill(text: String, showCheck: Boolean, accent: Color) {
     Row(
         modifier = Modifier
             .background(Color.White, CircleShape)
@@ -263,7 +478,7 @@ private fun TimePill(text: String, showCheck: Boolean, accent: Color) {
 }
 
 @Composable
-private fun Chip(text: String, @DrawableRes icon: Int? = null) {
+internal fun Chip(text: String, @DrawableRes icon: Int? = null) {
     Surface(
         shape = CircleShape,
         color = Color.Transparent,

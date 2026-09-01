@@ -139,11 +139,14 @@ internal fun DrawScope.drawAmbientGlow(accent: Color, darkTheme: Boolean) {
 @Composable
 fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    // Часы тикают сами: линия «сейчас» и остаток пары должны ехать без перезахода
-    // на экран. Полминуты — предел, при котором минуты на экране не врут.
+    // Часы тикают сами: линия «сейчас» и переход пары в прошедшие должны ехать без
+    // перезахода на экран. Сон до ближайшей :00, а не ровные полминуты от входа —
+    // иначе линия переезжает в случайный момент и опаздывает до полуминуты.
+    // Секундный отсчёт идущей пары живёт в её карточке и этого тика не касается.
     val now by produceState(LocalTime.now()) {
         while (true) {
-            delay(30_000)
+            val time = LocalTime.now()
+            delay(60_000L - time.second * 1000L - time.nano / 1_000_000L)
             value = LocalTime.now()
         }
     }
@@ -281,7 +284,12 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
     }
 
     state.details?.let { details ->
-        LessonSheet(details = details, onDismiss = viewModel::closeLesson)
+        LessonSheet(
+            details = details,
+            selection = state.selection,
+            onSelectSubgroup = viewModel::selectSubgroup,
+            onDismiss = viewModel::closeLesson,
+        )
     }
 }
 
@@ -335,9 +343,40 @@ private fun Hero(
                 ?: state.visible.dateRange(),
         )
 
+        if (state.isStale) {
+            StaleNote(fetchedAt = state.fetchedAt)
+        }
+
         Spacer(Modifier.height(20.dp))
 
         WeekNav(onToday = onToday, onPrev = onPrevWeek, onNext = onNextWeek)
+    }
+}
+
+/**
+ * Портал колледжа лежит, и бэкенд отдал снимок. Без этой строки расписание недельной
+ * давности выглядит как свежее — а это худший вид ошибки: студент придёт не туда.
+ */
+@Composable
+private fun StaleNote(fetchedAt: LocalDate?) {
+    Row(
+        modifier = Modifier.padding(top = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_refresh),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = fetchedAt
+                ?.let { "Портал недоступен, расписание от ${it.dayMonth()}" }
+                ?: "Портал недоступен, показано сохранённое расписание",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

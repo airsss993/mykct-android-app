@@ -26,6 +26,13 @@ class ApiMappingTest {
     }
 
     @Test
+    fun `дата снимка берётся из метки времени`() {
+        assertEquals(LocalDate.of(2026, 8, 30), parseDay("2026-08-30T14:05:11Z"))
+        assertEquals(LocalDate.of(2026, 8, 30), parseDay(" 2026-08-30 "))
+        assertNull(parseDay(""))
+    }
+
+    @Test
     fun `детали пары складываются в плоский список без того, что уже на карточке`() {
         val json = """
             {"ClID": "12345", "teacher": "Иванов И.И.", "title": "Математика",

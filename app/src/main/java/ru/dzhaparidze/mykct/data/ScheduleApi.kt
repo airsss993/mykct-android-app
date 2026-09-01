@@ -23,7 +23,7 @@ import java.time.LocalTime
  */
 class ApiScheduleRepository(private val baseUrl: String = BuildConfig.API_BASE_URL) : ScheduleRepository {
 
-    override suspend fun weekSchedule(monday: LocalDate, selection: Selection): List<Lesson> = apiCall {
+    override suspend fun weekSchedule(monday: LocalDate, selection: Selection): WeekSchedule = apiCall {
         val response: ScheduleResponse = Http.client.get("$baseUrl/api/v1/schedule") {
             parameter("group", selection.group)
             parameter("start", monday.toString())
@@ -33,7 +33,11 @@ class ApiScheduleRepository(private val baseUrl: String = BuildConfig.API_BASE_U
             selection.englishGroup?.let { parameter("english_group", it) }
             selection.profileSubgroup?.let { parameter("profile_subgroup", it) }
         }.decode()
-        response.events.mapNotNull { it.toLesson() }
+        WeekSchedule(
+            lessons = response.events.mapNotNull { it.toLesson() },
+            isStale = response.stale,
+            fetchedAt = response.fetchedAt?.let(::parseDay),
+        )
     }
 
     override suspend fun classDetails(id: String): List<Pair<String, String>> = apiCall {
@@ -76,7 +80,12 @@ private val SHOWN_KEYS = setOf(
 )
 
 @Serializable
-private data class ScheduleResponse(val events: List<EventDto> = emptyList())
+private data class ScheduleResponse(
+    val events: List<EventDto> = emptyList(),
+    /** Портал не ответил, и бэкенд отдал последний снимок. */
+    val stale: Boolean = false,
+    @SerialName("fetched_at") val fetchedAt: String? = null,
+)
 
 @Serializable
 private data class EventDto(
@@ -116,10 +125,23 @@ private fun EventDto.toLesson(): Lesson? {
         room = room.takeIf { it != "—" }.orEmpty(),
         colorHex = color?.takeIf { it.startsWith("#") },
         subgroups = subGroups.orEmpty().map {
-            LessonSubgroup(id = it.groupId, title = it.title, topic = it.topic, room = it.room)
+            LessonSubgroup(
+                id = it.groupId,
+                title = it.title,
+                topic = it.topic,
+                room = it.room,
+                classId = it.id,
+            )
         },
     )
 }
+
+/**
+ * Дата снимка: приходит меткой времени ISO 8601, а показывается днём и месяцем —
+ * поэтому от неё берётся только дата, а часовой пояс метки роли не играет.
+ */
+internal fun parseDay(value: String): LocalDate? =
+    runCatching { LocalDate.parse(value.trim().take(10)) }.getOrNull()
 
 /**
  * Время из портала. Штатный `LocalTime.parse` тут не годится: приходит и «09:00», и «9:00»,

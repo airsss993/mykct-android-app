@@ -5,9 +5,20 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
+/**
+ * Неделя целиком. Кроме пар несёт признак снимка: когда портал колледжа лежит, бэкенд
+ * отдаёт последнее, что успел забрать, и об этом надо сказать — иначе расписание
+ * недельной давности выглядит как свежее.
+ */
+data class WeekSchedule(
+    val lessons: List<Lesson>,
+    val isStale: Boolean = false,
+    val fetchedAt: LocalDate? = null,
+)
+
 interface ScheduleRepository {
     /** Расписание на неделю, начиная с понедельника [monday], для выбора [selection]. */
-    suspend fun weekSchedule(monday: LocalDate, selection: Selection): List<Lesson>
+    suspend fun weekSchedule(monday: LocalDate, selection: Selection): WeekSchedule
 
     /**
      * Детали пары из GET /api/v1/classdetails плоским «ключ → значение»:
@@ -23,12 +34,13 @@ interface ScheduleRepository {
  */
 class MockScheduleRepository : ScheduleRepository {
 
-    override suspend fun weekSchedule(monday: LocalDate, selection: Selection): List<Lesson> {
+    override suspend fun weekSchedule(monday: LocalDate, selection: Selection): WeekSchedule {
         delay(400) // видимая загрузка, чтобы состояние loading не было мёртвым кодом
-        return DayOfWeek.values()
+        val lessons = DayOfWeek.values()
             .filter { it != DayOfWeek.SUNDAY }
             .flatMap { dayOfWeek -> lessonsFor(monday.plusDays((dayOfWeek.value - 1).toLong()), dayOfWeek, selection) }
             .mapNotNull { it.filterBy(selection) }
+        return WeekSchedule(lessons)
     }
 
     private fun lessonsFor(date: LocalDate, dayOfWeek: DayOfWeek, selection: Selection): List<Lesson> {
@@ -91,13 +103,19 @@ class MockScheduleRepository : ScheduleRepository {
     private fun Split.subgroupsOf(group: String): List<LessonSubgroup> = when (this) {
         Split.NONE -> emptyList()
         Split.ENGLISH -> Groups.englishGroups(group).mapIndexed { index, id ->
-            LessonSubgroup(id, "Английский язык, $id", "Unit ${index + 1}", "20${index + 1}")
+            LessonSubgroup(id, "Английский язык, $id", "Unit ${index + 1}", "20${index + 1}", "eng-$id")
         }
         Split.PROFILE -> Groups.subgroups(group).mapIndexed { index, named ->
-            LessonSubgroup(named.id, "Профильный модуль: ${named.title}", "Практика ${index + 1}", "${310 + index}")
+            LessonSubgroup(
+                named.id,
+                "Профильный модуль: ${named.title}",
+                "Практика ${index + 1}",
+                "${310 + index}",
+                "prof-${named.id}",
+            )
         }
         Split.SPORT -> Groups.sportSubgroups.map {
-            LessonSubgroup(it, "Физическая культура, $it", "Круговая тренировка", "Спортзал")
+            LessonSubgroup(it, "Физическая культура, $it", "Круговая тренировка", "Спортзал", "sport-$it")
         }
     }
 

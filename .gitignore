@@ -44,3 +44,6 @@ keystore.properties
 *.jks
 *.keystore
 *.crt
+
+# Gradle build output
+build/

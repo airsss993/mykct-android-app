@@ -38,10 +38,6 @@
 - **core library desugaring** — `java.time` работает начиная с Android 7
 - Юнит-тесты на JUnit 4 + `kotlinx-coroutines-test`, сеть в тестах подменяется `MockEngine`
 
-## Лицензия
-
-MIT — см. [LICENSE](LICENSE). Лицензии сторонних библиотек: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
-
 <div align="center">
 <br/>
 Сделано для студентов КЦТ

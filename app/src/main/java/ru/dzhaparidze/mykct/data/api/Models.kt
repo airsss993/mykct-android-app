@@ -43,12 +43,20 @@ data class AttendanceStats(
     val percent: Int = if (total > 0) present * 100 / total else 0
 
     companion object {
-        fun of(records: List<AttendanceRecord>) = AttendanceStats(
-            total = records.size,
-            present = records.count { it.attendance == Attendance.PRESENT },
-            absent = records.count { it.attendance == Attendance.ABSENT },
-            excused = records.count { it.attendance == Attendance.EXCUSED },
-        )
+        /**
+         * Пары без отметки в счёт не идут. Они приходят у будущих занятий
+         * (`status == -1`), и на месячном периоде тянули процент вниз вдвое:
+         * 10 сентября выходило "30%, был на 21 из 70 пар" - 44 из них ещё не были.
+         */
+        fun of(records: List<AttendanceRecord>): AttendanceStats {
+            val marked = records.filter { it.attendance != Attendance.UNKNOWN }
+            return AttendanceStats(
+                total = marked.size,
+                present = marked.count { it.attendance == Attendance.PRESENT },
+                absent = marked.count { it.attendance == Attendance.ABSENT },
+                excused = marked.count { it.attendance == Attendance.EXCUSED },
+            )
+        }
     }
 }
 

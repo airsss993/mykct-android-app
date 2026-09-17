@@ -47,7 +47,7 @@ import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.SelectionStore
 import ru.dzhaparidze.mykct.data.auth.AuthService
 import ru.dzhaparidze.mykct.data.selectionOf
-import ru.dzhaparidze.mykct.ui.theme.Danger
+import ru.dzhaparidze.mykct.ui.theme.statusDanger
 import ru.dzhaparidze.mykct.data.ScheduleSettings
 import ru.dzhaparidze.mykct.data.ScheduleSettingsStore
 import ru.dzhaparidze.mykct.data.ScheduleView
@@ -297,7 +297,7 @@ private fun AccountSection(onLogin: () -> Unit) {
                 icon = R.drawable.ic_logout,
                 text = "Выйти",
                 modifier = Modifier.clickable { scope.launch { auth.signOut() } },
-                tint = Danger,
+                tint = statusDanger,
             ) {}
         }
     }

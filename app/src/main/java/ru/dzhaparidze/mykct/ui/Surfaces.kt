@@ -198,8 +198,9 @@ fun WeekNav(
     }
 }
 
+/** Круглая стрелка навигации: неделя в расписании, месяц в календаре посещаемости. */
 @Composable
-private fun NavArrow(@DrawableRes icon: Int, description: String, onClick: () -> Unit) {
+fun NavArrow(@DrawableRes icon: Int, description: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(44.dp)

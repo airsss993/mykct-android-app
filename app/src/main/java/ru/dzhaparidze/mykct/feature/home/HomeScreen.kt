@@ -1,6 +1,5 @@
 package ru.dzhaparidze.mykct.feature.home
 
-import android.os.Build
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -11,10 +10,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import ru.dzhaparidze.mykct.data.api.AttendanceStats
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,28 +27,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.api.Attendance
+import ru.dzhaparidze.mykct.data.api.AttendanceStats
 import ru.dzhaparidze.mykct.data.api.AttendanceRecord
 import ru.dzhaparidze.mykct.data.api.Subject
 import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.ui.Fade
 import ru.dzhaparidze.mykct.ui.HeroSummary
-import ru.dzhaparidze.mykct.ui.WeekNav
 import ru.dzhaparidze.mykct.ui.Phase
 import ru.dzhaparidze.mykct.ui.Swirl
 import ru.dzhaparidze.mykct.ui.phaseOf
@@ -62,12 +57,14 @@ import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.SegmentedSwitch
 import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.hairline
-import ru.dzhaparidze.mykct.ui.theme.Danger
-import ru.dzhaparidze.mykct.ui.theme.Green
-import ru.dzhaparidze.mykct.ui.theme.Warning
-import kotlin.math.cos
-import kotlin.math.sin
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.compositeOver
+import ru.dzhaparidze.mykct.ui.theme.GreenLime
+import ru.dzhaparidze.mykct.ui.theme.statusDanger
+import ru.dzhaparidze.mykct.ui.theme.statusGreen
+import ru.dzhaparidze.mykct.ui.theme.statusWarning
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -87,12 +84,6 @@ internal fun LocalDate.dayMonth() = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 
 
 private fun LocalDate.dayTitle() =
     "${dayOfWeek.getDisplayName(TextStyle.FULL, RU).replaceFirstChar { it.uppercase() }}, ${dayMonth()}"
-
-private fun weekRange(monday: LocalDate): String {
-    val end = monday.plusDays(6)
-    val start = if (monday.month == end.month) monday.dayOfMonth.toString() else monday.dayMonth()
-    return "$start – ${end.dayMonth()}"
-}
 
 /** «5 дней», «1 день», «22 дня». */
 internal fun days(count: Int): String {
@@ -127,10 +118,11 @@ private fun subjects(count: Int): String {
     return "$count $word"
 }
 
+@Composable
 private fun Attendance.color() = when (this) {
-    Attendance.PRESENT -> Green
-    Attendance.EXCUSED -> Warning
-    Attendance.ABSENT -> Danger
+    Attendance.PRESENT -> statusGreen
+    Attendance.EXCUSED -> statusWarning
+    Attendance.ABSENT -> statusDanger
     Attendance.UNKNOWN -> Color.Gray
 }
 
@@ -139,8 +131,8 @@ private fun Attendance.color() = when (this) {
  * поэтому без входа экран показывает приглашение войти, а не пустые карточки.
  *
  * Верстка повторяет расписание: тот же фон со светом, тот же `ScreenTitle` с огоньком
- * стрика, та же сводка крупным числом и та же навигация по неделям. Стрик отдельной
- * карточкой больше не дублируется — он живёт в огоньке и его листе.
+ * стрика и те же карточки. Посещаемость показывает календарь месяца, а не кольцо с
+ * процентом. Стрик отдельной карточкой не дублируется - он живёт в огоньке и его листе.
  */
 @Composable
 fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
@@ -299,40 +291,37 @@ private fun Authorized(state: HomeUiState, viewModel: HomeViewModel) {
     }
 }
 
-/** Посещаемость за неделю: сводка, недельная навигация, счётчики и отметки по дням. */
+/** Посещаемость за месяц: календарь, сводка под ним и пары выбранного дня. */
 @Composable
 private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
-    val stats = state.stats
     val empty = state.records.isEmpty()
 
-    Text(
-        text = "Неделя ${weekRange(state.weekStart)}",
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth(),
+    AttendanceCalendar(
+        month = state.month,
+        selected = state.selected,
+        records = state.records,
+        onPrev = { viewModel.shiftMonth(-1) },
+        onNext = { viewModel.shiftMonth(1) },
+        onToday = viewModel::goToToday,
+        onSelect = viewModel::selectDay,
     )
 
-    AttendanceRing(
-        stats = stats,
-        // Пока данных нет, «0%» — враньё: у пустой недели и у прогулянной он одинаков.
-        value = when {
+    Spacer(Modifier.height(14.dp))
+
+    MonthSummary(
+        stats = state.stats,
+        month = state.month,
+        text = when {
             state.isLoading && empty -> "Загружаем…"
             state.error != null -> "Нет данных"
-            empty -> "Отметок нет"
-            else -> "${stats.percent}%"
+            empty -> "Отметок за месяц нет"
+            else -> "Был на ${state.stats.present} из ${lessons(state.stats.total)}"
         },
-        caption = if (empty) "" else "Был на ${stats.present} из ${lessons(stats.total)}",
         hasData = !empty,
+        motivation = state.motivation,
     )
 
-    WeekNav(
-        onToday = viewModel::goToCurrentWeek,
-        onPrev = { viewModel.shiftWeek(-1) },
-        onNext = { viewModel.shiftWeek(1) },
-    )
-
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(20.dp))
 
     Fade(
         target = phaseOf(
@@ -346,16 +335,106 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
 
             Phase.Error -> ErrorBlock(state.error ?: "", onRetry = viewModel::refresh)
 
-            Phase.Empty -> Empty("За эту неделю отметок нет")
+            Phase.Empty -> Empty("За этот месяц отметок нет")
 
-            Phase.Content -> {
-                StatsRow(state)
-                Spacer(Modifier.height(16.dp))
-                state.records.groupBy { it.date }.toSortedMap().forEach { (date, records) ->
-                    DayBlock(date, records)
-                }
+            // Список - только выбранный день. Весь месяц простынёй никто не читает,
+            // для "когда я пропустил" выше стоит календарь.
+            Phase.Content -> DayBlock(state.selected, state.dayRecords)
+        }
+    }
+}
+
+/**
+ * Сводка месяца: кольцо с процентом и строка "был на столько-то из стольких".
+ * Кольцо здесь маленькое и стоит сбоку от текста - во всю ширину экрана оно и было
+ * тем самым дашбордом, из-за которого пришлось переделывать вкладку.
+ */
+@Composable
+private fun MonthSummary(
+    stats: AttendanceStats,
+    month: YearMonth,
+    text: String,
+    hasData: Boolean,
+    motivation: String?,
+) {
+    // Края карточки уходят в акцент: плоская заливка рядом с градиентом в кольце
+    // читается как вырезанный прямоугольник, а не как одна поверхность.
+    val surface = MaterialTheme.colorScheme.surface
+    val edge = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f).compositeOver(surface)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(Brush.horizontalGradient(listOf(edge, surface, edge)))
+            .hairline(RoundedCornerShape(24.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PercentRing(percent = stats.percent, hasData = hasData)
+
+        Column(modifier = Modifier.weight(1f).padding(start = 18.dp)) {
+            // Фраза приходит позже цифр, и до неё сверху стоит название месяца:
+            // так строка не пустует и карточка не подпрыгивает, когда фраза придёт.
+            Text(
+                text = motivation
+                    ?: "Посещаемость за ${MONTHS_NOMINATIVE[month.monthValue - 1].lowercase()}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+    }
+}
+
+/** Доля посещённых пар кольцом: дуга растёт от двенадцати часов, число стоит внутри. */
+@Composable
+private fun PercentRing(percent: Int, hasData: Boolean) {
+    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+    // Дуга залита градиентом, а не одним цветом: лайм сверху, зелёный снизу.
+    val arc = Brush.linearGradient(listOf(GreenLime, statusGreen))
+    val sweep by animateFloatAsState(
+        targetValue = if (hasData) percent / 100f else 0f,
+        animationSpec = tween(700),
+        label = "percent",
+    )
+
+    Box(modifier = Modifier.size(96.dp), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val stroke = 10.dp.toPx()
+            val inset = stroke / 2
+            drawArc(
+                color = track,
+                startAngle = 0f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = Size(size.width - stroke, size.height - stroke),
+                style = Stroke(width = stroke, cap = StrokeCap.Round),
+            )
+            if (sweep > 0f) {
+                drawArc(
+                    brush = arc,
+                    startAngle = -90f,
+                    sweepAngle = 360f * sweep,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = Size(size.width - stroke, size.height - stroke),
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                )
             }
         }
+        Text(
+            text = if (hasData) "$percent%" else "-",
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
@@ -408,155 +487,6 @@ private fun Empty(text: String) {
     )
 }
 
-/** Штрихов в кольце всегда столько: на неделе с тремя парами три штриха выглядели дырой. */
-private const val RING_TICKS = 48
-
-private val RING_SIZE = 216.dp
-
-/** Размытие свечения требует Android 12; ниже кольцо остаётся без ореола. */
-private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-
-/**
- * Штрихи шкалы по кругу. [glow] — слой свечения: трек не рисуется (светиться нечему),
- * а цветные идут в полсилы, иначе после размытия ореол забивает сами штрихи.
- */
-private fun DrawScope.drawRingTicks(
-    shown: Float,
-    present: Int,
-    excused: Int,
-    absent: Int,
-    track: Color,
-    stroke: Dp,
-    glow: Boolean,
-) {
-    val length = 16.dp.toPx()
-    val outerRadius = size.minDimension / 2f
-    val step = 360f / RING_TICKS
-
-    repeat(RING_TICKS) { index ->
-        val angle = Math.toRadians((-90f + step * index).toDouble())
-        val dx = cos(angle).toFloat()
-        val dy = sin(angle).toFloat()
-        val color = when {
-            index >= shown -> track
-            index < present -> Green
-            index < excused -> Warning
-            index < absent -> Danger
-            else -> track
-        }
-        if (glow && color == track) return@repeat
-        drawLine(
-            color = if (glow) color.copy(alpha = 0.7f) else color,
-            start = Offset(
-                center.x + dx * (outerRadius - length),
-                center.y + dy * (outerRadius - length),
-            ),
-            end = Offset(center.x + dx * outerRadius, center.y + dy * outerRadius),
-            strokeWidth = stroke.toPx(),
-            cap = StrokeCap.Round,
-        )
-    }
-}
-
-/**
- * Кольцо посещаемости: процент крупно в центре, вокруг — шкала из штрихов. Длина
- * цветного участка пропорциональна долям (был / уволен / прогулял), а число штрихов
- * не зависит от числа пар — кольцо одинаково плотное и на шести парах, и на двадцати.
- */
-@Composable
-private fun AttendanceRing(
-    stats: AttendanceStats,
-    value: String,
-    caption: String,
-    hasData: Boolean,
-) {
-    val track = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-
-    // Границы считаются нарастающим итогом в целых штрихах: округляй каждую долю
-    // отдельно — и на круге потеряется или прибавится штрих.
-    val total = stats.total.coerceAtLeast(1)
-    val present = stats.present * RING_TICKS / total
-    val excused = (stats.present + stats.excused) * RING_TICKS / total
-    val absent = (stats.present + stats.excused + stats.absent) * RING_TICKS / total
-
-    // Шкала заполняется по кругу, а не появляется разом: при смене недели видно,
-    // что кольцо пересобралось.
-    val shown by animateFloatAsState(
-        targetValue = if (hasData) RING_TICKS.toFloat() else 0f,
-        animationSpec = tween(700),
-        label = "ring",
-    )
-
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        // Свечение — та же шкала под основной, размытая целым слоем. Штрихи стоят
-        // вплотную, поэтому «ореол» из широкой полупрозрачной черты под каждой сливался
-        // в сплошной тёмный обод; blur даёт мягкий свет и не липнет к соседям.
-        if (CAN_BLUR) {
-            Canvas(
-                modifier = Modifier
-                    .size(RING_SIZE)
-                    .blur(10.dp, BlurredEdgeTreatment.Unbounded),
-            ) {
-                drawRingTicks(shown, present, excused, absent, track, 5.dp, glow = true)
-            }
-        }
-
-        Canvas(modifier = Modifier.size(RING_SIZE)) {
-            drawRingTicks(shown, present, excused, absent, track, 4.dp, glow = false)
-        }
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 44.dp),
-        ) {
-            Text(
-                text = value,
-                // Слова вместо процента в тот же кегль не влезают — им свой размер.
-                fontSize = if (hasData) 48.sp else 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-            )
-            if (caption.isNotEmpty()) {
-                Text(
-                    text = caption,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatsRow(state: HomeUiState) {
-    val stats = state.stats
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Stat("Был", stats.present.toString(), Green, Modifier.weight(1f))
-        Stat("Ув.", stats.excused.toString(), Warning, Modifier.weight(1f))
-        Stat("Н/У", stats.absent.toString(), Danger, Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun Stat(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .hairline(RoundedCornerShape(18.dp))
-            .padding(vertical = 14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(text = value, style = MaterialTheme.typography.titleLarge, color = color)
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
 /** Короткая метка для пилюли: полное «Не был (Н/У)» в строку не помещается. */
 private val Attendance.short: String
     get() = when (this) {
@@ -574,6 +504,10 @@ private val Attendance.short: String
  */
 @Composable
 private fun DayBlock(date: LocalDate, records: List<AttendanceRecord>) {
+    if (records.isEmpty()) {
+        Empty("${date.dayTitle()} - пар не было")
+        return
+    }
     Column(modifier = Modifier.padding(bottom = 16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 8.dp),

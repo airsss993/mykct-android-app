@@ -14,6 +14,9 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -61,7 +64,6 @@ import ru.dzhaparidze.mykct.data.ScheduleSettings
 import ru.dzhaparidze.mykct.data.ScheduleSettingsStore
 import ru.dzhaparidze.mykct.data.ScheduleView
 import ru.dzhaparidze.mykct.data.ThemeMode
-import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.hairline
@@ -169,14 +171,43 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, acc
         Spacer(Modifier.height(28.dp))
 
         val uriHandler = LocalUriHandler.current
-        ShinyPill(
-            text = "Написать разработчику",
-            icon = R.drawable.ic_send,
+        ContactPill(
             onClick = { uriHandler.openUri("https://t.me/airsss993") },
             modifier = Modifier.padding(horizontal = 16.dp),
         )
 
         Spacer(Modifier.height(navBarInset()))
+    }
+}
+
+/**
+ * "Написать разработчику" - стеклянная капсула цвета текста, как в iOS: акцентная
+ * заливка тут спорила с главными кнопками, а это второстепенное действие.
+ */
+@Composable
+private fun ContactPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val tint = MaterialTheme.colorScheme.onSurface.copy(alpha = if (pressed) 0.7f else 1f)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surface)
+            .hairline(CircleShape)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .padding(vertical = 18.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(R.drawable.ic_send), contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        Text(
+            text = "Написать разработчику",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = tint,
+            modifier = Modifier.padding(start = 10.dp),
+        )
     }
 }
 

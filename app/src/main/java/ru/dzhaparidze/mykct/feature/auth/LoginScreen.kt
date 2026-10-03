@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -93,7 +94,7 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
             color = Color.White,
         )
         Text(
-            text = "Логин и пароль — те же, что в личном кабинете колледжа.",
+            text = "Введите ваш корпоративный логин и пароль",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.6f),
             modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
@@ -117,17 +118,14 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
             imeAction = ImeAction.Done,
             visualTransformation = if (passwordShown) VisualTransformation.None else PasswordVisualTransformation(),
             trailing = {
-                // Текстом, а не иконкой-глазом: своего глаза в наборе нет, а тащить
-                // ещё один svg ради одного места незачем.
-                Text(
-                    text = if (passwordShown) "Скрыть" else "Показать",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = VioletLight,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .clickable { passwordShown = !passwordShown }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                )
+                IconButton(onClick = { passwordShown = !passwordShown }) {
+                    Icon(
+                        painter = painterResource(if (passwordShown) R.drawable.ic_eye_off else R.drawable.ic_eye),
+                        contentDescription = if (passwordShown) "Скрыть пароль" else "Показать пароль",
+                        tint = Color.White.copy(alpha = 0.6f),
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
             },
         )
 

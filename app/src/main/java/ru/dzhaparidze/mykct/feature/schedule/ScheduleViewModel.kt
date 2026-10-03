@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.LessonSubgroup
+import ru.dzhaparidze.mykct.data.slotCount
 import ru.dzhaparidze.mykct.data.splitOwn
 import ru.dzhaparidze.mykct.data.ApiScheduleRepository
 import ru.dzhaparidze.mykct.data.ScheduleRepository
@@ -220,7 +221,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val days = dates.map { date ->
             DayCell(
                 date = date,
-                lessonCount = byDate[date].orEmpty().size,
+                lessonCount = byDate[date].orEmpty().slotCount(),
                 isToday = date == today,
             )
         }

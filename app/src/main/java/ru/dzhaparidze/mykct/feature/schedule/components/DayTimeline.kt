@@ -92,7 +92,7 @@ fun DayTimeline(
                     LessonCard(
                         lesson = lesson,
                         isPast = now != null && !end.isAfter(now),
-                        isNow = isNow,
+                        now = now.takeIf { isNow },
                         onClick = { onLessonClick(lesson) },
                         modifier = Modifier
                             .weight(1f)

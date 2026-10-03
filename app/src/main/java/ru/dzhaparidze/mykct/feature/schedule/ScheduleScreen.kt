@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.selectionOf
+import ru.dzhaparidze.mykct.data.slotCount
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.data.api.Streak
@@ -337,8 +338,8 @@ private fun Hero(
             value = when {
                 state.isLoading -> "Загружаем…"
                 state.error != null -> "Нет данных"
-                state.visible.sumOf { it.lessons.size } == 0 -> "Пар нет"
-                else -> lessonsCount(state.visible.sumOf { it.lessons.size })
+                state.visible.sumOf { it.lessons.slotCount() } == 0 -> "Пар нет"
+                else -> lessonsCount(state.visible.sumOf { it.lessons.slotCount() })
             },
             // Один день — «Понедельник, 17 августа · 9:00 – 15:40», диапазон — «17 – 21 августа»
             subtitle = state.visible.singleOrNull()
@@ -419,7 +420,7 @@ private fun DayHeader(date: LocalDate, lessons: List<Lesson>, first: Boolean) {
         )
         Spacer(Modifier.width(12.dp))
         Text(
-            text = if (lessons.isEmpty()) "Пар нет" else lessonsCount(lessons.size),
+            text = if (lessons.isEmpty()) "Пар нет" else lessonsCount(lessons.slotCount()),
             style = MaterialTheme.typography.labelMedium,
             color = if (today) Color.White.copy(alpha = 0.8f) else colors.onSurfaceVariant,
             maxLines = 1,

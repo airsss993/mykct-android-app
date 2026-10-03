@@ -36,6 +36,12 @@ data class Lesson(
 }
 
 /** Элемент SubGroup: SGrID -> id, STitle -> title, STopic -> topic, SGCaID -> room. */
+/**
+ * Сколько пар по звонкам: две подгруппы в одно время - одна пара, а не две.
+ * Так же считает iOS - иначе счётчик дня расходится с сеткой.
+ */
+fun List<Lesson>.slotCount(): Int = distinctBy { it.start to it.end }.size
+
 data class LessonSubgroup(
     val id: String,
     val title: String,

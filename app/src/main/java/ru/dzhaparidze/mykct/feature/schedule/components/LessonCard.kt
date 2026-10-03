@@ -2,9 +2,6 @@ package ru.dzhaparidze.mykct.feature.schedule.components
 
 import android.os.Build
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,8 +11,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -27,7 +22,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
@@ -46,8 +42,10 @@ fun LessonCard(
     isPast: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isNow: Boolean = false,
+    /** Часы экрана, если пара идёт сейчас; null - не идёт. */
+    now: LocalTime? = null,
 ) {
+    val isNow = now != null
     // Монохром по референсу: все карточки в фирменном градиенте, предметы различает
     // водяной знак, а не цвет. `colorHex` с портала намеренно игнорируется.
     val accent = MaterialTheme.colorScheme.primary
@@ -147,23 +145,9 @@ fun LessonCard(
 
                 Spacer(Modifier.height(8.dp))
 
-                if (isNow) {
-                    // Свои часы на идущей паре: общий тик экрана ходит раз в минуту, и
-                    // поднимать его частоту ради одной карточки — перерисовывать весь
-                    // экран каждую секунду. Тикает только та карточка, которая идёт.
-                    val at by produceState(LocalTime.now(), lesson.id) {
-                        while (true) {
-                            value = LocalTime.now()
-                            delay(1000)
-                        }
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Chips(lesson = lesson, secondsLeft = secondsLeft(lesson, at))
-                        Progress(fraction = progressFraction(lesson, at))
-                    }
-                } else {
-                    Chips(lesson = lesson, secondsLeft = null)
-                }
+                // Остаток от тех же минутных часов, что и линия "сейчас": свои посекундные
+                // часы у карточки расходились с линией, а полосу прогресса iOS тоже убрал.
+                Chips(lesson = lesson, secondsLeft = now?.let { secondsLeft(lesson, it) })
             }
         }
     }
@@ -183,9 +167,7 @@ private fun Chips(lesson: Lesson, secondsLeft: Int?) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        if (secondsLeft != null) {
-            Chip(text = "Идёт · осталось ${remainingText(secondsLeft)}", icon = R.drawable.ic_clock)
-        }
+        if (secondsLeft != null) RemainingChip(remainingText(secondsLeft))
         if (lesson.room.isNotBlank()) {
             Chip(text = lesson.room, icon = R.drawable.ic_place)
         }
@@ -195,26 +177,24 @@ private fun Chips(lesson: Lesson, secondsLeft: Int?) {
     }
 }
 
-/** Сколько пары прошло: белая капсула по подложке, доезжает ровно за секунду тика. */
+/**
+ * Чип остатка сжимается под ширину карточки, как `ViewThatFits` в iOS: две пары рядом
+ * не вмещают "Идёт · осталось 40 мин", и тогда показываем "Осталось 40 мин" или "40 мин".
+ */
 @Composable
-private fun Progress(fraction: Float) {
-    val width by animateFloatAsState(
-        targetValue = fraction,
-        animationSpec = tween(1000, easing = LinearEasing),
-        label = "lesson-progress",
-    )
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(4.dp)
-            .background(Color.White.copy(alpha = 0.25f), CircleShape),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(width)
-                .fillMaxHeight()
-                .background(Color.White, CircleShape),
-        )
+private fun RemainingChip(left: String) {
+    Layout(
+        contents = listOf(
+            { Chip(text = "Идёт · осталось $left", icon = R.drawable.ic_clock) },
+            { Chip(text = "Осталось $left", icon = R.drawable.ic_clock) },
+            { Chip(text = left, icon = R.drawable.ic_clock) },
+        ),
+    ) { variants, constraints ->
+        val loose = constraints.copy(minWidth = 0, maxWidth = Constraints.Infinity)
+        val placeables = variants.map { it.first().measure(loose) }
+        val chosen = placeables.firstOrNull { it.width <= constraints.maxWidth }
+            ?: variants.last().first().measure(constraints.copy(minWidth = 0))
+        layout(chosen.width, chosen.height) { chosen.place(0, 0) }
     }
 }
 
@@ -222,13 +202,6 @@ private fun Progress(fraction: Float) {
 internal fun secondsLeft(lesson: Lesson, at: LocalTime): Int {
     val millis = Duration.between(at, lesson.end).toMillis()
     return if (millis <= 0) 0 else ((millis + 999) / 1000).toInt()
-}
-
-/** Доля прошедшего времени пары, 0..1. */
-internal fun progressFraction(lesson: Lesson, at: LocalTime): Float {
-    val total = Duration.between(lesson.start, lesson.end).toMillis()
-    if (total <= 0) return 1f
-    return (Duration.between(lesson.start, at).toMillis().toFloat() / total).coerceIn(0f, 1f)
 }
 
 /** Последнюю минуту отсчёт идёт секундами — иначе «осталось 0 мин» висит целую минуту. */

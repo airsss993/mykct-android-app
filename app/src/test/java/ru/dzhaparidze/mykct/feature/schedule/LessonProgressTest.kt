@@ -5,7 +5,7 @@ import java.time.LocalTime
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import ru.dzhaparidze.mykct.data.Lesson
-import ru.dzhaparidze.mykct.feature.schedule.components.progressFraction
+import ru.dzhaparidze.mykct.data.slotCount
 import ru.dzhaparidze.mykct.feature.schedule.components.remainingText
 import ru.dzhaparidze.mykct.feature.schedule.components.secondsLeft
 
@@ -40,9 +40,9 @@ class LessonProgressTest {
     }
 
     @Test
-    fun `полоса идёт от нуля до единицы`() {
-        assertEquals(0f, progressFraction(lesson, LocalTime.of(8, 59)), 0.001f)
-        assertEquals(0.5f, progressFraction(lesson, LocalTime.of(9, 30)), 0.001f)
-        assertEquals(1f, progressFraction(lesson, LocalTime.of(10, 30)), 0.001f)
+    fun `параллельные подгруппы считаются одной парой`() {
+        val parallel = lesson.copy(id = "cl-2", title = "Английский")
+        val next = lesson.copy(id = "cl-3", start = LocalTime.of(10, 10), end = LocalTime.of(11, 40))
+        assertEquals(2, listOf(lesson, parallel, next).slotCount())
     }
 }

@@ -63,6 +63,10 @@ import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.feature.auth.LoginScreen
 import ru.dzhaparidze.mykct.feature.home.HomeScreen
 import ru.dzhaparidze.mykct.feature.schedule.ScheduleScreen
+import ru.dzhaparidze.mykct.feature.schedule.ScheduleViewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
+import java.time.LocalDate
 import ru.dzhaparidze.mykct.ui.dotGrid
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
@@ -82,7 +86,12 @@ fun navBarInset(): Dp = 108.dp + WindowInsets.navigationBars.asPaddingValues().c
  * Навигации как таковой нет — три экрана и переключатель, роутер тут не за что.
  */
 @Composable
-fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
+fun AppShell(
+    openWeek: LocalDate?,
+    onWeekOpened: () -> Unit,
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
+) {
     // Старт на расписании: «Главная» пока пустая, открывать приложение на заглушке незачем.
     var screen by rememberSaveable { mutableStateOf(Screen.SCHEDULE) }
     // Форма входа живёт здесь, а не на экранах: навбар плавает поверх контента,
@@ -100,6 +109,17 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             signedIn = session.user != null,
             onClick = { if (session.user != null) profileOpen = true else loginOpen = true },
         )
+    }
+
+    // Тап по пушу: закрыть листы и открыть его неделю в расписании
+    val scheduleViewModel: ScheduleViewModel = viewModel()
+    LaunchedEffect(openWeek) {
+        val week = openWeek ?: return@LaunchedEffect
+        profileOpen = false
+        loginOpen = false
+        screen = Screen.SCHEDULE
+        scheduleViewModel.show(week)
+        onWeekOpened()
     }
 
     // Подложка под навбар: контент экрана пишется в слой, навбар рисует его размытым

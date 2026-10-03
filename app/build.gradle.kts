@@ -11,6 +11,12 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// Пуши (FCM) включаются, только когда рядом лежит google-services.json из консоли
+// Firebase. Без него сборка проходит, а приложение просто не регистрирует устройство.
+if (file("google-services.json").exists()) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+}
+
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) load(FileInputStream(file))
@@ -107,6 +113,9 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.kotlinx.serialization.json)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.kotlinx.coroutines.play.services)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     debugImplementation(libs.androidx.compose.ui.tooling)

@@ -125,6 +125,15 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** Неделя из пуша: сегодня, если оно в ней, иначе понедельник; данные всегда свежие. */
+    fun show(week: LocalDate) {
+        val today = today()
+        val weekStart = mondayOf(week)
+        val selected = if (mondayOf(today) == weekStart) today else weekStart
+        _state.update { it.copy(weekStart = weekStart, selectedDate = selected, details = null) }
+        loadWeek(silent = true)
+    }
+
     fun updateSelection(selection: Selection) {
         if (selection == _state.value.selection) return
         _state.update { it.copy(selection = selection) }

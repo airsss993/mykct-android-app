@@ -1,5 +1,14 @@
 package ru.dzhaparidze.mykct.feature.settings
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ru.dzhaparidze.mykct.data.push.Push
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
@@ -102,6 +111,9 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, acc
         }
 
         ScheduleSection()
+
+        val session by AuthService.get(LocalContext.current).state.collectAsStateWithLifecycle()
+        if (session.user != null) NotificationsSection()
 
         SectionTitle("О приложении")
         Card {
@@ -222,6 +234,64 @@ private fun ScheduleSection() {
         ) {
             Switch(checked = settings.skipWeekends, onCheckedChange = null)
         }
+    }
+}
+
+/**
+ * Пуши об изменениях расписания, как в iOS: переключатель свой, но если система
+ * уведомления запретила, включить его здесь нельзя - ведём в настройки телефона.
+ */
+@Composable
+private fun NotificationsSection() {
+    val context = LocalContext.current
+    val enabled by Push.enabled.collectAsStateWithLifecycle()
+    var allowed by remember { mutableStateOf(true) }
+    // Разрешение могли дать в настройках телефона - перечитываем при каждом возврате
+    LifecycleResumeEffect(Unit) {
+        allowed = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        onPauseOrDispose {}
+    }
+    var blocked by remember { mutableStateOf(false) }
+
+    SectionTitle("Уведомления")
+    Card {
+        SettingsRow(
+            icon = R.drawable.ic_bell,
+            text = "Изменения в расписании",
+            modifier = Modifier.toggleable(
+                value = enabled && allowed,
+                role = Role.Switch,
+                onValueChange = { on ->
+                    if (on && !allowed) blocked = true
+                    Push.setEnabled(context, on)
+                },
+            ),
+        ) {
+            Switch(checked = enabled && allowed, onCheckedChange = null)
+        }
+    }
+
+    if (blocked) {
+        AlertDialog(
+            onDismissRequest = { blocked = false },
+            title = { Text("Уведомления выключены") },
+            text = { Text("Разрешите уведомления в Настройках телефона, чтобы узнавать об изменениях в расписании.") },
+            dismissButton = { TextButton(onClick = { blocked = false }) { Text("Отмена") } },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        blocked = false
+                        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        } else {
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                        }
+                        context.startActivity(intent)
+                    },
+                ) { Text("Настройки") }
+            },
+        )
     }
 }
 

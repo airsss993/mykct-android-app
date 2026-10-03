@@ -59,3 +59,15 @@ fun AppTheme(
         content = content,
     )
 }
+
+/**
+ * Светлая ли сейчас тема. Смотрим на саму схему, а не на `isSystemInDarkTheme()`:
+ * тему можно задать руками в настройках, и системный флаг тогда врёт.
+ */
+private val isLightTheme: Boolean
+    @Composable get() = MaterialTheme.colorScheme.background == LightBackground
+
+/** Статусные цвета зависят от темы: светлые тона на белом фоне нечитаемы. */
+val statusGreen: Color @Composable get() = if (isLightTheme) GreenDeep else Green
+val statusWarning: Color @Composable get() = if (isLightTheme) WarningDeep else Warning
+val statusDanger: Color @Composable get() = if (isLightTheme) DangerDeep else Danger

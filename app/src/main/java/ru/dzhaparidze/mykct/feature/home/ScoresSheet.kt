@@ -24,9 +24,9 @@ import ru.dzhaparidze.mykct.ui.Phase
 import ru.dzhaparidze.mykct.ui.Swirl
 import ru.dzhaparidze.mykct.ui.phaseOf
 import ru.dzhaparidze.mykct.ui.hairline
-import ru.dzhaparidze.mykct.ui.theme.Danger
-import ru.dzhaparidze.mykct.ui.theme.Green
-import ru.dzhaparidze.mykct.ui.theme.Warning
+import ru.dzhaparidze.mykct.ui.theme.statusDanger
+import ru.dzhaparidze.mykct.ui.theme.statusGreen
+import ru.dzhaparidze.mykct.ui.theme.statusWarning
 
 /**
  * Баллы по предмету за текущее полугодие. Оценка приходит строкой и бывает пустой —
@@ -149,8 +149,8 @@ private fun Score.color(): Color {
     val value = this.value ?: return MaterialTheme.colorScheme.onSurfaceVariant
     val share = if (max > 0) value.toDouble() / max else 0.0
     return when {
-        share >= 0.8 -> Green
-        share >= 0.6 -> Warning
-        else -> Danger
+        share >= 0.8 -> statusGreen
+        share >= 0.6 -> statusWarning
+        else -> statusDanger
     }
 }

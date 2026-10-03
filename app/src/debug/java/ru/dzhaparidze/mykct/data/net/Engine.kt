@@ -133,14 +133,27 @@ private fun classDetails(request: HttpRequestData): JsonElement = buildJsonObjec
 }
 
 /**
- * Посещаемость за ту же неделю, что и расписание: прошедшие пары получают отметку
+ * Посещаемость за тот же период, что и расписание: прошедшие пары получают отметку
  * (детерминированно по id — чтобы цифры не прыгали при каждом обновлении),
  * будущие остаются без статуса.
+ *
+ * Расписание мок отдаёт неделями, а календарь на "Главной" просит месяц - поэтому
+ * недели собираются в цикле и обрезаются по запрошенному диапазону.
  */
 private suspend fun attendance(request: HttpRequestData): JsonElement {
-    val start = request.url.parameters["start"]?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-        ?: LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-    val lessons = MockScheduleRepository().weekSchedule(start, Selection()).lessons
+    fun param(name: String) = request.url.parameters[name]
+        ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
+    val start = param("start") ?: LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val end = param("end") ?: start.plusDays(6)
+    val repository = MockScheduleRepository()
+    val lessons = buildList {
+        var monday = start.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        while (!monday.isAfter(end)) {
+            addAll(repository.weekSchedule(monday, Selection()).lessons)
+            monday = monday.plusWeeks(1)
+        }
+    }.filter { it.date >= start && it.date <= end }
 
     return buildJsonArray {
         lessons.forEach { lesson ->

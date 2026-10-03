@@ -89,11 +89,12 @@ class ApiMappingTest {
         val stats = AttendanceStats.of(
             listOf(record(2), record(2), record(1), record(0), record(7)),
         )
-        assertEquals(5, stats.total)
+        // Пятая запись - без отметки (будущая пара), в знаменатель она не попадает.
+        assertEquals(4, stats.total)
         assertEquals(2, stats.present)
         assertEquals(1, stats.excused)
         assertEquals(1, stats.absent)
-        assertEquals(40, stats.percent)
+        assertEquals(50, stats.percent)
     }
 
     @Test

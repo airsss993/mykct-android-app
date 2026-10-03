@@ -31,6 +31,22 @@ val Green = Color(0xFF30D97C)         // кольцо прогресса, «в �
 val Warning = Color(0xFFFFAE1A)       // пропуск по уважительной
 val Danger = Color(0xFFFF5A63)        // ошибка, пропуск без уважительной
 
+// Те же три статуса для светлой темы: тёмные тона Radix (шаг 11 шкал grass/amber/red).
+// Светлые дают на белом контраст 1.9 / 1.9 / 3.0 - число в ячейке календаря не читается.
+val GreenDeep = Color(0xFF2A7E3B)
+val WarningDeep = Color(0xFFAB6400)
+val DangerDeep = Color(0xFFCE2C31)
+
+// Заливка ячейки календаря - одна на обе темы (Radix, шаг 9), текст поверх неё Ink.
+// Белого текста на жёлтой заливке не бывает: любой оттенок, который ещё читается как
+// жёлтый, даёт с белым 1.6:1. С Ink все три дают 6.4 / 12.4 / 5.0.
+/** Светлый конец градиента в кольце посещаемости: лайм переходит в зелёный. */
+val GreenLime = Color(0xFFC3F26B)
+
+val GreenFill = Color(0xFF46A758)
+val WarningFill = Color(0xFFFFC53D)
+val DangerFill = Color(0xFFE5484D)
+
 // Светлая тема
 val LightBackground = Color(0xFFF4F4F8)
 val GreyFill = Color(0xFFE7E7EE)      // невыбранные круги дней

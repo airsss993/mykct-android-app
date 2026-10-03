@@ -44,6 +44,10 @@ android {
         // (app/src/debug/.../net/Engine.kt). USE_MOCKS=false в local.properties —
         // и сборка снова пойдёт в сеть. В release заглушки нет ни при каком значении.
         buildConfigField("boolean", "USE_MOCKS", getEnvVariable("USE_MOCKS", "true"))
+        // Ключ OpenRouter под мотивационную строку на "Главной" (data/api/Motivation.kt).
+        // Пустой по умолчанию: без него строка берётся из заготовок, а не из модели.
+        // Ключ уезжает в APK и достаётся из него - держать на нём лимит.
+        buildConfigField("String", "OPENROUTER_KEY", "\"${getEnvVariable("OPENROUTER_KEY", "")}\"")
     }
 
     signingConfigs {

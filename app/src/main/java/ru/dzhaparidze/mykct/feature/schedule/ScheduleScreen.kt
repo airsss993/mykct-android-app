@@ -181,6 +181,7 @@ fun ScheduleScreen(
         Hero(
             state = state,
             streak = home.streak,
+            signedIn = home.isAuthenticated,
             onOpenStreak = { streakOpen = true },
             onOpenGroups = { groupSheetOpen = true },
             onPrevWeek = { viewModel.shiftWeek(-1) },
@@ -277,16 +278,8 @@ fun ScheduleScreen(
         )
     }
 
-    home.streak?.let { streak ->
-        if (streakOpen) {
-            StreakSheet(
-                streak = streak,
-                records = home.records,
-                stats = home.stats,
-                weekStart = home.weekStart,
-                onDismiss = { streakOpen = false },
-            )
-        }
+    if (streakOpen && home.isAuthenticated) {
+        StreakSheet(viewModel = homeViewModel, onDismiss = { streakOpen = false })
     }
 
     state.details?.let { details ->
@@ -307,6 +300,7 @@ fun ScheduleScreen(
 private fun Hero(
     state: ScheduleUiState,
     streak: Streak?,
+    signedIn: Boolean,
     onOpenStreak: () -> Unit,
     onOpenGroups: () -> Unit,
     onPrevWeek: () -> Unit,
@@ -324,9 +318,9 @@ private fun Hero(
             .padding(bottom = 28.dp),
     ) {
         ScreenTitle(text = "Расписание") {
-            // Огонёк появляется только у вошедшего: без токена стрика просто нет.
-            if (streak != null) {
-                StreakFlame(onClick = onOpenStreak)
+            // Огонёк у любого вошедшего, даже пока стрик грузится: без токена стрика нет.
+            if (signedIn) {
+                StreakFlame(active = (streak?.current ?: 0) > 0, onClick = onOpenStreak)
                 Spacer(Modifier.width(4.dp))
             }
             GroupPill(label = state.selection.label(), onClick = onOpenGroups)

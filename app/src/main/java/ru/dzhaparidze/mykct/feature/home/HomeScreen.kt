@@ -164,9 +164,9 @@ fun HomeScreen(
                 .padding(horizontal = 20.dp),
         ) {
             ScreenTitle(text = "Главная") {
-                // Огонёк — только у вошедшего: без токена стрика просто нет.
-                if (state.streak != null) {
-                    StreakFlame(onClick = { streakOpen = true })
+                // Огонёк у любого вошедшего, даже пока стрик грузится: без токена стрика нет.
+                if (state.isAuthenticated) {
+                    StreakFlame(active = (state.streak?.current ?: 0) > 0, onClick = { streakOpen = true })
                     Spacer(Modifier.width(4.dp))
                 }
                 account()
@@ -193,16 +193,8 @@ fun HomeScreen(
         }
     }
 
-    state.streak?.let { streak ->
-        if (streakOpen) {
-            StreakSheet(
-                streak = streak,
-                records = state.records,
-                stats = state.stats,
-                weekStart = state.weekStart,
-                onDismiss = { streakOpen = false },
-            )
-        }
+    if (streakOpen && state.isAuthenticated) {
+        StreakSheet(viewModel = viewModel, onDismiss = { streakOpen = false })
     }
 
     state.openSubject?.let { subject ->
@@ -620,7 +612,7 @@ private fun SubjectRow(subject: Subject, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ErrorBlock(text: String, onRetry: () -> Unit) {
+internal fun ErrorBlock(text: String, retry: String = "Повторить", onRetry: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -635,7 +627,7 @@ private fun ErrorBlock(text: String, onRetry: () -> Unit) {
         Button(onClick = onRetry) {
             Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Повторить")
+            Text(retry)
         }
     }
 }

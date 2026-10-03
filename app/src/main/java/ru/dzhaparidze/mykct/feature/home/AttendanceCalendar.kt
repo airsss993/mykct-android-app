@@ -2,6 +2,8 @@ package ru.dzhaparidze.mykct.feature.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -262,20 +264,23 @@ private fun RowScope.DayCell(
 ) {
     val accent = mark.color()
     val solid = mark.fill()
-    val fill = when {
+    val fillTarget = when {
         // Выбранный день залит целиком - как в референсе. Цвет берётся от отметки,
         // чтобы выбор не стирал то, ради чего в календарь и смотрят.
         isSelected -> solid ?: MaterialTheme.colorScheme.primary
         accent != null -> accent.copy(alpha = 0.16f)
         else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     }
-    val text = when {
+    val textTarget = when {
         // На залитом дне текст тёмный: белый на жёлтой заливке даёт 1.6:1.
         // День без отметки залит акцентом - там наоборот, тёмный не читается.
         isSelected -> if (solid != null) Ink else Color.White
         accent != null -> accent
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
+    // Выделение переезжает плавно, как в iOS: заливка и цвет числа за 280 мс
+    val fill by animateColorAsState(fillTarget, tween(280), label = "day-fill")
+    val text by animateColorAsState(textTarget, tween(280), label = "day-text")
 
     Box(
         modifier = Modifier

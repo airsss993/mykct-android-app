@@ -72,6 +72,14 @@ data class Streak(
     val periodEnd: LocalDate?,
 )
 
+/** Строка рейтинга: только псевдоним, ни имени, ни группы. */
+data class LeaderboardEntry(val rank: Int, val alias: String, val streak: Int, val isMe: Boolean)
+
+/** Рейтинг стриков по курсу: топ, своя строка и сколько всего участников. */
+data class Leaderboard(val top: List<LeaderboardEntry>, val me: LeaderboardEntry, val participants: Int) {
+    val isMeInTop: Boolean get() = top.any { it.isMe }
+}
+
 data class Subject(val id: String, val title: String)
 
 /** Баллы по предмету: занятие → его оценки. */

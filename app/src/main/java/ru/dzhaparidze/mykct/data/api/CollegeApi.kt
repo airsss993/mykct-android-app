@@ -49,6 +49,15 @@ class CollegeApi(
         }
     }
 
+    /** Рейтинг курса. 404 - выключен на сервере, 403 - не студент: экран говорит "недоступен". */
+    suspend fun leaderboard(): Leaderboard? = apiCall {
+        auth.withToken { token ->
+            Http.client.get("$baseUrl/attendance/leaderboard") { bearer(token) }
+                .decode<LeaderboardDto>()
+                .toLeaderboard()
+        }
+    }
+
     suspend fun subjects(): List<Subject> = apiCall {
         auth.withToken { token ->
             Http.client.get("$baseUrl/performance/subjects") { bearer(token) }
@@ -129,6 +138,33 @@ private fun StreakDto.toStreak() = Streak(
     periodStart = date(periodStart),
     periodEnd = date(periodEnd),
 )
+
+@Serializable
+internal data class LeaderboardEntryDto(
+    val rank: Int = 0,
+    val alias: String = "",
+    @SerialName("current_streak") val streak: Int = 0,
+    @SerialName("is_me") val isMe: Boolean = false,
+)
+
+@Serializable
+internal data class LeaderboardDto(
+    val top: List<LeaderboardEntryDto> = emptyList(),
+    val me: LeaderboardEntryDto? = null,
+    val participants: Int = 0,
+)
+
+/** Как в iOS: строки без псевдонима или с рангом <= 0 выкидываем, без своей строки рейтинга нет. */
+internal fun LeaderboardDto.toLeaderboard(): Leaderboard? {
+    val me = me?.toEntry() ?: return null
+    return Leaderboard(top = top.mapNotNull { it.toEntry() }, me = me, participants = participants.coerceAtLeast(0))
+}
+
+private fun LeaderboardEntryDto.toEntry(): LeaderboardEntry? {
+    val alias = alias.trim()
+    if (alias.isEmpty() || rank <= 0) return null
+    return LeaderboardEntry(rank = rank, alias = alias, streak = streak, isMe = isMe)
+}
 
 @Serializable
 private data class SubjectDto(

@@ -47,6 +47,7 @@ private fun mockEngine() = MockEngine { request ->
         path.endsWith("/classdetails") -> classDetails(request)
         path.endsWith("/attendance") -> attendance(request)
         path.endsWith("/attendance/streak") -> STREAK
+        path.endsWith("/attendance/leaderboard") -> LEADERBOARD
         path.endsWith("/performance/subjects") -> subjects()
         path.endsWith("/performance/score") -> SCORES
         path.endsWith("/auth/signin") -> SIGN_IN
@@ -244,6 +245,28 @@ private val STREAK: JsonObject = buildJsonObject {
     put("last_attended_date", LocalDate.now().minusDays(1).toString())
     put("period_start", LocalDate.now().minusMonths(3).toString())
     put("period_end", LocalDate.now().toString())
+}
+
+/** Своя строка ниже топа: экран рисует многоточие и её отдельно. */
+private val LEADERBOARD: JsonObject = buildJsonObject {
+    putJsonArray("top") {
+        listOf("Быстрый Енот" to 41, "Тихая Сова" to 38, "Смелый Барсук" to 33, "Рыжая Лиса" to 30, "Хитрый Ёж" to 27)
+            .forEachIndexed { index, (alias, streak) ->
+                add(buildJsonObject {
+                    put("rank", index + 1)
+                    put("alias", alias)
+                    put("current_streak", streak)
+                    put("is_me", false)
+                })
+            }
+    }
+    putJsonObject("me") {
+        put("rank", 14)
+        put("alias", "Весёлый Дельфин")
+        put("current_streak", 5)
+        put("is_me", true)
+    }
+    put("participants", 87)
 }
 
 /** Форма ответа — вложенная карта `{предмет: {занятие: [оценки]}}`, как у бэкенда. */

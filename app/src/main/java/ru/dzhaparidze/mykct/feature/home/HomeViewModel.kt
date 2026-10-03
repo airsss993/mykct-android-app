@@ -11,7 +11,11 @@ import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.data.api.AttendanceRecord
 import ru.dzhaparidze.mykct.data.api.AttendanceStats
 import ru.dzhaparidze.mykct.data.api.CollegeApi
+import ru.dzhaparidze.mykct.data.api.Leaderboard
 import ru.dzhaparidze.mykct.data.api.Motivation
+import ru.dzhaparidze.mykct.data.net.ApiException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import ru.dzhaparidze.mykct.data.api.Streak
 import ru.dzhaparidze.mykct.data.api.Subject
 import ru.dzhaparidze.mykct.data.api.SubjectLesson
@@ -21,6 +25,16 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.TemporalAdjusters
+
+/** Рейтинг грузится отдельно и только по открытию вкладки. */
+sealed interface LeaderboardFeed {
+    data object Idle : LeaderboardFeed
+    data object Loading : LeaderboardFeed
+    data class Loaded(val board: Leaderboard) : LeaderboardFeed
+    /** 404 (выключен на сервере) или 403: показываем "недоступен", а не ошибку. */
+    data object Unavailable : LeaderboardFeed
+    data class Failed(val message: String) : LeaderboardFeed
+}
 
 data class HomeUiState(
     val user: User? = null,
@@ -32,6 +46,7 @@ data class HomeUiState(
     /** Строка под процентом: приходит позже самих цифр, до неё карточка живёт без неё. */
     val motivation: String? = null,
     val streak: Streak? = null,
+    val leaderboard: LeaderboardFeed = LeaderboardFeed.Idle,
     val subjects: List<Subject> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -42,6 +57,9 @@ data class HomeUiState(
     val scoresError: String? = null,
 ) {
     val isAuthenticated: Boolean get() = user != null
+
+    /** Рейтинг по курсу есть только у студента с группой. */
+    val canSeeLeaderboard: Boolean get() = user?.isStudent == true && !user.academicGroup.isNullOrBlank()
 
     /** Отметки выбранного дня - календарь показывает месяц, список под ним один день. */
     val dayRecords: List<AttendanceRecord> get() = records.filter { it.date == selected }
@@ -64,6 +82,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val api = CollegeApi(auth)
 
     private val _state = MutableStateFlow(HomeUiState())
+    private var leaderboardJob: Job? = null
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     init {
@@ -74,7 +93,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 // Загружаемся один раз на переход «вошёл», а не на каждое обновление токена
                 if (session.user != null && !wasAuthenticated) load()
                 if (session.user == null) _state.update {
-                    it.copy(records = emptyList(), streak = null, subjects = emptyList(), stats = AttendanceStats(0, 0, 0, 0))
+                    it.copy(
+                        records = emptyList(),
+                        streak = null,
+                        leaderboard = LeaderboardFeed.Idle,
+                        subjects = emptyList(),
+                        stats = AttendanceStats(0, 0, 0, 0),
+                    )
                 }
             }
         }
@@ -96,6 +121,32 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
         _state.update { it.copy(month = YearMonth.from(today), selected = today) }
         load()
+    }
+
+    /** По открытию вкладки: уже загруженный или грузящийся рейтинг не трогаем. */
+    fun loadLeaderboard() {
+        val feed = _state.value.leaderboard
+        if (feed is LeaderboardFeed.Loading || feed is LeaderboardFeed.Loaded) return
+        reloadLeaderboard()
+    }
+
+    fun reloadLeaderboard() {
+        if (!_state.value.canSeeLeaderboard) return
+        leaderboardJob?.cancel()
+        _state.update { it.copy(leaderboard = LeaderboardFeed.Loading) }
+        leaderboardJob = viewModelScope.launch {
+            val feed = try {
+                api.leaderboard()?.let { LeaderboardFeed.Loaded(it) } ?: LeaderboardFeed.Failed(LEADERBOARD_ERROR)
+            } catch (e: ApiException) {
+                if (e.status == 403 || e.status == 404) LeaderboardFeed.Unavailable
+                else LeaderboardFeed.Failed(e.message ?: LEADERBOARD_ERROR)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                LeaderboardFeed.Failed(LEADERBOARD_ERROR)
+            }
+            _state.update { it.copy(leaderboard = feed) }
+        }
     }
 
     fun selectDay(date: LocalDate) = _state.update { it.copy(selected = date) }
@@ -161,3 +212,5 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 }
+
+private const val LEADERBOARD_ERROR = "Не удалось загрузить рейтинг"

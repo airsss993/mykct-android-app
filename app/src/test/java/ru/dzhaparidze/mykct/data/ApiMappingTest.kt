@@ -8,6 +8,9 @@ import org.junit.Test
 import ru.dzhaparidze.mykct.data.api.Attendance
 import ru.dzhaparidze.mykct.data.api.AttendanceRecord
 import ru.dzhaparidze.mykct.data.api.AttendanceStats
+import ru.dzhaparidze.mykct.data.api.LeaderboardDto
+import ru.dzhaparidze.mykct.data.api.LeaderboardEntryDto
+import ru.dzhaparidze.mykct.data.api.toLeaderboard
 import ru.dzhaparidze.mykct.data.auth.User
 import java.time.LocalDate
 import java.time.LocalTime
@@ -105,6 +108,24 @@ class ApiMappingTest {
         assertEquals(1, stats.excused)
         assertEquals(1, stats.absent)
         assertEquals(50, stats.percent)
+    }
+
+    @Test
+    fun `рейтинг выкидывает строки без псевдонима и с нулевым местом`() {
+        val board = LeaderboardDto(
+            top = listOf(
+                LeaderboardEntryDto(rank = 1, alias = " Енот ", streak = 9),
+                LeaderboardEntryDto(rank = 0, alias = "Сова"),
+                LeaderboardEntryDto(rank = 3, alias = "  "),
+            ),
+            me = LeaderboardEntryDto(rank = 7, alias = "Я", streak = 2, isMe = true),
+            participants = -5,
+        ).toLeaderboard()
+
+        assertEquals(listOf("Енот"), board?.top?.map { it.alias })
+        assertEquals(0, board?.participants)
+        assertEquals(false, board?.isMeInTop)
+        assertNull(LeaderboardDto(me = LeaderboardEntryDto(rank = 0, alias = "Я")).toLeaderboard())
     }
 
     @Test

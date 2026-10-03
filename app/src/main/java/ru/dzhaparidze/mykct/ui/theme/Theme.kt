@@ -48,13 +48,20 @@ private val DarkColors = darkColorScheme(
     outlineVariant = DarkGreyFill,
 )
 
+private val OledColors = DarkColors.copy(background = OledBackground, surface = OledSurface)
+
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    oled: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
+        colorScheme = when {
+            oled -> OledColors
+            darkTheme -> DarkColors
+            else -> LightColors
+        },
         typography = AppTypography,
         content = content,
     )

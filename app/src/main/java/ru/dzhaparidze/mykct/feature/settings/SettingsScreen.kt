@@ -352,6 +352,7 @@ private fun ThemeMode.icon(): Int = when (this) {
     ThemeMode.SYSTEM -> R.drawable.ic_theme_system
     ThemeMode.LIGHT -> R.drawable.ic_theme_light
     ThemeMode.DARK -> R.drawable.ic_theme_dark
+    ThemeMode.BLACK -> R.drawable.ic_theme_black
 }
 
 @Composable

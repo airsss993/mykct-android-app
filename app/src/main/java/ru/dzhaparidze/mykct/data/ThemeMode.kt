@@ -7,6 +7,8 @@ enum class ThemeMode(val title: String) {
     SYSTEM("Системная"),
     LIGHT("Светлая"),
     DARK("Тёмная"),
+    /** Тёмная на чистом чёрном, без света в фоне - для OLED-экранов, как в iOS. */
+    BLACK("Чёрная"),
 }
 
 /** Одна строка в SharedPreferences — как и выбор группы, DataStore тут не за что. */

@@ -67,7 +67,11 @@ import ru.dzhaparidze.mykct.feature.schedule.ScheduleViewModel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
-import ru.dzhaparidze.mykct.ui.dotGrid
+import ru.dzhaparidze.mykct.ui.theme.OledBackground
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.delay
+import kotlin.math.PI
+import kotlin.math.cos
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.feature.settings.SettingsScreen
 
@@ -128,9 +132,18 @@ fun AppShell(
 
     val accent = MaterialTheme.colorScheme.primary
     val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    // Чёрная тема - без света в фоне. Свет дрейфует с периодом 90 с, 8 кадров
+    // в секунду хватает: за кадр пятно сдвигается меньше чем на пиксель.
+    val glow = MaterialTheme.colorScheme.background != OledBackground
+    val drift by produceState(0f, glow) {
+        while (glow) {
+            value = ((1 - cos(2 * PI * System.currentTimeMillis() / 90_000)) / 2).toFloat()
+            delay(125)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Фон, свет по кромкам и точечная сетка — общие для всех экранов и живут здесь,
+        // Фон и свет по кромкам - общие для всех экранов и живут здесь,
         // а не внутри каждого: при смене экрана подложка не участвует в переходе,
         // меняется только содержимое. Раньше фон рисовал каждый экран сам, поэтому
         // гас вместе с ним — и в середине перехода экран целиком уходил в чёрный.
@@ -138,8 +151,7 @@ fun AppShell(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .drawBehind { drawAmbientGlow(accent, darkTheme) }
-                .dotGrid()
+                .drawBehind { if (glow) drawAmbientGlow(accent, darkTheme, drift) }
                 .drawWithContent {
                     backdrop.record { this@drawWithContent.drawContent() }
                     drawLayer(backdrop)

@@ -1,5 +1,6 @@
 package ru.dzhaparidze.mykct.ui.theme
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
@@ -23,7 +24,15 @@ val VioletInk = Color(0xFF3F1FD6)
  * Четыре остановки, а не две: блик — светлая сирень — акцент — индиго. На двух
  * переход читается как плоская заливка, на четырёх появляется объём, как в референсах.
  */
-val AccentGradient = Brush.linearGradient(listOf(VioletTint, VioletLight, Violet, VioletDeep))
+val AccentGradient = Brush.linearGradient(
+    0f to VioletTint,
+    0.12f to VioletLight,
+    0.4f to Violet,
+    1f to VioletDeep,
+    // из правого верхнего угла в левый нижний, как в iOS; бесконечность - край фигуры
+    start = Offset(Float.POSITIVE_INFINITY, 0f),
+    end = Offset(0f, Float.POSITIVE_INFINITY),
+)
 
 // Статусы взяты светлее и насыщеннее, чем обычная веб-палитра: на near-black фоне
 // #22C55E / #F5A623 / #E0575B выглядели тусклыми, будто выключенные.
@@ -60,3 +69,7 @@ val DarkBackground = Color(0xFF0C0C11)
 val DarkSurface = Color(0xFF16161D)   // карточки, навбар
 val DarkGreyFill = Color(0xFF23232D)  // круглые кнопки, невыбранные круги
 val DarkGreyText = Color(0xFF8A8A99)
+
+// Чёрная тема: фон гасит пиксели OLED, карточки берут фон тёмной темы
+val OledBackground = Color.Black
+val OledSurface = DarkBackground

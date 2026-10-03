@@ -58,7 +58,7 @@ import ru.dzhaparidze.mykct.ui.ScreenTitle
 import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.ui.theme.VioletIndigo
-import ru.dzhaparidze.mykct.ui.theme.VioletMagenta
+import ru.dzhaparidze.mykct.ui.theme.VioletLight
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -102,18 +102,16 @@ private fun lessonsCount(count: Int): String {
 }
 
 /**
- * Общий фон экранов приложения.
- * Свет в фоне: три источника по кромкам — акцент сверху, пурпур в правом верхнем
- * углу и индиго у левого нижнего, под капсулой навбара. Больше цветов и шире
- * радиусы превращают фон в грязное пятно, поэтому радиусы держим меньше ширины
- * экрана. Верхние считаются от ширины, нижний привязан к нижней кромке.
+ * Свет в фоне экранов, как в iOS (`AmbientGlow`): акцент и сиреневый блик сверху,
+ * индиго у нижней кромки под навбаром. Верхние пятна считаются от ширины, нижнее
+ * привязано к нижней кромке. [drift] от 0 до 1 водит пятна по горизонтали навстречу
+ * друг другу - верхние справа налево, нижнее слева направо.
  */
-internal fun DrawScope.drawAmbientGlow(accent: Color, darkTheme: Boolean) {
+internal fun DrawScope.drawAmbientGlow(accent: Color, darkTheme: Boolean, drift: Float) {
     val w = size.width
     val h = size.height
 
-    // На светлом фоне та же прозрачность читается вдвое ярче, поэтому верхние
-    // источники там гасим.
+    // На светлом фоне та же прозрачность читается вдвое ярче - там всё гасим вдвое.
     val strength = if (darkTheme) 1f else 0.5f
 
     fun glow(color: Color, alpha: Float, cx: Float, cy: Float, radius: Float) {
@@ -126,16 +124,17 @@ internal fun DrawScope.drawAmbientGlow(accent: Color, darkTheme: Boolean) {
         )
     }
 
-    glow(accent, 0.50f * strength, w * 0.42f, -w * 0.05f, w * 0.80f)
-    glow(VioletMagenta, 0.30f * strength, w, w * 0.12f, w * 0.55f)
-
-    // Снизу на светлой теме индиго уходит в серую муть и его просто не видно,
-    // поэтому там акцент и без половинного гашения.
-    if (darkTheme) {
-        glow(VioletIndigo, 0.35f, w * 0.12f, h, w * 0.55f)
-    } else {
-        glow(accent, 0.30f, w * 0.12f, h, w * 0.60f)
-    }
+    val top = w * (1 - drift)
+    glow(accent, 0.50f * strength, top, -w * 0.05f, w * 0.80f)
+    glow(VioletLight, 0.26f * strength, top + w * 0.22f, w * 0.12f, w * 0.55f)
+    // Снизу на светлой теме индиго уходит в серую муть, там вместо него акцент.
+    glow(
+        if (darkTheme) VioletIndigo else accent,
+        (if (darkTheme) 0.35f else 0.30f) * strength,
+        w * (0.1f + 0.9f * drift),
+        h,
+        w * 0.60f,
+    )
 }
 
 @Composable

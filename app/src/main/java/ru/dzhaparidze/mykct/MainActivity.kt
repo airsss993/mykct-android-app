@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
             val darkTheme = when (themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false
-                ThemeMode.DARK -> true
+                ThemeMode.DARK, ThemeMode.BLACK -> true
             }
 
             // Статус-бар всегда лежит на градиентной шапке — иконки там белые независимо
@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
 
-            AppTheme(darkTheme = darkTheme) {
+            AppTheme(darkTheme = darkTheme, oled = themeMode == ThemeMode.BLACK) {
                 if (entered) {
                     AppShell(
                         openWeek = pushWeek,

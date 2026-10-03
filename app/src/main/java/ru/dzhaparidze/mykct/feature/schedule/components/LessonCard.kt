@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
 import ru.dzhaparidze.mykct.R
+import ru.dzhaparidze.mykct.data.Groups
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 import ru.dzhaparidze.mykct.ui.theme.VioletLight
@@ -210,81 +211,102 @@ internal fun remainingText(seconds: Int): String =
 
 
 /**
- * Водяной знак по названию предмета. Сначала точное совпадание с названиями портала
- * ([PORTAL_ICONS]): «АиСД», «ОКРиУП», «РевьюКодаGD» ни под какое ключевое слово не
- * подходят и без справочника все получали бы `ic_school`. Что не нашлось — разбирается
- * по ключевому слову: названия приходят свободным текстом, и полного списка не бывает.
+ * Водяной знак по названию предмета, алгоритм как в iOS (`SubjectIcon`). Название
+ * сводится к ключу справочника [PORTAL_ICONS]: точное совпадение, другое написание
+ * ([ALIASES]), то же без профиля ("ТестUI-FE" -> "ТестUI" -> "ТестИнтерф"), и только
+ * потом ключевое слово - полное название вроде "Базы данных" получает иконку короткого.
  *
- * Порядок правил значим — частные слова стоят раньше общих, иначе «Физическая культура»
- * уходит в физику, «Русский язык» — в иностранный, а «Языки программирования» — в перевод.
+ * Порядок ключевых правил значим - частные слова стоят раньше общих, иначе
+ * "Физическая культура" уходит в физику, а "Языки программирования" - в иностранный.
  */
 @DrawableRes
 internal fun subjectIcon(title: String): Int {
     val name = title.trim()
-    PORTAL_ICONS[name]?.let { return it }
+    val subject = known(name) ?: withoutProfile(name)?.let(::known) ?: keywordSubject(name)
+    return subject?.let(PORTAL_ICONS::get) ?: R.drawable.ic_school
+}
 
-    val n = name.lowercase().replace('ё', 'е')
+private fun known(title: String): String? =
+    (ALIASES[title] ?: title).takeIf { it in PORTAL_ICONS }
+
+/** Профиль приклеен к названию: "-FE", ".PM", "BE". UI бывает только через разделитель. */
+private val PROFILE_SUFFIXES: List<String> = Groups.PROFILES.map { it.id }.let { ids ->
+    (ids + "UI").flatMap { listOf("-$it", ".$it") } + ids
+}
+
+private fun withoutProfile(title: String): String? =
+    PROFILE_SUFFIXES.firstOrNull { title.endsWith(it) && title.length > it.length }
+        ?.let { title.dropLast(it.length) }
+
+private fun keywordSubject(title: String): String? {
+    val n = title.lowercase().replace('ё', 'е')
+    fun has(vararg parts: String) = parts.any { it in n }
+
     return when {
-        // Физкультура — до физики: «физическая» есть в обоих названиях.
-        "физкультур" in n || "физическ" in n || "спорт" in n -> R.drawable.ic_fitness
+        has("физкультур", "спорт") || (has("физическ") && has("культур")) -> "Физкульт"
+        has("мышлен") && has("инженерн") -> "ИнжМыш"
+        has("мышлен") && has("критическ") -> "КритМыш"
 
-        // Профильный цикл
-        ("баз" in n && "данн" in n) || "субд" in n || "sql" in n -> R.drawable.ic_database
-        "сет" in n || "маршрутизац" in n || "телекоммуникац" in n -> R.drawable.ic_network
-        "операционн" in n || "linux" in n || "windows" in n -> R.drawable.ic_terminal
-        "алгоритм" in n || "структур данных" in n || "дискретн" in n -> R.drawable.ic_algorithm
-        "тестирован" in n || "отладк" in n || "качеств" in n -> R.drawable.ic_bug
-        "мобильн" in n || "android" in n || "ios" in n -> R.drawable.ic_mobile
-        "веб" in n || "web" in n || "сайт" in n || "html" in n || "фронтенд" in n -> R.drawable.ic_web
-        "криптограф" in n || ("безопасн" in n && ("информ" in n || "данн" in n)) ||
-            ("защит" in n && "информ" in n) -> R.drawable.ic_security
-        "разработ" in n || "программ" in n || "модул" in n || "информатик" in n ->
-            R.drawable.ic_code
-        "аппаратн" in n || "эвм" in n || "архитектур" in n || "схемотехник" in n ->
-            R.drawable.ic_memory
+        (has("баз") && has("данн")) || has("субд", "sql") -> "СУБД"
+        has("сети", "сетев", "маршрутизац", "телекоммуникац") -> "КомпСети"
+        has("операционн", "linux", "windows") -> "ОперСистемы"
+        has("дискретн") -> "ДискрМат"
+        has("алгоритм") || (has("структур") && has("данн")) -> "АиСД"
+        has("тестирован", "отладк", "качеств") -> "Тестирование"
+        has("мобильн", "android", "ios") -> "Мобильная разработка"
+        has("веб", "web", "сайт", "html", "фронтенд") -> "Веб-Дизайн"
+        has("криптограф") || (has("безопасн") && has("информ", "данн")) ||
+            (has("защит") && has("информ")) -> "ИнфоБез"
+        has("паттерн") -> "АрхПаттерны"
+        has("разработ", "программ", "модул", "информатик") -> "РазработкаПО"
+        has("аппаратн", "эвм", "архитектур", "схемотехник") -> "Hardware"
 
-        // Языки — русский до иностранного, иностранный после «программирования» выше.
-        "русск" in n || "литератур" in n || "родн" in n -> R.drawable.ic_book
-        "английск" in n || "иностран" in n || "язык" in n -> R.drawable.ic_translate
+        has("русск", "родн") -> "РусЯз"
+        has("литератур") -> "Литер"
+        has("английск", "иностран") && has("профессиональн") -> "АнглЯзПро"
+        has("английск", "иностран", "язык") -> "АнглЯз"
 
-        // Математика и естественные науки
-        "статистик" in n || "вероятност" in n -> R.drawable.ic_statistics
-        "математик" in n || "матем" in n || "численн метод" in n -> R.drawable.ic_math
-        "астроном" in n -> R.drawable.ic_astronomy
-        "физик" in n || "хими" in n -> R.drawable.ic_science
-        "биолог" in n || "естествознан" in n || "эколог" in n -> R.drawable.ic_biology
-        "географ" in n -> R.drawable.ic_public
+        has("статистик", "вероятност") -> "ТеорВер"
+        has("численн") -> "ЧислМетоды"
+        has("высш") && has("матем") -> "ЭлВышМат"
+        has("математик", "матем") -> "Математика"
+        has("астроном") -> "Астрономия"
+        has("хими") -> "Химия"
+        has("физик") -> "Физика"
+        has("биолог", "естествознан", "эколог") -> "Биология"
+        has("географ") -> "География"
 
-        // Гуманитарный цикл
-        "истори" in n -> R.drawable.ic_history
-        "обществ" in n || "правов" in n || "юрид" in n || "законодат" in n -> R.drawable.ic_law
-        "психолог" in n || "общени" in n || "этик" in n -> R.drawable.ic_psychology
-        "эконом" in n || "финанс" in n || "предпринимат" in n || "бухгалт" in n ||
-            "менеджмент" in n || "маркетинг" in n -> R.drawable.ic_economics
+        has("истори") && has("технолог") -> "ИстТехно"
+        has("истори") -> "История"
+        has("обществ") -> "Обществознание"
+        has("правов", "юрид", "законодат") -> "ПОПД"
+        has("философ") -> "Философия"
+        has("психолог", "общени", "этик") -> "ПсихОбщен"
+        has("финанс") -> "ФинГрамота"
+        has("эконом") -> "Экономика"
+        has("маркетинг") -> "Маркетинг"
+        has("предпринимат", "бухгалт", "менеджмент") -> "Предпринимат"
 
-        // Организационное
-        "жизнедеятельн" in n || "обж" in n || "охран труда" in n || "медицин" in n ->
-            R.drawable.ic_safety
-        "черчени" in n || "график" in n || "дизайн" in n || "инженерн" in n ->
-            R.drawable.ic_design
-        "практик" in n || "производствен" in n || "стажировк" in n -> R.drawable.ic_practice
-        "проект" in n || "курсов" in n || "диплом" in n || "вкр" in n -> R.drawable.ic_assignment
-        "экзамен" in n || "зачет" in n || "консультац" in n || "аттестац" in n ->
-            R.drawable.ic_exam
-        "классн час" in n || "куратор" in n || "собрани" in n -> R.drawable.ic_groups
-
-        else -> R.drawable.ic_school
+        has("жизнедеятельн", "обж", "охран труда") -> "ОБиЗР"
+        has("медицин") -> "Медицина"
+        has("график", "графическ") -> "ГрафДизайн"
+        has("черчени", "дизайн", "инженерн") -> "Дизайн"
+        has("практик", "производствен", "стажировк") -> "ПроизвПракт.01"
+        has("проект", "курсов", "диплом", "вкр") -> "Проект"
+        has("экзамен", "зачет", "консультац", "аттестац") -> "Демоэкзамен"
+        has("собрани") -> "ОргСобрание"
+        has("классн час", "куратор") -> "Классный час"
+        else -> null
     }
 }
 
-
 /**
- * Названия предметов с портала за 2025/26 — то же соответствие, что в iOS
- * (`SubjectIcon.icons`), но символов там 110, а иконок здесь 25: близкие предметы
- * делят одну. Пополняется вместе с порталом, обычно каждый сентябрь.
+ * Предметы портала - те же ключи, что в iOS (`SubjectIcon.icons`), но символов там
+ * ~150, а иконок здесь 25: близкие предметы делят одну. Пополняется вместе с порталом,
+ * обычно каждый сентябрь; профильные варианты и другие написания сюда не пишутся.
  *
- * ponytail: палитра сознательно сужена. Нужны свои символы под каждое название —
- * это ~85 новых vector drawable, таблица тогда меняется значениями, а не строением.
+ * ponytail: палитра сознательно сужена. Нужны свои символы под каждое название -
+ * это ~125 новых vector drawable, таблица тогда меняется значениями, а не строением.
  */
 private val PORTAL_ICONS: Map<String, Int> = mapOf(
     // Общеобразовательный цикл
@@ -298,6 +320,8 @@ private val PORTAL_ICONS: Map<String, Int> = mapOf(
     "Биология" to R.drawable.ic_biology,
     "Астрономия" to R.drawable.ic_astronomy,
     "История" to R.drawable.ic_history,
+    "ИстТехно" to R.drawable.ic_history,
+    "ИсторияТ" to R.drawable.ic_history,
     "Обществознание" to R.drawable.ic_law,
     "Философия" to R.drawable.ic_psychology,
     "РусЯз" to R.drawable.ic_book,
@@ -305,51 +329,62 @@ private val PORTAL_ICONS: Map<String, Int> = mapOf(
     "АнглЯз" to R.drawable.ic_translate,
     "АнглЯзПро" to R.drawable.ic_translate,
     "Физкульт" to R.drawable.ic_fitness,
-    "Физкультура" to R.drawable.ic_fitness,
     "ОБиЗР" to R.drawable.ic_safety,
     "ЭлДок" to R.drawable.ic_assignment,
+    "ТехДокиРус" to R.drawable.ic_assignment,
     "ФинГрамота" to R.drawable.ic_economics,
+    "Экономика" to R.drawable.ic_economics,
     "ПОПД" to R.drawable.ic_law,
     "Предпринимат" to R.drawable.ic_economics,
+    "ПредпрКлас" to R.drawable.ic_economics,
     "ПсихОбщен" to R.drawable.ic_psychology,
     "КритМыш" to R.drawable.ic_psychology,
     "ИнжМыш" to R.drawable.ic_design,
+    "ТРИЗ" to R.drawable.ic_psychology,
     "АктМаст" to R.drawable.ic_groups,
-    "ИстТехно" to R.drawable.ic_history,
     "ЛичБренд" to R.drawable.ic_person,
     "КреативМ" to R.drawable.ic_design,
-    "ТехДокиРус" to R.drawable.ic_assignment,
     "ОКРиУП" to R.drawable.ic_assignment,
+    "ВведСпец" to R.drawable.ic_school,
+    "ВВСпец-П" to R.drawable.ic_school,
 
     // Профильный цикл
     "РазработкаПО" to R.drawable.ic_code,
+    "РазработкаПО-1" to R.drawable.ic_code,
+    "РазработкаПО-2" to R.drawable.ic_code,
+    "РазрПО-П" to R.drawable.ic_code,
     "ВведениеООП" to R.drawable.ic_code,
     "ПрогрC#" to R.drawable.ic_code,
+    "UnityC#" to R.drawable.ic_code,
+    "Frameworks" to R.drawable.ic_code,
+    "React" to R.drawable.ic_web,
     "АиСД" to R.drawable.ic_algorithm,
+    "АиСД-2" to R.drawable.ic_algorithm,
     "Hardware" to R.drawable.ic_memory,
     "ОперСистемы" to R.drawable.ic_terminal,
     "КомпСети" to R.drawable.ic_network,
     "СУБД" to R.drawable.ic_database,
+    "СУБД-1" to R.drawable.ic_database,
+    "СУБД-2" to R.drawable.ic_database,
     "СУБД-проектирование" to R.drawable.ic_database,
     "ИнфоБез" to R.drawable.ic_security,
     "ОсновыML" to R.drawable.ic_memory,
-    "АрхПаттерны3" to R.drawable.ic_algorithm,
+    "АрхПаттерны" to R.drawable.ic_algorithm,
     "ПарадигмыПроект" to R.drawable.ic_algorithm,
-    "React" to R.drawable.ic_web,
-    "UML-BE" to R.drawable.ic_algorithm,
-    "UML-FE" to R.drawable.ic_algorithm,
-    "УчПроект.BE" to R.drawable.ic_code,
-    "УчПроект.FE" to R.drawable.ic_web,
-    "МикросервисыBE" to R.drawable.ic_network,
-    "МикросервисыFE" to R.drawable.ic_network,
+    "UML" to R.drawable.ic_algorithm,
+    "УчПроект" to R.drawable.ic_code,
+    "УчПроект02" to R.drawable.ic_code,
+    "Микросервисы" to R.drawable.ic_network,
+    "ИнтегрПО" to R.drawable.ic_network,
     "BE-Production" to R.drawable.ic_terminal,
     "Тестирование" to R.drawable.ic_bug,
     "ТестИнтерф" to R.drawable.ic_bug,
-    "ТестИнтерфейс" to R.drawable.ic_bug,
-    "ТестИнтерфейсов" to R.drawable.ic_bug,
     "РазрИнтерф" to R.drawable.ic_design,
     "ИнстРазрИнтерф" to R.drawable.ic_design,
     "РазрИгрИнтерф" to R.drawable.ic_design,
+    "ИТ-инфр-проект" to R.drawable.ic_network,
+    "ИТ-инфр-разв" to R.drawable.ic_network,
+    "ИТ-инфр-экспл" to R.drawable.ic_terminal,
 
     // Дизайн
     "Веб-Дизайн" to R.drawable.ic_web,
@@ -371,36 +406,42 @@ private val PORTAL_ICONS: Map<String, Int> = mapOf(
     "GameDev-2(2)" to R.drawable.ic_code,
     "GameDev-3(3)" to R.drawable.ic_code,
     "GameDev-практ" to R.drawable.ic_practice,
+    "ИгроДев" to R.drawable.ic_code,
+    "ИгроМех" to R.drawable.ic_code,
     "РазработкаИгрП" to R.drawable.ic_code,
-    "РевьюКодаGD" to R.drawable.ic_bug,
+    "СопрИгрПрод" to R.drawable.ic_practice,
+    "РевьюКода" to R.drawable.ic_bug,
     "РевьюИгроКейс2" to R.drawable.ic_bug,
     "РевьюИгроКейс3" to R.drawable.ic_bug,
-    "МаркетингGD" to R.drawable.ic_economics,
+    "Маркетинг" to R.drawable.ic_economics,
 
-    // Проектная деятельность
-    "Проект" to R.drawable.ic_assignment,
-    "Проект-3" to R.drawable.ic_assignment,
-    "ПрофПредмет" to R.drawable.ic_school,
-    "ВведСпец" to R.drawable.ic_school,
+    // Управление проектами
     "УпрИТ-проект" to R.drawable.ic_assignment,
     "ВидыПроект" to R.drawable.ic_assignment,
     "ФормПроекта" to R.drawable.ic_assignment,
+    "ГруппаПроекта" to R.drawable.ic_groups,
+    "ЭтапыПроекта" to R.drawable.ic_list,
     "КейсыПроектов" to R.drawable.ic_assignment,
     "ПроектированиеБП" to R.drawable.ic_assignment,
     "ПроектыБП" to R.drawable.ic_assignment,
     "ПсихологияБП" to R.drawable.ic_psychology,
+    "ПсихоПроекта" to R.drawable.ic_psychology,
     "МаркетингПМ" to R.drawable.ic_economics,
-    "ИТ-инфр-проект" to R.drawable.ic_network,
-    "ИТ-инфр-разв" to R.drawable.ic_network,
-    "ИТ-инфр-экспл" to R.drawable.ic_terminal,
+    "ПродРазр" to R.drawable.ic_mobile,
+    "ОтрасПР" to R.drawable.ic_practice,
+    "Предприятия" to R.drawable.ic_economics,
 
-    // Практики и мероприятия
+    // Проекты, практики и мероприятия
+    "Проект" to R.drawable.ic_assignment,
+    "Проект-3" to R.drawable.ic_assignment,
+    "ПрофПредмет" to R.drawable.ic_school,
     "ПроизвПракт.01" to R.drawable.ic_practice,
     "УчПракт03" to R.drawable.ic_practice,
     "УчПракт04" to R.drawable.ic_practice,
     "УчПракт06" to R.drawable.ic_practice,
     "УчПракт.БП" to R.drawable.ic_practice,
-    "УчПракт.UI" to R.drawable.ic_practice,
+    "УчПракт" to R.drawable.ic_practice,
+    "АлгоТруд-3" to R.drawable.ic_person,
     "Демоэкзамен" to R.drawable.ic_exam,
     "Предзащита" to R.drawable.ic_exam,
     "Нормоконтроль" to R.drawable.ic_assignment,
@@ -410,9 +451,45 @@ private val PORTAL_ICONS: Map<String, Int> = mapOf(
     "ФорумБудущего" to R.drawable.ic_groups,
     "ОргСобрание" to R.drawable.ic_groups,
     "Подгруппы" to R.drawable.ic_list,
+    "Подгруппы-1к" to R.drawable.ic_list,
     "Подгруппы-2к" to R.drawable.ic_list,
     "Подгруппы-3к" to R.drawable.ic_list,
-    "АлгоТруд-3" to R.drawable.ic_person,
+
+    // Ключи для полных названий, у портала таких нет
+    "Мобильная разработка" to R.drawable.ic_mobile,
+    "География" to R.drawable.ic_public,
+    "Медицина" to R.drawable.ic_safety,
+    "Дизайн" to R.drawable.ic_design,
+    "Классный час" to R.drawable.ic_groups,
+)
+
+/** Другие написания того же предмета на портале. */
+private val ALIASES: Map<String, String> = mapOf(
+    "Литература" to "Литер",
+    "АнлгЯзПро" to "АнглЯзПро",
+    "Физкультура" to "Физкульт",
+    "ВВСпец" to "ВведСпец",
+    "ОперСистем" to "ОперСистемы",
+    "АрхПаттерны3" to "АрхПаттерны",
+    "ПарадПроекта" to "ПарадигмыПроект",
+    "ИнтегрПО2" to "ИнтегрПО",
+    "ТестИнтерфейс" to "ТестИнтерф",
+    "ТестИнтерфейсов" to "ТестИнтерф",
+    "ТестUI" to "ТестИнтерф",
+    "РазрUI" to "РазрИнтерф",
+    "ИПИР" to "ИнстРазрИнтерф",
+    "Проект-ИТ-ИНФ" to "ИТ-инфр-проект",
+    "Развер-ИТ-ИНФ" to "ИТ-инфр-разв",
+    "Экспл-ИТ-ИНФ" to "ИТ-инфр-экспл",
+    "ВебДизайн" to "Веб-Дизайн",
+    "ИнтерфДиз" to "ДизИнтерфейсов",
+    "ДигиДиз" to "ДизДиджитал",
+    "СтилиДиз" to "СтилиДизайн",
+    "2D-Граф" to "2D-КомпГраф",
+    "3D-Граф" to "3D-КомпГраф",
+    "3D-Интерф" to "3D-Интерфейсы",
+    "ИгроМаркетинг" to "Маркетинг",
+    "КейсыПроекта" to "КейсыПроектов",
 )
 
 @Composable

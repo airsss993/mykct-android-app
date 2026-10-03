@@ -50,6 +50,37 @@ class SubjectIconTest {
     }
 
     @Test
+    fun `профильный вариант и другое написание получают иконку предмета`() {
+        assertEquals(R.drawable.ic_bug, subjectIcon("ТестUI-FE"))
+        assertEquals(R.drawable.ic_design, subjectIcon("ИПИР-UI"))
+        assertEquals(R.drawable.ic_code, subjectIcon("УчПроект.PM"))
+        assertEquals(R.drawable.ic_network, subjectIcon("МикросервисыFE"))
+        assertEquals(R.drawable.ic_algorithm, subjectIcon("АиСД-2BE"))
+        assertEquals(R.drawable.ic_practice, subjectIcon("УчПракт.UI"))
+        assertEquals(R.drawable.ic_economics, subjectIcon("ИгроМаркетинг"))
+        // ПМ кириллицей - часть названия, не профиль
+        assertEquals(R.drawable.ic_economics, subjectIcon("МаркетингПМ"))
+    }
+
+    @Test
+    fun `UI без разделителя не срезается как профиль`() {
+        assertEquals(R.drawable.ic_school, subjectIcon("РазрBE"))
+        assertEquals(R.drawable.ic_bug, subjectIcon("ТестUI"))
+    }
+
+    @Test
+    fun `полное название получает иконку короткого`() {
+        assertEquals(R.drawable.ic_math, subjectIcon("Численные методы"))
+        assertEquals(R.drawable.ic_algorithm, subjectIcon("Структуры данных"))
+        assertEquals(R.drawable.ic_science, subjectIcon("Физическая химия"))
+        assertEquals(R.drawable.ic_translate, subjectIcon("Иностранный язык в профессиональной деятельности"))
+        assertEquals(R.drawable.ic_design, subjectIcon("Инженерное мышление"))
+        assertEquals(R.drawable.ic_algorithm, subjectIcon("Архитектурные паттерны"))
+        assertEquals(R.drawable.ic_groups, subjectIcon("Организационное собрание"))
+        assertEquals(R.drawable.ic_safety, subjectIcon("Первая медицинская помощь"))
+    }
+
+    @Test
     fun `неизвестный предмет получает общую иконку`() {
         assertEquals(R.drawable.ic_school, subjectIcon("Пара"))
     }

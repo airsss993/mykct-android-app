@@ -42,7 +42,7 @@ object Groups {
         return (FIRST_YEAR - year + 1).takeIf { it in ENGLISH }
     }
 
-    private val PROFILES = listOf(
+    internal val PROFILES = listOf(
         Named("BE", "Backend"),
         Named("FE", "Frontend"),
         Named("GD", "Game Dev"),

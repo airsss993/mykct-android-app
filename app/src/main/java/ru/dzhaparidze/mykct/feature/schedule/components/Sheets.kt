@@ -198,7 +198,7 @@ private fun summary(selection: Selection): String = listOfNotNull(
  * Подробности пары. Раскрывать карточку прямо в таймлайне нельзя — она позиционируется
  * по времени и наедет на следующую, поэтому всё здесь: шапка-карточка, повторяющая ту,
  * по которой тапнули, подгруппы (каждая раскрывается в свои детали по SClID) и то,
- * что отдал портал по GET /api/v1/classdetails.
+ * что отдал портал по GET /api/mykct/v1/classdetails.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

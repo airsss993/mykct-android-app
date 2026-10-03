@@ -8,7 +8,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import ru.dzhaparidze.mykct.BuildConfig
+import ru.dzhaparidze.mykct.data.net.API_URL
 import ru.dzhaparidze.mykct.data.net.Http
 import ru.dzhaparidze.mykct.data.net.apiCall
 import ru.dzhaparidze.mykct.data.net.decode
@@ -16,15 +16,15 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Расписание из GET /api/v1/schedule. Токен не нужен — эндпоинт публичный.
+ * Расписание из GET /api/mykct/v1/schedule. Токен не нужен — эндпоинт публичный.
  *
  * Ключи с капитализацией портала (`ClID`, `Day`, `SubGroup`) остаются здесь и наружу
  * не выходят: экран работает с [Lesson].
  */
-class ApiScheduleRepository(private val baseUrl: String = BuildConfig.API_BASE_URL) : ScheduleRepository {
+class ApiScheduleRepository(private val baseUrl: String = API_URL) : ScheduleRepository {
 
     override suspend fun weekSchedule(monday: LocalDate, selection: Selection): WeekSchedule = apiCall {
-        val response: ScheduleResponse = Http.client.get("$baseUrl/api/v1/schedule") {
+        val response: ScheduleResponse = Http.client.get("$baseUrl/schedule") {
             parameter("group", selection.group)
             parameter("start", monday.toString())
             parameter("end", monday.plusDays(6).toString())
@@ -41,7 +41,7 @@ class ApiScheduleRepository(private val baseUrl: String = BuildConfig.API_BASE_U
     }
 
     override suspend fun classDetails(id: String): List<Pair<String, String>> = apiCall {
-        val details: JsonObject = Http.client.get("$baseUrl/api/v1/classdetails") {
+        val details: JsonObject = Http.client.get("$baseUrl/classdetails") {
             parameter("id", id)
         }.decode()
         details.flattenDetails()

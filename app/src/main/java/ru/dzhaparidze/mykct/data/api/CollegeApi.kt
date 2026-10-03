@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
-import ru.dzhaparidze.mykct.BuildConfig
+import ru.dzhaparidze.mykct.data.net.API_URL
 import ru.dzhaparidze.mykct.data.auth.AuthService
 import ru.dzhaparidze.mykct.data.net.Http
 import ru.dzhaparidze.mykct.data.net.apiCall
@@ -27,13 +27,12 @@ import java.time.LocalDate
  */
 class CollegeApi(
     private val auth: AuthService,
-    private val baseUrl: String = BuildConfig.API_BASE_URL,
+    private val baseUrl: String = API_URL,
 ) {
 
     suspend fun attendance(start: LocalDate, end: LocalDate): List<AttendanceRecord> = apiCall {
         auth.withToken { token ->
-            // список может прийти голым `null`, а не `[]` — см. AttendanceService в college-app-core
-            val dto: List<AttendanceDto>? = Http.client.get("$baseUrl/api/v1/attendance") {
+            val dto: List<AttendanceDto>? = Http.client.get("$baseUrl/attendance") {
                 bearer(token)
                 parameter("start", start.toString())
                 parameter("end", end.toString())
@@ -44,7 +43,7 @@ class CollegeApi(
 
     suspend fun streak(): Streak = apiCall {
         auth.withToken { token ->
-            Http.client.get("$baseUrl/api/v1/attendance/streak") { bearer(token) }
+            Http.client.get("$baseUrl/attendance/streak") { bearer(token) }
                 .decode<StreakDto>()
                 .toStreak()
         }
@@ -52,7 +51,7 @@ class CollegeApi(
 
     suspend fun subjects(): List<Subject> = apiCall {
         auth.withToken { token ->
-            Http.client.get("$baseUrl/api/v1/performance/subjects") { bearer(token) }
+            Http.client.get("$baseUrl/performance/subjects") { bearer(token) }
                 .decode<List<SubjectDto>?>()
                 .orEmpty()
                 .map { Subject(id = it.suId, title = it.title) }
@@ -61,7 +60,7 @@ class CollegeApi(
 
     suspend fun scores(subjectId: String, start: LocalDate, end: LocalDate): List<SubjectLesson> = apiCall {
         auth.withToken { token ->
-            val body: JsonElement = Http.client.post("$baseUrl/api/v1/performance/score") {
+            val body: JsonElement = Http.client.post("$baseUrl/performance/score") {
                 bearer(token)
                 contentType(ContentType.Application.Json)
                 setBody(ScoreRequest(subjectId, start.toString(), end.toString()))
@@ -71,7 +70,7 @@ class CollegeApi(
     }
 }
 
-private fun io.ktor.client.request.HttpRequestBuilder.bearer(token: String) {
+internal fun io.ktor.client.request.HttpRequestBuilder.bearer(token: String) {
     header("Authorization", "Bearer $token")
 }
 

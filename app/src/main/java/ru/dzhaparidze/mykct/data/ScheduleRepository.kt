@@ -21,14 +21,14 @@ interface ScheduleRepository {
     suspend fun weekSchedule(monday: LocalDate, selection: Selection): WeekSchedule
 
     /**
-     * Детали пары из GET /api/v1/classdetails плоским «ключ → значение»:
+     * Детали пары из GET /api/mykct/v1/classdetails плоским «ключ → значение»:
      * схемы у портала нет (см. `flattenDetails`). Мок деталей не знает — их неоткуда взять.
      */
     suspend fun classDetails(id: String): List<Pair<String, String>> = emptyList()
 }
 
 /**
- * Моки до подключения GET /api/v1/schedule. Сетка звонков и предметы — как в КЦТ,
+ * Моки до подключения GET /api/mykct/v1/schedule. Сетка звонков и предметы — как в КЦТ,
  * набор пар зависит от дня недели, чтобы точки под датами были разной длины.
  * Часть предметов делится на подгруппы — английский, профильный модуль, физкультура.
  */

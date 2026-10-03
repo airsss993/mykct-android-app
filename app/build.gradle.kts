@@ -32,14 +32,7 @@ android {
         versionCode = 9
         versionName = "2.0.0"
 
-        buildConfigField("String", "API_BASE_URL", "\"${getEnvVariable("API_BASE_URL", "http://localhost:8500")}\"")
-        // Авторизация живёт отдельным сервисом (в iOS это BaseAuthURL). Домен тот же,
-        // пока не сказано иное — переопределяется AUTH_BASE_URL в local.properties.
-        buildConfigField(
-            "String",
-            "AUTH_BASE_URL",
-            "\"${getEnvVariable("AUTH_BASE_URL", getEnvVariable("API_BASE_URL", "http://localhost:8500"))}\"",
-        )
+        buildConfigField("String", "API_BASE_URL", "\"${getEnvVariable("API_BASE_URL", "https://mykct.it-college.ru")}\"")
         // Боевого сервера пока нет: debug по умолчанию отвечает сам себе заглушкой
         // (app/src/debug/.../net/Engine.kt). USE_MOCKS=false в local.properties —
         // и сборка снова пойдёт в сеть. В release заглушки нет ни при каком значении.

@@ -12,17 +12,21 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import ru.dzhaparidze.mykct.BuildConfig
 import java.io.IOException
 
 /**
  * Ошибка запроса с человеческим текстом — его показывает UI.
  * [status] null, если до сервера вообще не дошли.
  */
-class ApiException(val status: Int?, message: String) : Exception(message)
+class ApiException(val status: Int?, message: String, val code: String? = null) : Exception(message)
+
+/** Корень всех маршрутов mykct-api: расписание, auth, посещаемость, пуши. */
+val API_URL = "${BuildConfig.API_BASE_URL}/api/mykct/v1"
 
 /**
  * Один HTTP-клиент на приложение. `expectSuccess = false` намеренно: коды разбираем
- * сами в [decode], потому что бэкенд кладёт текст ошибки в тело `{"error": "..."}`.
+ * сами в [decode], потому что бэкенд кладёт ошибку в конверт `{"code", "message", "details"}`.
  *
  * Движок берётся из `httpEngine()` — он свой у debug и release: в debug это заглушка
  * вместо сервера, пока боевого адреса нет.
@@ -47,9 +51,9 @@ object Http {
     }
 }
 
-/** Разбор ответа: успех — тело, иначе [ApiException] с текстом из `{"error": ...}`. */
+/** Разбор ответа: успех — тело, иначе [ApiException] с текстом и кодом из конверта ошибки. */
 suspend inline fun <reified T> HttpResponse.decode(): T {
-    if (!status.isSuccess()) throw ApiException(status.value, errorText(status.value))
+    ensureSuccess()
     return try {
         body()
     } catch (e: SerializationException) {
@@ -57,15 +61,24 @@ suspend inline fun <reified T> HttpResponse.decode(): T {
     }
 }
 
-/** Текст ошибки от бэкенда, а если его нет — по коду ответа. */
-suspend fun HttpResponse.errorText(code: Int): String {
-    val fromBody = runCatching {
-        Http.json.parseToJsonElement(bodyAsText()).jsonObject["error"]?.jsonPrimitive?.content
-    }.getOrNull()
-    return fromBody ?: when (code) {
+/** Ответ без тела (204, signout): проверяем только код. */
+suspend fun HttpResponse.ensureSuccess() {
+    if (status.isSuccess()) return
+    val envelope = runCatching { Http.json.parseToJsonElement(bodyAsText()).jsonObject }.getOrNull()
+    throw ApiException(
+        status = status.value,
+        message = envelope?.get("message")?.jsonPrimitive?.content ?: errorText(status.value),
+        code = envelope?.get("code")?.jsonPrimitive?.content,
+    )
+}
+
+/** Текст ошибки по коду ответа - когда сервер своего не прислал (nginx, обрыв). */
+fun errorText(code: Int): String {
+    return when (code) {
         401 -> "Требуется авторизация"
         403 -> "Доступ запрещён"
         404 -> "Ресурс не найден"
+        429 -> "Слишком много запросов, попробуйте через минуту"
         in 500..599 -> "Ошибка сервера ($code)"
         else -> "Сервер вернул код $code"
     }

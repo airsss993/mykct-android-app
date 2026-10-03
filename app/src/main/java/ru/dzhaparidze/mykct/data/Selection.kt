@@ -4,7 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableSharedFlow
 import ru.dzhaparidze.mykct.data.auth.User
 
-/** Что выбрал студент — это же параметры GET /api/v1/schedule, кроме дат. null = «все». */
+/** Что выбрал студент — это же параметры GET /api/mykct/v1/schedule, кроме дат. null = «все». */
 data class Selection(
     val group: String = Groups.all.first(),
     val subgroup: String? = null,

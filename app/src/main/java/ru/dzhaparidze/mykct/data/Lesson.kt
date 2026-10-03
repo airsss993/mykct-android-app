@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Пара в расписании. Поля — то, что реально отдаёт GET /api/v1/schedule
+ * Пара в расписании. Поля — то, что реально отдаёт GET /api/mykct/v1/schedule
  * (см. ~/Desktop/mykct-android-app-контекст.md), уже нормализованное:
  * ClID -> id, Day -> date, start/end -> LocalTime.
  */

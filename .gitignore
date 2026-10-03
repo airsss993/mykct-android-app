@@ -47,3 +47,6 @@ keystore.properties
 
 # Gradle build output
 build/
+
+# Firebase: конфиг проекта, в git не кладём
+app/google-services.json

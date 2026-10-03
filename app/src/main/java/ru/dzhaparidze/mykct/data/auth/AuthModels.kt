@@ -3,7 +3,10 @@ package ru.dzhaparidze.mykct.data.auth
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Студент из auth-сервиса. Группа и подгруппы отсюда подставляются в расписание. */
+/**
+ * Пользователь из auth mykct-api. `id` - логин (i24s0291), `username` - ФИО из LDAP.
+ * Групповые поля есть только у студента, у преподавателя их нет вовсе.
+ */
 @Serializable
 data class User(
     val id: String = "",
@@ -13,7 +16,9 @@ data class User(
     val profile: String? = null,
     val subgroup: String? = null,
     @SerialName("english_group") val englishGroup: String? = null,
-)
+) {
+    val isStudent: Boolean get() = role == "student"
+}
 
 @Serializable
 data class SignInResponse(
@@ -37,5 +42,3 @@ data class RefreshTokenResponse(
     @SerialName("expires_in") val expiresIn: Long,
 )
 
-@Serializable
-data class ValidateResponse(val valid: Boolean, val user: User? = null)

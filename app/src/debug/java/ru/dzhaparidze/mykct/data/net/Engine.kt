@@ -36,29 +36,31 @@ internal fun httpEngine(): HttpClientEngine =
     if (BuildConfig.USE_MOCKS) mockEngine() else OkHttp.create()
 
 /**
- * Отвечает вместо `college-app-core` и auth-сервиса. Формы ответов — те же, что у
+ * Отвечает вместо mykct-api. Формы ответов — те же, что у
  * настоящего бэкенда (сверено в `tools/local-stand/stub.py`), поэтому разбор в клиенте
  * работает боевой, а не облегчённый.
  */
 private fun mockEngine() = MockEngine { request ->
     val path = request.url.encodedPath
     val body = when {
-        path.endsWith("/api/v1/schedule") -> schedule(request)
-        path.endsWith("/api/v1/classdetails") -> classDetails(request)
-        path.endsWith("/api/v1/attendance") -> attendance(request)
-        path.endsWith("/api/v1/attendance/streak") -> STREAK
-        path.endsWith("/api/v1/performance/subjects") -> subjects()
-        path.endsWith("/api/v1/performance/score") -> SCORES
-        path.endsWith("/app/signin") -> SIGN_IN
-        path.endsWith("/app/access") -> ACCESS
-        path.endsWith("/app/refresh") -> REFRESH
-        path.endsWith("/app/signout") -> buildJsonObject { put("message", "signed out") }
+        path.endsWith("/schedule") -> schedule(request)
+        path.endsWith("/classdetails") -> classDetails(request)
+        path.endsWith("/attendance") -> attendance(request)
+        path.endsWith("/attendance/streak") -> STREAK
+        path.endsWith("/performance/subjects") -> subjects()
+        path.endsWith("/performance/score") -> SCORES
+        path.endsWith("/auth/signin") -> SIGN_IN
+        path.endsWith("/auth/access") -> ACCESS
+        path.endsWith("/auth/refresh") -> REFRESH
+        path.endsWith("/auth/signout") -> buildJsonObject { put("message", "Вы вышли из аккаунта") }
+        // mykct-api отвечает 204 без тела, клиенту важен только код
+        path.endsWith("/notifications/devices") -> buildJsonObject {}
         else -> null
     }
 
     if (body == null) {
         respond(
-            content = """{"error":"заглушка не знает путь $path"}""",
+            content = """{"code":"NOT_FOUND","message":"заглушка не знает путь $path"}""",
             status = HttpStatusCode.NotFound,
             headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
         )
@@ -203,8 +205,9 @@ private suspend fun subjects(): JsonElement {
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 private val USER = buildJsonObject {
-    put("id", "student01")
-    put("username", "student01")
+    // как у mykct-api: id - логин, username - ФИО из LDAP
+    put("id", "i25s0001")
+    put("username", "Иванов Иван Иванович")
     put("role", "student")
     put("academic_group", "ИТ25-11")
     put("profile", "")
@@ -236,7 +239,7 @@ private val STREAK: JsonObject = buildJsonObject {
     put("longest_streak", 12)
     put("total_days_attended", 40)
     put("total_school_days", 45)
-    // доля, а не проценты — как в college-app-core; клиент считает процент сам
+    // доля, а не проценты — как в mykct-api; клиент считает процент сам
     put("attendance_rate", 0.888)
     put("last_attended_date", LocalDate.now().minusDays(1).toString())
     put("period_start", LocalDate.now().minusMonths(3).toString())

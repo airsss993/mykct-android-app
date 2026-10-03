@@ -209,7 +209,7 @@ private val USER = buildJsonObject {
     put("id", "i25s0001")
     put("username", "Иванов Иван Иванович")
     put("role", "student")
-    put("academic_group", "ИТ25-11")
+    put("academic_group", "ИТ26-11")
     put("profile", "")
     put("subgroup", "Подгр1")
     put("english_group", "A0.11")

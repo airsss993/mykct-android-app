@@ -1,40 +1,46 @@
 package ru.dzhaparidze.mykct.data
 
 /**
- * Справочник групп и подгрупп. Бэкенд каталога не отдаёт вообще — клиент знает его сам
+ * Справочник групп и подгрупп. Бэкенд каталога не отдаёт вообще - клиент знает его сам
  * (см. ~/Desktop/mykct-android-app-контекст.md, раздел 4).
  *
- * ponytail: обновляется руками каждый сентябрь. Начнёт надоедать — выносить на сервер.
+ * ponytail: обновляется руками каждый сентябрь. Начнёт надоедать - выносить на сервер.
  */
 object Groups {
 
     data class Named(val id: String, val title: String)
 
-    /** ИТ25-11..14, ИТ24-11..14, ИТ23-11..13, ИТ22-11..12. */
-    val all: List<String> = listOf(25 to 4, 24 to 4, 23 to 3, 22 to 2)
+    /** Год набора первого курса. Меняется каждый сентябрь вместе со списком ниже. */
+    private const val FIRST_YEAR = 26
+
+    /** ИТ26-11..14, ИТ25-11..14, ИТ24-11..14, ИТ23-11..13 - как в iOS. */
+    val all: List<String> = listOf(26 to 4, 25 to 4, 24 to 4, 23 to 3)
         .flatMap { (year, count) -> (1..count).map { "ИТ$year-1$it" } }
 
-    /** Те же группы, разложенные по наборам: 2025 → [ИТ25-11..14], порядок от старшего. */
-    val bySet: Map<Int, List<String>> = all.groupBy { 2000 + yearOf(it) }
+    /** Те же группы, разложенные по наборам: 2026 -> [ИТ26-11..14], порядок от младшего курса. */
+    val bySet: Map<Int, List<String>> = all.groupBy { 2000 + (it.drop(2).take(2).toIntOrNull() ?: 0) }
 
-    /** Набор 25 делится на «Подгр1..4», наборы постарше — на профили. */
-    fun subgroups(group: String): List<Named> = when (yearOf(group)) {
-        25 -> numbered(4)
-        else -> PROFILES
+    /** Первый курс делится на "Подгр1..2", старшие - на профили. */
+    fun subgroups(group: String): List<Named> = if (course(group) == 1) numbered(2) else PROFILES
+
+    fun englishGroups(group: String): List<String> = course(group)?.let { ENGLISH[it] }.orEmpty()
+
+    /** У старших курсов профили FE и CD дополнительно делятся пополам. */
+    fun profileSubgroups(group: String, subgroup: String?): List<Named> {
+        val course = course(group) ?: return emptyList()
+        return if (course > 1 && subgroup in PROFILES_WITH_SUBGROUPS) numbered(2) else emptyList()
     }
-
-    fun englishGroups(group: String): List<String> = ENGLISH[yearOf(group)].orEmpty()
-
-    /** Единственное исключение: у ИТ24-14 профиль CD дополнительно делится пополам. */
-    fun profileSubgroups(group: String, subgroup: String?): List<Named> =
-        if (group == "ИТ24-14" && subgroup == "CD") numbered(2) else emptyList()
 
     /** Физкультуру бэкенд отдаёт всегда: фильтр по подгруппе эти три не режет. */
     val sportSubgroups = listOf("ФизраКол", "БрайтФит", "БаскетКол")
 
     private fun numbered(count: Int) = (1..count).map { Named("Подгр$it", "Подгруппа $it") }
 
-    private fun yearOf(group: String): Int = group.drop(2).take(2).toIntOrNull() ?: 0
+    /** Курс 1..4 по году набора; null - выпустились или опечатка. */
+    private fun course(group: String): Int? {
+        val year = group.drop(2).take(2).toIntOrNull() ?: return null
+        return (FIRST_YEAR - year + 1).takeIf { it in ENGLISH }
+    }
 
     private val PROFILES = listOf(
         Named("BE", "Backend"),
@@ -45,10 +51,12 @@ object Groups {
         Named("CD", "UX/UI Design"),
     )
 
+    private val PROFILES_WITH_SUBGROUPS = setOf("FE", "CD")
+
     private val ENGLISH = mapOf(
-        25 to listOf("A0.11", "A0.12", "A1.11", "A1.12", "A2.11", "A2.12", "B1.11", "B1.12"),
-        24 to listOf("A0.21", "A1.21", "A1.22", "A1.23", "A2.21", "A2.22", "B1.21", "B1.22"),
-        23 to listOf("A1.31", "A2.31", "B1.31"),
-        22 to listOf("A1.41", "A2.41", "B1.41"),
+        1 to listOf("A0.11", "A0.12", "A1.11", "A1.12", "A2.11", "A2.12", "B1.11", "B1.12"),
+        2 to listOf("A0.21", "A0.22", "A1.21", "A1.22", "A2.21", "A2.22", "B1.21", "B1.22"),
+        3 to listOf("A1.31", "A2.31", "B1.31", "B2.31"),
+        4 to listOf("A1.41", "A2.41", "B1.41"),
     )
 }

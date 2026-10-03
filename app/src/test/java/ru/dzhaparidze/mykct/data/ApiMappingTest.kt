@@ -54,9 +54,9 @@ class ApiMappingTest {
     @Test
     fun `первокурснику подгруппа берётся из subgroup, старшему — из профиля`() {
         val first = selectionOf(
-            User(academicGroup = "ИТ25-11", subgroup = "Подгр2", profile = "BE", englishGroup = "A1.11"),
+            User(academicGroup = "ИТ26-11", subgroup = "Подгр2", profile = "BE", englishGroup = "A1.11"),
         )
-        assertEquals("ИТ25-11", first?.group)
+        assertEquals("ИТ26-11", first?.group)
         assertEquals("Подгр2", first?.subgroup)
         assertEquals("A1.11", first?.englishGroup)
         assertNull(first?.profileSubgroup)
@@ -79,8 +79,18 @@ class ApiMappingTest {
     }
 
     @Test
+    fun `деление пополам есть у FE и CD всех старших курсов и нет у первого`() {
+        assertEquals(2, Groups.profileSubgroups("ИТ25-12", "FE").size)
+        assertEquals(2, Groups.profileSubgroups("ИТ23-11", "CD").size)
+        assertEquals(0, Groups.profileSubgroups("ИТ25-12", "BE").size)
+        assertEquals(0, Groups.profileSubgroups("ИТ26-11", "FE").size)
+        assertEquals("Подгр2", Groups.subgroups("ИТ26-14").last().id)
+        assertEquals("B2.31", Groups.englishGroups("ИТ24-11").last())
+    }
+
+    @Test
     fun `группы вне справочника дают null, а не чужое расписание`() {
-        assertNull(selectionOf(User(academicGroup = "ИТ19-11")))
+        assertNull(selectionOf(User(academicGroup = "ИТ22-11")))
         assertNull(selectionOf(User(academicGroup = null)))
     }
 

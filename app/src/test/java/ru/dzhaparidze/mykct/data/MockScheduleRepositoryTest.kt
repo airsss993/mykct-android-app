@@ -67,7 +67,7 @@ class MockScheduleRepositoryTest {
 
     @Test
     fun `физкультуру фильтр по подгруппе не режет`() {
-        val lessons = week(Selection(group = "ИТ24-11", subgroup = "BE", englishGroup = "A1.21"))
+        val lessons = week(Selection(group = "ИТ24-11", subgroup = "BE", englishGroup = "A1.31"))
 
         val sport = lessons.first { it.subgroups.any { sub -> sub.id in Groups.sportSubgroups } }
         assertEquals(Groups.sportSubgroups.size, sport.subgroups.size)
@@ -75,11 +75,11 @@ class MockScheduleRepositoryTest {
 
     @Test
     fun `выбор английской группы оставляет одну`() {
-        val lessons = week(Selection(group = "ИТ24-11", englishGroup = "A1.21"))
+        val lessons = week(Selection(group = "ИТ24-11", englishGroup = "A1.31"))
 
         assertTrue(
             "английский не схлопнулся",
-            lessons.any { it.title == "Английский язык, A1.21" && it.subgroups.isEmpty() },
+            lessons.any { it.title == "Английский язык, A1.31" && it.subgroups.isEmpty() },
         )
     }
 }

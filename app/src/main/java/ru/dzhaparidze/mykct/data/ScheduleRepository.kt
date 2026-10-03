@@ -92,7 +92,7 @@ class MockScheduleRepository : ScheduleRepository {
     private fun LessonSubgroup.matches(selection: Selection): Boolean = when {
         id in Groups.sportSubgroups -> true
         ENGLISH_ID.matches(id) -> selection.englishGroup == null || selection.englishGroup == id
-        // «Подгр1..4» — это либо подгруппа набора 25, либо деление профиля у ИТ24-14
+        // "Подгр1..2" - это либо подгруппа первого курса, либо деление профиля FE/CD у старших
         id.startsWith("Подгр") -> {
             val chosen = selection.subgroup?.takeIf { it.startsWith("Подгр") } ?: selection.profileSubgroup
             chosen == null || chosen == id
@@ -130,7 +130,7 @@ class MockScheduleRepository : ScheduleRepository {
     )
 
     private companion object {
-        val ENGLISH_ID = Regex("""^(A0|A1|A2|B1)\.\d{2}$""")
+        val ENGLISH_ID = Regex("""^(A0|A1|A2|B1|B2)\.\d{2}$""")
 
         val BELLS = listOf(
             LocalTime.of(9, 0) to LocalTime.of(10, 30),

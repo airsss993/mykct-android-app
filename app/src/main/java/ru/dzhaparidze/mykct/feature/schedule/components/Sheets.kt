@@ -79,13 +79,15 @@ fun GroupSheet(
     selection: Selection,
     onSelect: (Selection) -> Unit,
     onDismiss: () -> Unit,
+    /** Выбор из профиля вошедшего студента; null - кнопки "Моя группа" нет. */
+    mine: Selection? = null,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Text(
-            text = "Моя группа",
+            text = "Группа",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 20.dp),
@@ -105,6 +107,8 @@ fun GroupSheet(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp),
         ) {
+            mine?.let { MyGroupButton(it) { onSelect(it); onDismiss() } }
+
             Section("Группа") {
                 Groups.bySet.forEach { (year, groups) ->
                     Text(
@@ -178,6 +182,41 @@ fun GroupSheet(
         )
 
         Spacer(Modifier.navigationBarsPadding())
+    }
+}
+
+/** "Моя группа": одним нажатием вернуть выбор из профиля и закрыть лист. Заменила пункт в настройках. */
+@Composable
+private fun MyGroupButton(mine: Selection, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(top = 16.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .hairline(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_person),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(
+            text = "Моя группа",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 12.dp).weight(1f),
+        )
+        Text(
+            text = mine.group,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
     }
 }
 

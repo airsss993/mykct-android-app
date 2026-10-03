@@ -34,6 +34,7 @@ import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.dzhaparidze.mykct.R
+import ru.dzhaparidze.mykct.data.selectionOf
 import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.data.api.Streak
@@ -137,7 +138,10 @@ internal fun DrawScope.drawAmbientGlow(accent: Color, darkTheme: Boolean) {
 }
 
 @Composable
-fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
+fun ScheduleScreen(
+    account: @Composable () -> Unit,
+    viewModel: ScheduleViewModel = viewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Часы тикают сами: линия «сейчас» и переход пары в прошедшие должны ехать без
     // перезахода на экран. Сон до ближайшей :00, а не ровные полминуты от входа —
@@ -182,6 +186,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             onPrevWeek = { viewModel.shiftWeek(-1) },
             onNextWeek = { viewModel.shiftWeek(1) },
             onToday = viewModel::goToToday,
+            account = account,
         )
 
         // Отдельного «листа» больше нет: контент лежит на том же фоне, что и шапка.
@@ -268,6 +273,7 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = viewModel()) {
             selection = state.selection,
             onSelect = viewModel::updateSelection,
             onDismiss = { groupSheetOpen = false },
+            mine = home.user?.let(::selectionOf),
         )
     }
 
@@ -306,6 +312,7 @@ private fun Hero(
     onPrevWeek: () -> Unit,
     onNextWeek: () -> Unit,
     onToday: () -> Unit,
+    account: @Composable () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -323,6 +330,8 @@ private fun Hero(
                 Spacer(Modifier.width(4.dp))
             }
             GroupPill(label = state.selection.label(), onClick = onOpenGroups)
+            Spacer(Modifier.width(4.dp))
+            account()
         }
 
         Spacer(Modifier.height(24.dp))

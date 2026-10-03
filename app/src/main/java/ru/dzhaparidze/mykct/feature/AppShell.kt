@@ -52,6 +52,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.R
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
+import ru.dzhaparidze.mykct.data.auth.AuthService
+import ru.dzhaparidze.mykct.feature.profile.AccountButton
+import ru.dzhaparidze.mykct.feature.profile.ProfileSheet
 import ru.dzhaparidze.mykct.data.ThemeMode
 import ru.dzhaparidze.mykct.feature.auth.LoginScreen
 import ru.dzhaparidze.mykct.feature.home.HomeScreen
@@ -81,6 +88,19 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
     // Форма входа живёт здесь, а не на экранах: навбар плавает поверх контента,
     // и открытая изнутри экрана форма оказывалась под ним.
     var loginOpen by rememberSaveable { mutableStateOf(false) }
+    var profileOpen by rememberSaveable { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val auth = remember { AuthService.get(context) }
+    val session by auth.state.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    // Кнопка аккаунта одна на три шапки: у вошедшего - профиль, иначе - форма входа.
+    val account: @Composable () -> Unit = {
+        AccountButton(
+            signedIn = session.user != null,
+            onClick = { if (session.user != null) profileOpen = true else loginOpen = true },
+        )
+    }
 
     // Подложка под навбар: контент экрана пишется в слой, навбар рисует его размытым
     // у себя под пластиной. Настоящего backdrop-blur в Compose нет, это его ручная сборка.
@@ -117,13 +137,13 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             modifier = Modifier.fillMaxSize(),
         ) { current ->
             when (current) {
-                Screen.SCHEDULE -> ScheduleScreen()
-                Screen.HOME -> HomeScreen(onLogin = { loginOpen = true })
+                Screen.SCHEDULE -> ScheduleScreen(account = account)
+                Screen.HOME -> HomeScreen(onLogin = { loginOpen = true }, account = account)
 
                 Screen.SETTINGS -> SettingsScreen(
                     themeMode = themeMode,
                     onThemeChange = onThemeChange,
-                    onLogin = { loginOpen = true },
+                    account = account,
                 )
             }
         }
@@ -135,6 +155,18 @@ fun AppShell(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
             onSelect = { screen = it },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+
+        val user = session.user
+        if (profileOpen && user != null) {
+            ProfileSheet(
+                user = user,
+                onSignOut = {
+                    profileOpen = false
+                    scope.launch { auth.signOut() }
+                },
+                onDismiss = { profileOpen = false },
+            )
+        }
 
         if (loginOpen) {
             LoginScreen(onBack = { loginOpen = false }, onSuccess = { loginOpen = false })

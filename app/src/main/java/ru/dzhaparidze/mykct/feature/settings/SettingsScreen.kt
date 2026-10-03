@@ -63,16 +63,14 @@ import ru.dzhaparidze.mykct.feature.navBarInset
  * экранами с кнопкой «назад», но содержимого на них по горсти — вложенность не нужна.
  */
 @Composable
-fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, onLogin: () -> Unit) {
+fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, account: @Composable () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .statusBarsPadding(),
     ) {
-        ScreenTitle(text = "Настройки", modifier = Modifier.padding(start = 20.dp))
-
-        AccountSection(onLogin = onLogin)
+        ScreenTitle(text = "Настройки", modifier = Modifier.padding(horizontal = 20.dp)) { account() }
 
         SectionTitle("Тема")
         Card {
@@ -171,10 +169,6 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, onL
 }
 
 /**
- * Аккаунт: кто вошёл, перенос группы из профиля в расписание и выход.
- * Без входа — одна строка «Войти», она же открывает форму поверх настроек.
- */
-/**
  * Вид расписания и «пропускать выходные» — то же, что в iOS. Хранилище своё, а не
  * общее с выбором группы: группа — параметр запроса, а это чистая подача на экране.
  */
@@ -236,71 +230,6 @@ private fun ScheduleView.icon(): Int = when (this) {
     ScheduleView.TODAY -> R.drawable.ic_clock
     ScheduleView.THREE_DAYS -> R.drawable.ic_list
     ScheduleView.WEEK -> R.drawable.ic_calendar
-}
-
-@Composable
-private fun AccountSection(onLogin: () -> Unit) {
-    val context = LocalContext.current
-    val auth = remember { AuthService.get(context) }
-    val session by auth.state.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
-    var applied by remember { mutableStateOf(false) }
-
-    SectionTitle("Аккаунт")
-    Card {
-        val user = session.user
-        if (user == null) {
-            SettingsRow(
-                icon = R.drawable.ic_person,
-                text = "Войти",
-                modifier = Modifier.clickable(onClick = onLogin),
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_chevron_right),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        } else {
-            SettingsRow(icon = R.drawable.ic_person, text = user.username) {
-                Text(
-                    text = user.academicGroup.orEmpty(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            val selection = remember(user) { selectionOf(user) }
-            if (selection != null) {
-                Divider()
-                SettingsRow(
-                    icon = R.drawable.ic_calendar,
-                    text = "Использовать мою группу",
-                    modifier = Modifier.clickable {
-                        SelectionStore(context).save(selection)
-                        applied = true
-                    },
-                ) {
-                    if (applied) {
-                        Icon(
-                            painterResource(R.drawable.ic_check),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
-                }
-            }
-
-            Divider()
-            SettingsRow(
-                icon = R.drawable.ic_logout,
-                text = "Выйти",
-                modifier = Modifier.clickable { scope.launch { auth.signOut() } },
-                tint = statusDanger,
-            ) {}
-        }
-    }
 }
 
 /**

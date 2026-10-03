@@ -135,7 +135,11 @@ private fun Attendance.color() = when (this) {
  * процентом. Стрик отдельной карточкой не дублируется - он живёт в огоньке и его листе.
  */
 @Composable
-fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(
+    onLogin: () -> Unit,
+    account: @Composable () -> Unit,
+    viewModel: HomeViewModel = viewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var streakOpen by rememberSaveable { mutableStateOf(false) }
 
@@ -165,7 +169,7 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
                     StreakFlame(onClick = { streakOpen = true })
                     Spacer(Modifier.width(4.dp))
                 }
-                state.user?.username?.let { UserPill(it) }
+                account()
             }
 
             // Первый кадр экрана — индикатор поверх пустоты; он гаснет, и на его месте
@@ -212,35 +216,6 @@ fun HomeScreen(onLogin: () -> Unit, viewModel: HomeViewModel = viewModel()) {
     }
 }
 
-/** Логин в шапке — той же пилюлей, что группа в расписании, чтобы строки совпали. */
-@Composable
-private fun UserPill(login: String) {
-    Row(
-        modifier = Modifier
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
-            .widthIn(max = 200.dp)
-            .heightIn(min = 48.dp)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_person),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(18.dp),
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = login,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
 /** Без токена бэкенд не отдаёт ничего из этого экрана — честно объясняем и зовём войти. */
 @Composable
 private fun SignInInvite(onLogin: () -> Unit) {
@@ -253,7 +228,7 @@ private fun SignInInvite(onLogin: () -> Unit) {
         )
         Text(
             text = "Стрик посещений, отметки по парам и баллы по предметам колледж отдаёт " +
-                "только вошедшим. Логин и пароль — те же, что в личном кабинете.",
+                "только вошедшим. Нужен корпоративный логин и пароль.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp, bottom = 28.dp),

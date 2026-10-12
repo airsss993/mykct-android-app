@@ -2,4 +2,9 @@
 <resources>
     <!-- Тёмный вариант подложки окна, см. DarkBackground в Color.kt -->
     <color name="window_background">#FF0C0C11</color>
+
+    <color name="widget_surface">#FF16161D</color>
+    <color name="widget_text">#FFFFFFFF</color>
+    <color name="widget_text_secondary">#FF8A8A99</color>
+    <color name="widget_accent">#FF9B8CFF</color>
 </resources>

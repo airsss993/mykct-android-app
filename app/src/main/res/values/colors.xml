@@ -9,4 +9,11 @@
     <color name="white">#FFFFFFFF</color>
     <!-- Подложка окна: тот же фон, что у темы приложения (Color.kt) -->
     <color name="window_background">#FFF4F4F8</color>
+
+    <!-- Виджет: токены из Color.kt. Ночной вариант в values-night,
+         виджет следует системной теме - выбор темы в приложении до лаунчера не доходит. -->
+    <color name="widget_surface">#FFFFFFFF</color>
+    <color name="widget_text">#FF16161D</color>
+    <color name="widget_text_secondary">#FF6E6E7A</color>
+    <color name="widget_accent">#FF6C5CE7</color>
 </resources>

@@ -40,6 +40,19 @@
             </intent-filter>
         </service>
 
+        <!-- Виджет на домашний экран (feature/widget), пока заглушка "Скоро" -->
+        <receiver
+            android:name="ru.dzhaparidze.mykct.feature.widget.ScheduleWidget"
+            android:exported="false"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/schedule_widget_info" />
+        </receiver>
+
         <!-- Пуш в фоне рисует система: канал и иконка те же, что в PushService -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"

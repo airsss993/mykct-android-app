@@ -29,8 +29,8 @@ import ru.dzhaparidze.mykct.ui.theme.statusGreen
 import ru.dzhaparidze.mykct.ui.theme.statusWarning
 
 /**
- * Баллы по предмету за текущее полугодие. Оценка приходит строкой и бывает пустой —
- * это «ещё не оценено», а не ноль, поэтому такие занятия показываем отдельной подписью.
+ * Баллы по предмету за текущее полугодие. Оценка приходит строкой и бывает пустой -
+ * это "ещё не оценено", а не ноль, поэтому такие занятия показываем отдельной подписью.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,7 +135,7 @@ private fun ScoreRow(score: Score) {
             }
         }
         Text(
-            text = score.value?.let { "$it / ${score.max}" } ?: "—",
+            text = score.value?.let { "$it / ${score.max}" } ?: "-",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = score.color(),
@@ -143,7 +143,7 @@ private fun ScoreRow(score: Score) {
     }
 }
 
-/** Цвет оценки от доли максимума: как в iOS — зелёный/оранжевый/красный. */
+/** Цвет оценки от доли максимума: как в iOS - зелёный/оранжевый/красный. */
 @Composable
 private fun Score.color(): Color {
     val value = this.value ?: return MaterialTheme.colorScheme.onSurfaceVariant

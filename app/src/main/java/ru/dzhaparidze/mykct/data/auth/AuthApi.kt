@@ -13,10 +13,10 @@ import ru.dzhaparidze.mykct.data.net.decode
 import ru.dzhaparidze.mykct.data.net.ensureSuccess
 
 /**
- * Auth mykct-api (`/api/mykct/v1/auth/...`). Пути и тела — как в iOS-версии
+ * Auth mykct-api (`/api/mykct/v1/auth/...`). Пути и тела - как в iOS-версии
  * (`Features/Auth/Services/AuthAPI.swift`), у неё контракт уже боевой.
  *
- * Логины, пароли и токены не логируются нигде — ни в исключениях, ни в отладке.
+ * Логины, пароли и токены не логируются нигде - ни в исключениях, ни в отладке.
  */
 class AuthApi(private val baseUrl: String = "$API_URL/auth") {
 
@@ -47,7 +47,7 @@ class AuthApi(private val baseUrl: String = "$API_URL/auth") {
         }.decode()
     }
 
-    /** Тело ответа пустое — интересен только код. */
+    /** Тело ответа пустое - интересен только код. */
     suspend fun signOut(refreshToken: String): Unit = apiCall {
         Http.client.post("$baseUrl/signout") {
             contentType(ContentType.Application.Json)

@@ -6,8 +6,8 @@ import android.content.Context
  * Refresh-токен между запусками. В iOS это Keychain; на Android приватные
  * SharedPreferences лежат в песочнице приложения и другим приложениям недоступны.
  *
- * ponytail: без шифрования — на рутованном устройстве файл читается.
- * Понадобится защита от физического доступа — EncryptedSharedPreferences.
+ * ponytail: без шифрования - на рутованном устройстве файл читается.
+ * Понадобится защита от физического доступа - EncryptedSharedPreferences.
  */
 class TokenStore(context: Context) {
 
@@ -19,7 +19,7 @@ class TokenStore(context: Context) {
             if (value == null) remove(REFRESH) else putString(REFRESH, value)
         }.apply()
 
-    /** Когда протухает refresh — millis. 0, если неизвестно. */
+    /** Когда протухает refresh - millis. 0, если неизвестно. */
     var refreshExpiresAt: Long
         get() = prefs.getLong(REFRESH_EXPIRES, 0L)
         set(value) = prefs.edit().putLong(REFRESH_EXPIRES, value).apply()

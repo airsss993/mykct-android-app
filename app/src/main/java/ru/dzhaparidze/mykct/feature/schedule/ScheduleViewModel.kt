@@ -32,7 +32,7 @@ data class DayCell(
 /** Открытая пара и её детали с портала: грузятся по нажатию, а не вместе с неделей. */
 data class LessonDetails(
     val lesson: Lesson,
-    /** Раскрытая подгруппа; null — открыта сама пара. */
+    /** Раскрытая подгруппа; null - открыта сама пара. */
     val selected: LessonSubgroup? = null,
     val rows: List<Pair<String, String>> = emptyList(),
     val isLoading: Boolean = true,
@@ -54,14 +54,14 @@ data class ScheduleUiState(
     val selection: Selection,
     val settings: ScheduleSettings = ScheduleSettings(),
     val days: List<DayCell> = emptyList(),
-    /** Дни, которые сейчас показаны: один, три или вся неделя — по [ScheduleSettings.view]. */
+    /** Дни, которые сейчас показаны: один, три или вся неделя - по [ScheduleSettings.view]. */
     val visible: List<DaySchedule> = emptyList(),
     val isLoading: Boolean = true,
-    /** Текст ошибки от сети; null — всё в порядке. */
+    /** Текст ошибки от сети; null - всё в порядке. */
     val error: String? = null,
-    /** null — лист с парой закрыт. */
+    /** null - лист с парой закрыт. */
     val details: LessonDetails? = null,
-    /** Портал не ответил и показан снимок: [fetchedAt] — когда его сняли. */
+    /** Портал не ответил и показан снимок: [fetchedAt] - когда его сняли. */
     val isStale: Boolean = false,
     val fetchedAt: LocalDate? = null,
 )
@@ -86,7 +86,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     init {
         loadWeek()
-        // Выбор могли поменять в настройках («использовать мою группу») — подхватываем
+        // Выбор могли поменять в настройках ("использовать мою группу") - подхватываем
         viewModelScope.launch {
             SelectionStore.changed.collect { selection ->
                 if (selection == _state.value.selection) return@collect
@@ -94,7 +94,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 loadWeek(silent = true)
             }
         }
-        // Вид и «пропускать выходные» — чистый пересчёт: неделя уже в weekLessons
+        // Вид и "пропускать выходные" - чистый пересчёт: неделя уже в weekLessons
         viewModelScope.launch {
             ScheduleSettingsStore.changed.collect { settings ->
                 if (settings == _state.value.settings) return@collect
@@ -149,7 +149,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         loadDetails()
     }
 
-    /** Раскрытие подгруппы в листе: повторное нажатие по той же — закрывает. */
+    /** Раскрытие подгруппы в листе: повторное нажатие по той же - закрывает. */
     fun selectSubgroup(subgroup: LessonSubgroup?) {
         val details = _state.value.details ?: return
         if (details.selected == subgroup) return
@@ -241,7 +241,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 }
 
-/** Дни полоски недели: пн–вс или пн–пт, если выходные скрыты. */
+/** Дни полоски недели: пн-вс или пн-пт, если выходные скрыты. */
 internal fun weekDays(weekStart: LocalDate, settings: ScheduleSettings): List<LocalDate> =
     (0..6).map { weekStart.plusDays(it.toLong()) }
         .filter { !settings.skipWeekends || it.dayOfWeek.value <= 5 }
@@ -249,7 +249,7 @@ internal fun weekDays(weekStart: LocalDate, settings: ScheduleSettings): List<Lo
 /**
  * Какие дни рисует таймлайн. Диапазон никогда не вылезает за неделю: дальше данных
  * всё равно нет, их грузит `loadWeek()` целиком неделями. Выходные выброшены ещё
- * в [weekDays], так что «3 дня» со скрытыми выходными — это три рабочих дня, как в iOS.
+ * в [weekDays], так что "3 дня" со скрытыми выходными - это три рабочих дня, как в iOS.
  */
 internal fun visibleDays(
     days: List<LocalDate>,
@@ -258,5 +258,5 @@ internal fun visibleDays(
 ): List<LocalDate> = when (settings.view) {
     ScheduleView.WEEK -> days
     else -> days.dropWhile { it < selected }.take(settings.view.days)
-    // выбран выходной, а они скрыты — показываем хвост недели, а не пустоту
+    // выбран выходной, а они скрыты - показываем хвост недели, а не пустоту
 }.ifEmpty { days.takeLast(settings.view.days) }

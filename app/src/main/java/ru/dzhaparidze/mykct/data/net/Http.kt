@@ -16,7 +16,7 @@ import ru.dzhaparidze.mykct.BuildConfig
 import java.io.IOException
 
 /**
- * Ошибка запроса с человеческим текстом — его показывает UI.
+ * Ошибка запроса с человеческим текстом - его показывает UI.
  * [status] null, если до сервера вообще не дошли.
  */
 class ApiException(val status: Int?, message: String, val code: String? = null) : Exception(message)
@@ -28,7 +28,7 @@ val API_URL = "${BuildConfig.API_BASE_URL}/api/mykct/v1"
  * Один HTTP-клиент на приложение. `expectSuccess = false` намеренно: коды разбираем
  * сами в [decode], потому что бэкенд кладёт ошибку в конверт `{"code", "message", "details"}`.
  *
- * Движок берётся из `httpEngine()` — он свой у debug и release: в debug это заглушка
+ * Движок берётся из `httpEngine()` - он свой у debug и release: в debug это заглушка
  * вместо сервера, пока боевого адреса нет.
  */
 object Http {
@@ -51,7 +51,7 @@ object Http {
     }
 }
 
-/** Разбор ответа: успех — тело, иначе [ApiException] с текстом и кодом из конверта ошибки. */
+/** Разбор ответа: успех - тело, иначе [ApiException] с текстом и кодом из конверта ошибки. */
 suspend inline fun <reified T> HttpResponse.decode(): T {
     ensureSuccess()
     return try {
@@ -78,13 +78,13 @@ fun errorText(code: Int): String {
         401 -> "Требуется авторизация"
         403 -> "Доступ запрещён"
         404 -> "Ресурс не найден"
-        429 -> "Слишком много запросов, попробуйте через минуту"
+        429 -> "Слишком много запросов, попробуй через минуту"
         in 500..599 -> "Ошибка сервера ($code)"
         else -> "Сервер вернул код $code"
     }
 }
 
-/** Сетевые сбои наружу тоже уходят как [ApiException] — UI знает только его. */
+/** Сетевые сбои наружу тоже уходят как [ApiException] - UI знает только его. */
 suspend fun <T> apiCall(block: suspend () -> T): T = try {
     block()
 } catch (e: ApiException) {

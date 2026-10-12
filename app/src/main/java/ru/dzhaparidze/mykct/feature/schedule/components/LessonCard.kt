@@ -53,11 +53,11 @@ fun LessonCard(
 
     // propagateMinConstraints: минимальную высоту карточке задаёт таймлайн (она
     // пропорциональна длительности пары), а без этого она доходила только до внешнего
-    // Box — Surface внутри мерился по своему содержимому, и карточка не дотягивалась
+    // Box - Surface внутри мерился по своему содержимому, и карточка не дотягивалась
     // до отметки конца пары.
     Box(modifier = modifier, propagateMinConstraints = true) {
         // Свечение из-под идущей пары: узкая полоса у нижней кромки, а не заливка
-        // во всю карточку — так свет читается как отблеск, а не как вторая карточка.
+        // во всю карточку - так свет читается как отблеск, а не как вторая карточка.
         // Градиент гаснет к краям, иначе после размытия видны торцы полосы.
         if (isNow && CAN_BLUR) {
             Box(
@@ -85,13 +85,13 @@ fun LessonCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            // прошедшая пара просто гасится целиком — так же, как строки истории в референсе
+            // прошедшая пара просто гасится целиком - так же, как строки истории в референсе
             .alpha(if (isPast) 0.55f else 1f)
             // жмётся любая пара: в листе не только подгруппы, но и детали с портала
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         color = accent,
-        // Идущая пара обведена светлой кромкой — её видно, не читая время.
+        // Идущая пара обведена светлой кромкой - её видно, не читая время.
         border = if (isNow) BorderStroke(2.dp, Color.White.copy(alpha = 0.85f)) else null,
         shadowElevation = 6.dp,
     ) {
@@ -159,7 +159,7 @@ fun LessonCard(
 private val CAN_BLUR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 /**
- * FlowRow, а не Row: на узком экране «Идёт · осталось N мин» рядом с «Подгруппы: N»
+ * FlowRow, а не Row: на узком экране "Идёт · осталось N мин" рядом с "Подгруппы: N"
  * не влезает в строку и второй чип обрезается.
  */
 @Composable
@@ -199,13 +199,13 @@ private fun RemainingChip(left: String) {
     }
 }
 
-/** До конца пары, с округлением вверх: на последней секунде честнее «1 с», чем «0 с». */
+/** До конца пары, с округлением вверх: на последней секунде честнее "1 с", чем "0 с". */
 internal fun secondsLeft(lesson: Lesson, at: LocalTime): Int {
     val millis = Duration.between(at, lesson.end).toMillis()
     return if (millis <= 0) 0 else ((millis + 999) / 1000).toInt()
 }
 
-/** Последнюю минуту отсчёт идёт секундами — иначе «осталось 0 мин» висит целую минуту. */
+/** Последнюю минуту отсчёт идёт секундами - иначе "осталось 0 мин" висит целую минуту. */
 internal fun remainingText(seconds: Int): String =
     if (seconds < 60) "$seconds с" else "${seconds / 60} мин"
 
@@ -501,7 +501,7 @@ internal fun TimePill(text: String, showCheck: Boolean, accent: Color) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (showCheck) {
-            // в референсе галочка — белая на цветном круге внутри белой пилюли
+            // в референсе галочка - белая на цветном круге внутри белой пилюли
             Box(
                 modifier = Modifier
                     .size(28.dp)

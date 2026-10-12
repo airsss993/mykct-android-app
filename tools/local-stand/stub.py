@@ -49,7 +49,7 @@ USER = {"id": "student01", "username": "student01", "role": "student",
         "academic_group": "ИТ25-11", "profile": "", "subgroup": "Подгр1", "english_group": "A0.11"}
 
 def shift(items, d_start):
-    """Портал отдаёт то, что попало в запрошенный период — двигаем даты под d_start."""
+    """Портал отдаёт то, что попало в запрошенный период - двигаем даты под d_start."""
     if not d_start:
         return items
     base = date.fromisoformat(d_start)

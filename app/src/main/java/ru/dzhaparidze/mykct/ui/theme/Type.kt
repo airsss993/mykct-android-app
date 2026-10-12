@@ -9,12 +9,12 @@ import androidx.compose.ui.unit.sp
 import ru.dzhaparidze.mykct.R
 
 /**
- * Onest (OFL) — современный интерфейсный гротеск, кириллица у него родная, а не
+ * Onest (OFL) - современный интерфейсный гротеск, кириллица у него родная, а не
  * добавленная позже. Ровнее и спокойнее Onest, но живее нейтрального Inter.
  * Лежит статикой в трёх начертаниях: вариативный файл требует API 26, а у нас
- * minSdk 24 — на Android 7 вариации игнорируются и весь текст стал бы Regular.
+ * minSdk 24 - на Android 7 вариации игнорируются и весь текст стал бы Regular.
  * Файлы получены из вариативного Onest инстансированием на wght 400/600/700
- * (`fontTools.varLib.instancer`) и подрезаны до латиницы с кириллицей — 41 КБ вместо 141.
+ * (`fontTools.varLib.instancer`) и подрезаны до латиницы с кириллицей - 41 КБ вместо 141.
  */
 val Onest = FontFamily(
     Font(R.font.onest_regular, FontWeight.Normal),
@@ -22,7 +22,7 @@ val Onest = FontFamily(
     Font(R.font.onest_bold, FontWeight.Bold),
 )
 
-// Межбуквенное сжатие на крупном тексте — как в референсах: чем крупнее, тем плотнее.
+// Межбуквенное сжатие на крупном тексте - как в референсах: чем крупнее, тем плотнее.
 val AppTypography = Typography(
     headlineMedium = TextStyle(fontFamily = Onest, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 30.sp, letterSpacing = (-0.5).sp),
     headlineSmall = TextStyle(fontFamily = Onest, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.4).sp),

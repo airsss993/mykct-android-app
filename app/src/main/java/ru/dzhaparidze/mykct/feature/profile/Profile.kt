@@ -139,7 +139,7 @@ fun ProfileSheet(user: User, onSignOut: () -> Unit, onDismiss: () -> Unit) {
         AlertDialog(
             onDismissRequest = { confirm = false },
             title = { Text("Выйти из аккаунта?") },
-            text = { Text("Вы уверены, что хотите выйти из аккаунта?") },
+            text = { Text("Посещаемость и баллы снова откроются после входа.") },
             dismissButton = { TextButton(onClick = { confirm = false }) { Text("Отмена") } },
             confirmButton = {
                 TextButton(onClick = { confirm = false; onSignOut() }) {

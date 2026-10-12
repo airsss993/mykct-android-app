@@ -69,8 +69,8 @@ private val RU = Locale.forLanguageTag("ru-RU")
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
 
 /**
- * Родительный падеж руками: `MMMM` на Android отдаёт именительный («16 август»),
- * а нужен «16 августа». Своего формата под это в java.time нет.
+ * Родительный падеж руками: `MMMM` на Android отдаёт именительный ("16 август"),
+ * а нужен "16 августа". Своего формата под это в java.time нет.
  */
 private val MONTHS_GENITIVE = listOf(
     "января", "февраля", "марта", "апреля", "мая", "июня",
@@ -82,15 +82,15 @@ private fun LocalDate.dayMonth(): String = "$dayOfMonth ${MONTHS_GENITIVE[monthV
 private fun LocalDate.dayTitle(): String =
     "${dayOfWeek.getDisplayName(TextStyle.FULL, RU).replaceFirstChar { it.uppercase() }}, ${dayMonth()}"
 
-/** «11 – 17 августа», а через границу месяца — «28 июля – 3 августа». */
+/** "11 - 17 августа", а через границу месяца - "28 июля - 3 августа". */
 private fun dateRange(from: LocalDate, to: LocalDate): String {
     val start = if (from.month == to.month) from.dayOfMonth.toString() else from.dayMonth()
-    return "$start – ${to.dayMonth()}"
+    return "$start - ${to.dayMonth()}"
 }
 
 private fun weekRange(weekStart: LocalDate): String = dateRange(weekStart, weekStart.plusDays(6))
 
-/** «1 пара», «4 пары», «11 пар». */
+/** "1 пара", "4 пары", "11 пар". */
 private fun lessonsCount(count: Int): String {
     val word = when {
         count % 100 in 11..14 -> "пар"
@@ -143,8 +143,8 @@ fun ScheduleScreen(
     viewModel: ScheduleViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    // Часы тикают сами: линия «сейчас» и переход пары в прошедшие должны ехать без
-    // перезахода на экран. Сон до ближайшей :00, а не ровные полминуты от входа —
+    // Часы тикают сами: линия "сейчас" и переход пары в прошедшие должны ехать без
+    // перезахода на экран. Сон до ближайшей :00, а не ровные полминуты от входа -
     // иначе линия переезжает в случайный момент и опаздывает до полуминуты.
     // Секундный отсчёт идущей пары живёт в её карточке и этого тика не касается.
     val now by produceState(LocalTime.now()) {
@@ -157,12 +157,12 @@ fun ScheduleScreen(
     var groupSheetOpen by rememberSaveable { mutableStateOf(false) }
     var streakOpen by rememberSaveable { mutableStateOf(false) }
 
-    // Стрик и посещаемость грузит «Главная»; ViewModel одна на приложение (владелец —
+    // Стрик и посещаемость грузит "Главная"; ViewModel одна на приложение (владелец -
     // активити), поэтому огонёк берёт готовые данные, а не ходит в сеть второй раз.
     val homeViewModel: HomeViewModel = viewModel()
     val home by homeViewModel.state.collectAsStateWithLifecycle()
 
-    // Фон, свет и сетка — общие для всех экранов и живут в `AppShell`: при смене
+    // Фон, свет и сетка - общие для всех экранов и живут в `AppShell`: при смене
     // экрана меняется только содержимое, подложка остаётся на месте.
     Box(modifier = Modifier.fillMaxSize()) {
     // `isRefreshing` только поверх уже показанной недели: на первой загрузке
@@ -190,11 +190,11 @@ fun ScheduleScreen(
             account = account,
         )
 
-        // Отдельного «листа» больше нет: контент лежит на том же фоне, что и шапка.
+        // Отдельного "листа" больше нет: контент лежит на том же фоне, что и шапка.
         Column(modifier = Modifier.fillMaxWidth()) {
             WeekStrip(
                 days = state.days,
-                // подсвечен весь показанный диапазон, а не только «точка входа» в него
+                // подсвечен весь показанный диапазон, а не только "точка входа" в него
                 selectedDates = state.visible.map { it.date }.toSet(),
                 onSelect = viewModel::selectDate,
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -202,7 +202,7 @@ fun ScheduleScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Ошибка и «пар нет» приходят на место индикатора плавно: неделя грузится
+            // Ошибка и "пар нет" приходят на место индикатора плавно: неделя грузится
             // за доли секунды, и без перехода экран дёргается на каждом переключении.
             Fade(
                 target = phaseOf(
@@ -242,13 +242,13 @@ fun ScheduleScreen(
                         )
                     }
 
-                    // Многодневный вид — это те же таймлайны подряд: у каждого дня своя
+                    // Многодневный вид - это те же таймлайны подряд: у каждого дня своя
                     // сетка времени, поэтому склеивать их в один нельзя.
                     Phase.Content -> state.visible.forEachIndexed { index, day ->
                         if (state.visible.size > 1) {
                             // Пустой день внутри диапазона молча пропускать нельзя: иначе
-                            // «3 дня» без пар в среду выглядят как потерянный день — поэтому
-                            // полоса дня рисуется всегда, а «Пар нет» пишется в ней самой.
+                            // "3 дня" без пар в среду выглядят как потерянный день - поэтому
+                            // полоса дня рисуется всегда, а "Пар нет" пишется в ней самой.
                             DayHeader(date = day.date, lessons = day.lessons, first = index == 0)
                         }
                         if (day.lessons.isNotEmpty()) {
@@ -294,7 +294,7 @@ fun ScheduleScreen(
 
 /**
  * Градиентная шапка по референсу: строка заголовка с пилюлей выбора, крупная сводка дня
- * на месте «баланса» и навигация по неделям под ней.
+ * на месте "баланса" и навигация по неделям под ней.
  */
 @Composable
 private fun Hero(
@@ -313,8 +313,8 @@ private fun Hero(
             .fillMaxWidth()
             .statusBarsPadding()
             .padding(horizontal = 20.dp)
-            // Верхний отступ живёт в ScreenTitle — здесь он был бы вторым, и заголовок
-            // расписания висел бы ниже, чем на «Главной» и в настройках.
+            // Верхний отступ живёт в ScreenTitle - здесь он был бы вторым, и заголовок
+            // расписания висел бы ниже, чем на "Главной" и в настройках.
             .padding(bottom = 28.dp),
     ) {
         ScreenTitle(text = "Расписание") {
@@ -333,14 +333,14 @@ private fun Hero(
         HeroSummary(
             caption = "Неделя ${weekRange(state.weekStart)}",
             // Крупная строка на месте баланса из референса: сколько пар в выбранном дне.
-            // Во время загрузки «Пар нет» — враньё, пока данных ещё нет.
+            // Во время загрузки "Пар нет" - враньё, пока данных ещё нет.
             value = when {
-                state.isLoading -> "Загружаем…"
+                state.isLoading -> "Загружаем..."
                 state.error != null -> "Нет данных"
                 state.visible.sumOf { it.lessons.slotCount() } == 0 -> "Пар нет"
                 else -> lessonsCount(state.visible.sumOf { it.lessons.slotCount() })
             },
-            // Один день — «Понедельник, 17 августа · 9:00 – 15:40», диапазон — «17 – 21 августа»
+            // Один день - "Понедельник, 17 августа · 9:00 - 15:40", диапазон - "17 - 21 августа"
             subtitle = state.visible.singleOrNull()
                 ?.let { it.date.dayTitle() + it.lessons.dayHours() }
                 ?: state.visible.dateRange(),
@@ -358,7 +358,7 @@ private fun Hero(
 
 /**
  * Портал колледжа лежит, и бэкенд отдал снимок. Без этой строки расписание недельной
- * давности выглядит как свежее — а это худший вид ошибки: студент придёт не туда.
+ * давности выглядит как свежее - а это худший вид ошибки: студент придёт не туда.
  */
 @Composable
 private fun StaleNote(fetchedAt: LocalDate?) {
@@ -384,8 +384,8 @@ private fun StaleNote(fetchedAt: LocalDate?) {
 }
 
 /**
- * Граница между днями в многодневном виде. Мелкой подписи не хватало — таймлайны
- * сливались в один, — поэтому день открывает полоса во всю ширину: у сегодняшнего
+ * Граница между днями в многодневном виде. Мелкой подписи не хватало - таймлайны
+ * сливались в один, - поэтому день открывает полоса во всю ширину: у сегодняшнего
  * она залита акцентным градиентом, у остальных лежит на поверхности с волосяной кромкой.
  * Часы дня в подпись не пишем: на узком экране они выдавливают дату, а в таймлайне
  * под полосой они и так видны.
@@ -428,15 +428,15 @@ private fun DayHeader(date: LocalDate, lessons: List<Lesson>, first: Boolean) {
     Spacer(Modifier.height(14.dp))
 }
 
-/** «17 – 21 августа» для показанного диапазона — тем же правилом, что и неделя в шапке. */
+/** "17 - 21 августа" для показанного диапазона - тем же правилом, что и неделя в шапке. */
 private fun List<DaySchedule>.dateRange(): String {
     val first = firstOrNull()?.date ?: return ""
     return dateRange(first, last().date)
 }
 
-/** « · 9:00 – 15:40» для непустого дня, иначе ничего. */
+/** " · 9:00 - 15:40" для непустого дня, иначе ничего. */
 private fun List<Lesson>.dayHours(): String =
-    if (isEmpty()) "" else " · ${first().start.format(TIME)} – ${last().end.format(TIME)}"
+    if (isEmpty()) "" else " · ${first().start.format(TIME)} - ${last().end.format(TIME)}"
 
 /** Стеклянная пилюля поверх градиента: показывает выбор и открывает шит групп. */
 @Composable

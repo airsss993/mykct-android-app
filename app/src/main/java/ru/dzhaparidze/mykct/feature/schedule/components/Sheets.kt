@@ -67,11 +67,11 @@ import ru.dzhaparidze.mykct.ui.theme.AccentGradient
 private val SHEET_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
 
 /**
- * Выбор группы и подгрупп. Каталога в API нет, поэтому весь список — локальный.
+ * Выбор группы и подгрупп. Каталога в API нет, поэтому весь список - локальный.
  *
  * Группы разложены по наборам, а не единой простынёй из тринадцати чипов: номер набора
- * — первое, что студент ищет глазами. Лист открывается сразу во всю высоту
- * (`skipPartiallyExpanded`), иначе «Английский» оказывался за двумя прокрутками.
+ * - первое, что студент ищет глазами. Лист открывается сразу во всю высоту
+ * (`skipPartiallyExpanded`), иначе "Английский" оказывался за двумя прокрутками.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,7 +170,7 @@ fun GroupSheet(
             Spacer(Modifier.height(8.dp))
         }
 
-        // Выбор применяется сразу, кнопка только закрывает лист — но без неё непонятно,
+        // Выбор применяется сразу, кнопка только закрывает лист - но без неё непонятно,
         // что делать дальше: свайп вниз как единственный выход студенты не находят.
         ShinyPill(
             text = "Готово",
@@ -220,7 +220,7 @@ private fun MyGroupButton(mine: Selection, onClick: () -> Unit) {
     }
 }
 
-/** Что выбрано сейчас, одной строкой: «ИТ25-11 · Подгруппа 1 · A1.11». */
+/** Что выбрано сейчас, одной строкой: "ИТ25-11 · Подгруппа 1 · A1.11". */
 private fun summary(selection: Selection): String = listOfNotNull(
     selection.group,
     selection.subgroup?.let { id ->
@@ -234,7 +234,7 @@ private fun summary(selection: Selection): String = listOfNotNull(
 ).joinToString(" · ")
 
 /**
- * Подробности пары. Раскрывать карточку прямо в таймлайне нельзя — она позиционируется
+ * Подробности пары. Раскрывать карточку прямо в таймлайне нельзя - она позиционируется
  * по времени и наедет на следующую, поэтому всё здесь: шапка-карточка, повторяющая ту,
  * по которой тапнули, подгруппы (каждая раскрывается в свои детали по SClID) и то,
  * что отдал портал по GET /api/mykct/v1/classdetails.
@@ -278,8 +278,8 @@ fun LessonSheet(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 20.dp, bottom = 10.dp),
                 )
-                // Ключ по индексу, а не по SGrID: в одной паре он повторяется —
-                // две «BE» в разных кабинетах у ИТ25-11 это живой случай.
+                // Ключ по индексу, а не по SGrID: в одной паре он повторяется -
+                // две "BE" в разных кабинетах у ИТ25-11 это живой случай.
                 lesson.subgroups.forEachIndexed { index, subgroup ->
                     if (index > 0) Spacer(Modifier.height(10.dp))
                     SubgroupCard(
@@ -300,7 +300,7 @@ fun LessonSheet(
 }
 
 /**
- * Шапка листа — та же карточка пары, только крупнее: студент тапнул по фиолетовой
+ * Шапка листа - та же карточка пары, только крупнее: студент тапнул по фиолетовой
  * карточке, и лист продолжает её, а не открывает системный диалог с плоским текстом.
  */
 @Composable
@@ -364,7 +364,7 @@ private fun LessonHero(lesson: Lesson) {
 
 /**
  * Подгруппа-аккордеон: детали приходят по её собственному SClID, поэтому раскрытие
- * живёт внутри карточки, а не открывает второй лист. Подгруппа без SClID не жмётся —
+ * живёт внутри карточки, а не открывает второй лист. Подгруппа без SClID не жмётся -
  * спрашивать по ней нечего.
  */
 @Composable
@@ -438,7 +438,7 @@ private fun SubgroupCard(
                 }
                 // Своя подгруппа помечена: иначе её ищут глазами в списке из трёх-четырёх
                 if (isOwn) {
-                    SheetChip(text = "Ваша подгруппа", icon = R.drawable.ic_check, accent = true)
+                    SheetChip(text = "Твоя подгруппа", icon = R.drawable.ic_check, accent = true)
                 }
             }
         }
@@ -450,14 +450,14 @@ private fun SubgroupCard(
     }
 }
 
-/** Детали пары или раскрытой подгруппы: индикатор, ошибка, «пусто» или сами строки. */
+/** Детали пары или раскрытой подгруппы: индикатор, ошибка, "пусто" или сами строки. */
 @Composable
 private fun DetailsContent(details: LessonDetails, rows: List<Pair<String, String>>) {
     Fade(target = phaseOf(details.isLoading, details.error, rows.isEmpty())) { phase ->
         when (phase) {
             Phase.Loading -> Swirl(modifier = Modifier.size(24.dp))
             Phase.Error -> Caption(details.error ?: "")
-            // Пустой ответ портала — это тоже ответ: без строки тап читается как «ничего не произошло»
+            // Пустой ответ портала - это тоже ответ: без строки тап читается как "ничего не произошло"
             Phase.Empty -> Caption("Подробностей нет")
             Phase.Content -> rows.forEachIndexed { index, (key, value) ->
                 Column(modifier = Modifier.padding(top = if (index == 0) 0.dp else 12.dp)) {
@@ -480,7 +480,7 @@ private fun DetailsContent(details: LessonDetails, rows: List<Pair<String, Strin
 
 /**
  * Строки, которые стоит показывать: то, что уже написано в шапке или на карточке
- * подгруппы, портал часто повторяет и в деталях — второй раз это шум.
+ * подгруппы, портал часто повторяет и в деталях - второй раз это шум.
  */
 private fun LessonDetails.visibleRows(): List<Pair<String, String>> {
     val shown = listOfNotNull(lesson.title, lesson.topic, selected?.title, selected?.topic)
@@ -562,9 +562,9 @@ private fun Chips(content: @Composable FlowRowScope.() -> Unit) {
 }
 
 /**
- * Чип выбора. Не `FilterChip`: у материального выбранное состояние — бледная заливка,
+ * Чип выбора. Не `FilterChip`: у материального выбранное состояние - бледная заливка,
  * на светлой теме её почти не видно. Здесь выбранный залит фирменным градиентом,
- * как выбранный день в полосе недели, — и переключается так же: градиент проявляется
+ * как выбранный день в полосе недели, - и переключается так же: градиент проявляется
  * поверх нейтральной заливки, цвет текста доезжает по lerp.
  */
 @Composable
@@ -579,7 +579,7 @@ private fun Choice(text: String, selected: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            // Ряби нет: отклик — сама заливка, на градиенте она читается грязью.
+            // Ряби нет: отклик - сама заливка, на градиенте она читается грязью.
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,

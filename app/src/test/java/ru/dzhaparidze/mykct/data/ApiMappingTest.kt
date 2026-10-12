@@ -55,7 +55,7 @@ class ApiMappingTest {
     }
 
     @Test
-    fun `первокурснику подгруппа берётся из subgroup, старшему — из профиля`() {
+    fun `первокурснику подгруппа берётся из subgroup, старшему - из профиля`() {
         val first = selectionOf(
             User(academicGroup = "ИТ26-11", subgroup = "Подгр2", profile = "BE", englishGroup = "A1.11"),
         )
@@ -68,7 +68,7 @@ class ApiMappingTest {
             User(academicGroup = "ИТ23-11", subgroup = "Подгр1", profile = "BE", englishGroup = "A1.31"),
         )
         assertEquals("BE", senior?.subgroup)
-        // «Подгр1» у старших курсов в подгруппу не лезет: там профили
+        // "Подгр1" у старших курсов в подгруппу не лезет: там профили
         assertNull(senior?.profileSubgroup)
     }
 
@@ -98,7 +98,7 @@ class ApiMappingTest {
     }
 
     @Test
-    fun `статусы посещаемости считаются по правилу «2 — был»`() {
+    fun `статусы посещаемости считаются по правилу "2 - был"`() {
         val stats = AttendanceStats.of(
             listOf(record(2), record(2), record(1), record(0), record(7)),
         )

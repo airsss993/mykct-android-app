@@ -4,7 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
- * Сколько дней подряд показывать. Значения и дефолт — из iOS (`DefaultScheduleView`),
+ * Сколько дней подряд показывать. Значения и дефолт - из iOS (`DefaultScheduleView`),
  * чтобы у студента с двумя телефонами расписание выглядело одинаково.
  */
 enum class ScheduleView(val title: String, val days: Int) {
@@ -13,13 +13,13 @@ enum class ScheduleView(val title: String, val days: Int) {
     WEEK("Неделя", 7),
 }
 
-/** Настройки расписания. В iOS дефолт — «3 дня» и выходные не скрыты. */
+/** Настройки расписания. В iOS дефолт - "3 дня" и выходные не скрыты. */
 data class ScheduleSettings(
     val view: ScheduleView = ScheduleView.THREE_DAYS,
     val skipWeekends: Boolean = false,
 )
 
-/** Две строки в SharedPreferences — как тема и выбор группы. */
+/** Две строки в SharedPreferences - как тема и выбор группы. */
 class ScheduleSettingsStore(context: Context) {
 
     private val prefs = context.getSharedPreferences("schedule", Context.MODE_PRIVATE)
@@ -41,7 +41,7 @@ class ScheduleSettingsStore(context: Context) {
 
     companion object {
         /**
-         * Настройки правят на экране настроек, а применяет их ViewModel расписания —
+         * Настройки правят на экране настроек, а применяет их ViewModel расписания -
          * она живёт дольше обоих экранов, поэтому изменения приезжают сюда
          * (тот же приём, что у [SelectionStore.changed]).
          */

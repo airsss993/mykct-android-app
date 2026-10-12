@@ -8,10 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 // Роли Material 3 используются по назначению, чтобы редизайн не разъезжался:
-// primary — акцент (активный пункт, кнопки, карточки пар по умолчанию),
-// primaryContainer — подложка шапки под градиентом, tertiary — выбранный день,
-// secondary — кольцо прогресса, surfaceVariant — круглые кнопки и невыбранные круги.
-// Градиент — не роль M3, он живёт отдельным токеном `AccentGradient` в Color.kt.
+// primary - акцент (активный пункт, кнопки, карточки пар по умолчанию),
+// primaryContainer - подложка шапки под градиентом, tertiary - выбранный день,
+// secondary - кольцо прогресса, surfaceVariant - круглые кнопки и невыбранные круги.
+// Градиент - не роль M3, он живёт отдельным токеном `AccentGradient` в Color.kt.
 private val LightColors = lightColorScheme(
     primary = Violet,
     onPrimary = Color.White,

@@ -85,7 +85,7 @@ internal fun LocalDate.dayMonth() = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 
 private fun LocalDate.dayTitle() =
     "${dayOfWeek.getDisplayName(TextStyle.FULL, RU).replaceFirstChar { it.uppercase() }}, ${dayMonth()}"
 
-/** «5 дней», «1 день», «22 дня». */
+/** "5 дней", "1 день", "22 дня". */
 internal fun days(count: Int): String {
     val word = when {
         count % 100 in 11..14 -> "дней"
@@ -96,7 +96,7 @@ internal fun days(count: Int): String {
     return "$count $word"
 }
 
-/** «1 пара», «4 пары», «11 пар». */
+/** "1 пара", "4 пары", "11 пар". */
 private fun lessons(count: Int): String {
     val word = when {
         count % 100 in 11..14 -> "пар"
@@ -107,7 +107,7 @@ private fun lessons(count: Int): String {
     return "$count $word"
 }
 
-/** «1 предмет», «3 предмета», «12 предметов». */
+/** "1 предмет", "3 предмета", "12 предметов". */
 private fun subjects(count: Int): String {
     val word = when {
         count % 100 in 11..14 -> "предметов"
@@ -127,7 +127,7 @@ private fun Attendance.color() = when (this) {
 }
 
 /**
- * «Главная»: посещаемость и успеваемость. Всё это бэкенд отдаёт только с токеном,
+ * "Главная": посещаемость и успеваемость. Всё это бэкенд отдаёт только с токеном,
  * поэтому без входа экран показывает приглашение войти, а не пустые карточки.
  *
  * Верстка повторяет расписание: тот же фон со светом, тот же `ScreenTitle` с огоньком
@@ -145,7 +145,7 @@ fun HomeScreen(
 
     val accent = MaterialTheme.colorScheme.primary
 
-    // Фон, свет и сетка — в `AppShell`, общие на все экраны.
+    // Фон, свет и сетка - в `AppShell`, общие на все экраны.
     Box(modifier = Modifier.fillMaxSize()) {
         // `isRefreshing` только поверх уже показанных данных: на первой загрузке
         // крутится свой индикатор в теле экрана, и два спиннера сразу читались бы
@@ -172,7 +172,7 @@ fun HomeScreen(
                 account()
             }
 
-            // Первый кадр экрана — индикатор поверх пустоты; он гаснет, и на его месте
+            // Первый кадр экрана - индикатор поверх пустоты; он гаснет, и на его месте
             // проявляется либо приглашение войти, либо данные. Мгновенная подмена
             // читалась как мигание: автологин отвечает за доли секунды.
             Fade(target = state.isBootstrapping to state.isAuthenticated) { (loading, authorized) ->
@@ -208,7 +208,7 @@ fun HomeScreen(
     }
 }
 
-/** Без токена бэкенд не отдаёт ничего из этого экрана — честно объясняем и зовём войти. */
+/** Без токена бэкенд не отдаёт ничего из этого экрана - честно объясняем и зовём войти. */
 @Composable
 private fun SignInInvite(onLogin: () -> Unit) {
     Column(modifier = Modifier.padding(top = 40.dp)) {
@@ -239,7 +239,7 @@ private fun Authorized(state: HomeUiState, viewModel: HomeViewModel) {
 
     Spacer(Modifier.height(24.dp))
 
-    // Разделы уезжают в ту сторону, куда переключили, — движение повторяет ход бегунка.
+    // Разделы уезжают в ту сторону, куда переключили, - движение повторяет ход бегунка.
     // `SizeTransform(clip = false)`: у вкладок разная высота, и без него список
     // подрезается по высоте соседа на всё время перехода.
     AnimatedContent(
@@ -279,7 +279,7 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
         stats = state.stats,
         month = state.month,
         text = when {
-            state.isLoading && empty -> "Загружаем…"
+            state.isLoading && empty -> "Загружаем..."
             state.error != null -> "Нет данных"
             empty -> "Отметок за месяц нет"
             else -> "Был на ${state.stats.present} из ${lessons(state.stats.total)}"
@@ -405,7 +405,7 @@ private fun PercentRing(percent: Int, hasData: Boolean) {
     }
 }
 
-/** Успеваемость: предметы полугодия, баллы по каждому — в листе по нажатию. */
+/** Успеваемость: предметы полугодия, баллы по каждому - в листе по нажатию. */
 @Composable
 private fun PerformanceTab(state: HomeUiState, viewModel: HomeViewModel) {
     val empty = state.subjects.isEmpty()
@@ -413,11 +413,11 @@ private fun PerformanceTab(state: HomeUiState, viewModel: HomeViewModel) {
     HeroSummary(
         caption = "Текущее полугодие",
         value = when {
-            state.isLoading && empty -> "Загружаем…"
+            state.isLoading && empty -> "Загружаем..."
             empty -> "Нет данных"
             else -> subjects(state.subjects.size)
         },
-        subtitle = "Нажми на предмет — покажем баллы по занятиям",
+        subtitle = "Нажми на предмет - покажем баллы по занятиям",
     )
 
     Spacer(Modifier.height(24.dp))
@@ -454,19 +454,19 @@ private fun Empty(text: String) {
     )
 }
 
-/** Короткая метка для пилюли: полное «Не был (Н/У)» в строку не помещается. */
+/** Короткая метка для пилюли: полное "Не был (Н/У)" в строку не помещается. */
 private val Attendance.short: String
     get() = when (this) {
         Attendance.PRESENT -> "Был"
         Attendance.EXCUSED -> "Ув."
         Attendance.ABSENT -> "Н/У"
-        Attendance.UNKNOWN -> "—"
+        Attendance.UNKNOWN -> "-"
     }
 
 /**
- * День посещаемости — одна карточка со строками, а не стопка отдельных плашек:
+ * День посещаемости - одна карточка со строками, а не стопка отдельных плашек:
  * у четырёх пар подряд рамки и скругления превращались в рябь. Статус показывают
- * иконка предмета в тонированном круге и пилюля справа — цветной точки для этого
+ * иконка предмета в тонированном круге и пилюля справа - цветной точки для этого
  * мало, она читается как маркер списка, а не как оценка присутствия.
  */
 @Composable
@@ -549,7 +549,7 @@ private fun RecordRow(record: AttendanceRecord) {
             )
             Text(
                 text = listOfNotNull(
-                    record.start?.let { "${it.format(TIME)} – ${record.end?.format(TIME) ?: ""}" },
+                    record.start?.let { "${it.format(TIME)} - ${record.end?.format(TIME) ?: ""}" },
                     record.room.takeIf { it.isNotBlank() },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
@@ -568,7 +568,7 @@ private fun RecordRow(record: AttendanceRecord) {
     }
 }
 
-/** Иконка предмета — та же, что водяным знаком на карточке пары в расписании. */
+/** Иконка предмета - та же, что водяным знаком на карточке пары в расписании. */
 @Composable
 private fun SubjectRow(subject: Subject, onClick: () -> Unit) {
     Row(

@@ -16,7 +16,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Расписание из GET /api/mykct/v1/schedule. Токен не нужен — эндпоинт публичный.
+ * Расписание из GET /api/mykct/v1/schedule. Токен не нужен - эндпоинт публичный.
  *
  * Ключи с капитализацией портала (`ClID`, `Day`, `SubGroup`) остаются здесь и наружу
  * не выходят: экран работает с [Lesson].
@@ -28,7 +28,7 @@ class ApiScheduleRepository(private val baseUrl: String = API_URL) : ScheduleRep
             parameter("group", selection.group)
             parameter("start", monday.toString())
             parameter("end", monday.plusDays(6).toString())
-            // «не слать вовсе» вместо «*»: бэк понимает оба варианта, но так короче URL
+            // "не слать вовсе" вместо "*": бэк понимает оба варианта, но так короче URL
             selection.subgroup?.let { parameter("subgroup", it) }
             selection.englishGroup?.let { parameter("english_group", it) }
             selection.profileSubgroup?.let { parameter("profile_subgroup", it) }
@@ -52,10 +52,10 @@ class ApiScheduleRepository(private val baseUrl: String = API_URL) : ScheduleRep
  * Детали пары портал отдаёт произвольным объектом: бэкенд его не типизирует
  * (`FetchClassDetails` возвращает `map[string]any` и льёт как есть), в iOS эндпоинт
  * не используется, живого портала под рукой нет. Поэтому не выдуманная модель, а
- * плоский список «ключ → значение»: листья берутся как есть, пустые значения и то,
+ * плоский список "ключ -> значение": листья берутся как есть, пустые значения и то,
  * что уже нарисовано на карточке, выбрасываются.
  *
- * ponytail: подписи — сырые ключи портала. Появится настоящий ответ — сюда придёт
+ * ponytail: подписи - сырые ключи портала. Появится настоящий ответ - сюда придёт
  * словарь русских названий, разбор менять не придётся.
  */
 internal fun JsonObject.flattenDetails(): List<Pair<String, String>> = buildList {
@@ -137,15 +137,15 @@ private fun EventDto.toLesson(): Lesson? {
 }
 
 /**
- * Дата снимка: приходит меткой времени ISO 8601, а показывается днём и месяцем —
+ * Дата снимка: приходит меткой времени ISO 8601, а показывается днём и месяцем -
  * поэтому от неё берётся только дата, а часовой пояс метки роли не играет.
  */
 internal fun parseDay(value: String): LocalDate? =
     runCatching { LocalDate.parse(value.trim().take(10)) }.getOrNull()
 
 /**
- * Время из портала. Штатный `LocalTime.parse` тут не годится: приходит и «09:00», и «9:00»,
- * а в /attendance — целиком «2026-09-01 09:00».
+ * Время из портала. Штатный `LocalTime.parse` тут не годится: приходит и "09:00", и "9:00",
+ * а в /attendance - целиком "2026-09-01 09:00".
  */
 internal fun parseTime(value: String): LocalTime? {
     val parts = value.trim().substringAfterLast(' ').split(":")

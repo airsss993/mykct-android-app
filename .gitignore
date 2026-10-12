@@ -50,3 +50,12 @@ build/
 
 # Firebase: конфиг проекта, в git не кладём
 app/google-services.json
+
+# Wrapper нужен свежему клону, *.jar выше его отрезает
+!gradle/wrapper/gradle-wrapper.jar
+
+# Записки между сессиями и инструкции агентам - вне git
+HANDOFF.md
+AGENTS.md
+DESIGN.md
+output/

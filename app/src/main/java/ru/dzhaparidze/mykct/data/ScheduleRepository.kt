@@ -7,7 +7,7 @@ import java.time.LocalTime
 
 /**
  * Неделя целиком. Кроме пар несёт признак снимка: когда портал колледжа лежит, бэкенд
- * отдаёт последнее, что успел забрать, и об этом надо сказать — иначе расписание
+ * отдаёт последнее, что успел забрать, и об этом надо сказать - иначе расписание
  * недельной давности выглядит как свежее.
  */
 data class WeekSchedule(
@@ -21,16 +21,16 @@ interface ScheduleRepository {
     suspend fun weekSchedule(monday: LocalDate, selection: Selection): WeekSchedule
 
     /**
-     * Детали пары из GET /api/mykct/v1/classdetails плоским «ключ → значение»:
-     * схемы у портала нет (см. `flattenDetails`). Мок деталей не знает — их неоткуда взять.
+     * Детали пары из GET /api/mykct/v1/classdetails плоским "ключ -> значение":
+     * схемы у портала нет (см. `flattenDetails`). Мок деталей не знает - их неоткуда взять.
      */
     suspend fun classDetails(id: String): List<Pair<String, String>> = emptyList()
 }
 
 /**
- * Моки до подключения GET /api/mykct/v1/schedule. Сетка звонков и предметы — как в КЦТ,
+ * Моки до подключения GET /api/mykct/v1/schedule. Сетка звонков и предметы - как в КЦТ,
  * набор пар зависит от дня недели, чтобы точки под датами были разной длины.
- * Часть предметов делится на подгруппы — английский, профильный модуль, физкультура.
+ * Часть предметов делится на подгруппы - английский, профильный модуль, физкультура.
  */
 class MockScheduleRepository : ScheduleRepository {
 
@@ -70,8 +70,8 @@ class MockScheduleRepository : ScheduleRepository {
     }
 
     /**
-     * Фильтрация подгрупп — вообще-то работа бэкенда: он режет SubGroup по subgroup /
-     * english_group / profile_subgroup и «схлопывает» пару, если осталась ровно одна.
+     * Фильтрация подгрупп - вообще-то работа бэкенда: он режет SubGroup по subgroup /
+     * english_group / profile_subgroup и "схлопывает" пару, если осталась ровно одна.
      * Мок повторяет это, чтобы экран увидел обе формы ответа ещё до подключения сети.
      */
     private fun Lesson.filterBy(selection: Selection): Lesson? {

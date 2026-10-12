@@ -29,14 +29,14 @@ import java.time.temporal.TemporalAdjusters
 /**
  * Боевого сервера пока нет (см. HANDOFF), поэтому debug-сборка по умолчанию ходит
  * не в сеть, а в заглушку: `USE_MOCKS=false` в `local.properties` вернёт настоящий API.
- * Release-сборка этот файл не видит вовсе — у неё свой [httpEngine] с одним OkHttp,
+ * Release-сборка этот файл не видит вовсе - у неё свой [httpEngine] с одним OkHttp,
  * так что уехать в RuStore с моками нельзя даже по ошибке.
  */
 internal fun httpEngine(): HttpClientEngine =
     if (BuildConfig.USE_MOCKS) mockEngine() else OkHttp.create()
 
 /**
- * Отвечает вместо mykct-api. Формы ответов — те же, что у
+ * Отвечает вместо mykct-api. Формы ответов - те же, что у
  * настоящего бэкенда (сверено в `tools/local-stand/stub.py`), поэтому разбор в клиенте
  * работает боевой, а не облегчённый.
  */
@@ -75,9 +75,9 @@ private fun mockEngine() = MockEngine { request ->
 }
 
 /**
- * Расписание берётся у [MockScheduleRepository] — там уже лежит и сетка звонков, и
+ * Расписание берётся у [MockScheduleRepository] - там уже лежит и сетка звонков, и
  * фильтрация подгрупп, повторяющая бэкенд. Здесь остаётся только собрать её ответ:
- * пары «схлопываются» ещё в репозитории, так что наружу уходят обе формы события.
+ * пары "схлопываются" ещё в репозитории, так что наружу уходят обе формы события.
  */
 private suspend fun schedule(request: HttpRequestData): JsonElement {
     val query = request.url.parameters
@@ -127,7 +127,7 @@ private suspend fun schedule(request: HttpRequestData): JsonElement {
     }
 }
 
-/** Портал отдаёт произвольный объект — заглушка тоже, лишь бы формой была карта. */
+/** Портал отдаёт произвольный объект - заглушка тоже, лишь бы формой была карта. */
 private fun classDetails(request: HttpRequestData): JsonElement = buildJsonObject {
     put("ClID", request.url.parameters["id"].orEmpty())
     put("teacher", "Иванов И. И.")
@@ -137,7 +137,7 @@ private fun classDetails(request: HttpRequestData): JsonElement = buildJsonObjec
 
 /**
  * Посещаемость за тот же период, что и расписание: прошедшие пары получают отметку
- * (детерминированно по id — чтобы цифры не прыгали при каждом обновлении),
+ * (детерминированно по id - чтобы цифры не прыгали при каждом обновлении),
  * будущие остаются без статуса.
  *
  * Расписание мок отдаёт неделями, а календарь на "Главной" просит месяц - поэтому
@@ -164,7 +164,7 @@ private suspend fun attendance(request: HttpRequestData): JsonElement {
                 buildJsonObject {
                     put("ClID", lesson.id.hashCode().toLong())
                     put("Day", lesson.date.toString())
-                    // время здесь бэкенд не обрезает — как в настоящем /attendance
+                    // время здесь бэкенд не обрезает - как в настоящем /attendance
                     put("start", "${lesson.date} ${lesson.start.format(TIME)}")
                     put("end", "${lesson.date} ${lesson.end.format(TIME)}")
                     put("title", lesson.title)
@@ -177,7 +177,7 @@ private suspend fun attendance(request: HttpRequestData): JsonElement {
     }
 }
 
-/** 2 — был, 1 — уважительная, 0 — прогул; будущая пара статуса ещё не имеет. */
+/** 2 - был, 1 - уважительная, 0 - прогул; будущая пара статуса ещё не имеет. */
 private fun Lesson.status(): Int {
     if (date.isAfter(LocalDate.now())) return -1
     return when (Math.floorMod(id.hashCode(), 10)) {
@@ -240,7 +240,7 @@ private val STREAK: JsonObject = buildJsonObject {
     put("longest_streak", 12)
     put("total_days_attended", 40)
     put("total_school_days", 45)
-    // доля, а не проценты — как в mykct-api; клиент считает процент сам
+    // доля, а не проценты - как в mykct-api; клиент считает процент сам
     put("attendance_rate", 0.888)
     put("last_attended_date", LocalDate.now().minusDays(1).toString())
     put("period_start", LocalDate.now().minusMonths(3).toString())
@@ -269,7 +269,7 @@ private val LEADERBOARD: JsonObject = buildJsonObject {
     put("participants", 87)
 }
 
-/** Форма ответа — вложенная карта `{предмет: {занятие: [оценки]}}`, как у бэкенда. */
+/** Форма ответа - вложенная карта `{предмет: {занятие: [оценки]}}`, как у бэкенда. */
 private val SCORES: JsonObject = buildJsonObject {
     putJsonObject("Предмет") {
         putJsonArray("Практическая работа 1") {

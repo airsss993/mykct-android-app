@@ -70,8 +70,8 @@ import ru.dzhaparidze.mykct.ui.hairline
 import ru.dzhaparidze.mykct.feature.navBarInset
 
 /**
- * Настройки версии 1.1.1 одним экраном: там тема и «О приложении» были отдельными
- * экранами с кнопкой «назад», но содержимого на них по горсти — вложенность не нужна.
+ * Настройки версии 1.1.1 одним экраном: там тема и "О приложении" были отдельными
+ * экранами с кнопкой "назад", но содержимого на них по горсти - вложенность не нужна.
  */
 @Composable
 fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, account: @Composable () -> Unit) {
@@ -87,7 +87,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, acc
         Card {
             ThemeMode.entries.forEachIndexed { index, mode ->
                 if (index > 0) Divider()
-                // selectable, а не clickable: иначе строка и отметка — два отдельных
+                // selectable, а не clickable: иначе строка и отметка - два отдельных
                 // таргета, и TalkBack читает их дважды
                 SettingsRow(
                     icon = mode.icon(),
@@ -98,7 +98,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, acc
                         onClick = { onThemeChange(mode) },
                     ),
                 ) {
-                    // Галочка вместо радиокнопки — как в референсе: выбранное состояние
+                    // Галочка вместо радиокнопки - как в референсе: выбранное состояние
                     // отмечено акцентом, а не отдельным элементом управления.
                     if (themeMode == mode) {
                         Icon(
@@ -132,7 +132,7 @@ fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit, acc
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 Text(
-                    text = "© 2021–2025 АНПОО «Колледж Цифровых Технологий»",
+                    text = "© 2021-${java.time.Year.now()} АНПОО \"Колледж Цифровых Технологий\"",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp),
@@ -212,8 +212,8 @@ private fun ContactPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 /**
- * Вид расписания и «пропускать выходные» — то же, что в iOS. Хранилище своё, а не
- * общее с выбором группы: группа — параметр запроса, а это чистая подача на экране.
+ * Вид расписания и "пропускать выходные" - то же, что в iOS. Хранилище своё, а не
+ * общее с выбором группы: группа - параметр запроса, а это чистая подача на экране.
  */
 @Composable
 private fun ScheduleSection() {
@@ -252,7 +252,7 @@ private fun ScheduleSection() {
 
         Divider()
 
-        // toggleable на всей строке, а сам Switch без своего onCheckedChange —
+        // toggleable на всей строке, а сам Switch без своего onCheckedChange -
         // иначе у строки и переключателя два разных таргета
         SettingsRow(
             icon = R.drawable.ic_home,
@@ -306,7 +306,7 @@ private fun NotificationsSection() {
         AlertDialog(
             onDismissRequest = { blocked = false },
             title = { Text("Уведомления выключены") },
-            text = { Text("Разрешите уведомления в Настройках телефона, чтобы узнавать об изменениях в расписании.") },
+            text = { Text("Разреши уведомления в настройках телефона, чтобы узнавать об изменениях в расписании.") },
             dismissButton = { TextButton(onClick = { blocked = false }) { Text("Отмена") } },
             confirmButton = {
                 TextButton(
@@ -334,7 +334,7 @@ private fun ScheduleView.icon(): Int = when (this) {
 }
 
 /**
- * Разделитель внутри карточки — с отступом под иконку, как в референсе.
+ * Разделитель внутри карточки - с отступом под иконку, как в референсе.
  * Цвет свой: штатный outlineVariant в тёмной теме совпадает с фоном карточки
  * (оба DarkGreyFill), и линии не видно вовсе.
  */
@@ -344,7 +344,7 @@ private fun Divider() = HorizontalDivider(
     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
 )
 
-/** Строка настроек: иконка, подпись и что-нибудь справа — отметка или стрелка. */
+/** Строка настроек: иконка, подпись и что-нибудь справа - отметка или стрелка. */
 @Composable
 private fun SettingsRow(
     @DrawableRes icon: Int,
@@ -434,7 +434,7 @@ private fun LinkRow(@DrawableRes icon: Int, text: String, url: String) {
 }
 
 /**
- * Карточка человека: слева подпись и соцсети, справа портрет, за ним — фигуры
+ * Карточка человека: слева подпись и соцсети, справа портрет, за ним - фигуры
  * фирменного градиента. Портрет вырезан по контуру (PNG с альфой), поэтому голова
  * заходит за круг, как в референсе; с прямоугольным фото так не выйдет.
  */
@@ -448,13 +448,13 @@ private fun PersonCard(
     @DrawableRes avatar: Int? = null,
     // Исходник со сценой: уходит в фон карточки размытым и подкрашенным.
     @DrawableRes backdrop: Int? = null,
-    // Кадр «человек у машины» шире портрета: если масштабировать его по высоте
+    // Кадр "человек у машины" шире портрета: если масштабировать его по высоте
     // карточки, машина съёживается в оранжевое пятно. Такие кадры тянем по ширине.
     wideShot: Boolean = false,
 ) {
     val uriHandler = LocalUriHandler.current
 
-    // Портрет — сосед карточки, а не её содержимое: внутри его обрезала бы скруглённая
+    // Портрет - сосед карточки, а не её содержимое: внутри его обрезала бы скруглённая
     // кромка, а он должен выступать над ней, как в референсе.
     Box(
         modifier = modifier
@@ -528,13 +528,13 @@ private fun PersonCard(
                     modifier = Modifier.padding(top = 12.dp),
                 ) {
                     SocialButton(R.drawable.github_icon, "GitHub $name") { uriHandler.openUri(github) }
-                    // telegram_icon нарисован «вверх ногами» относительно остальных — отражаем
+                    // telegram_icon нарисован "вверх ногами" относительно остальных - отражаем
                     SocialButton(R.drawable.telegram_icon, "Telegram $name", flip = true) { uriHandler.openUri(telegram) }
                 }
             }
         }
 
-        // Широкий кадр прижат к правой кромке и обрезан формой карточки — растушёвка
+        // Широкий кадр прижат к правой кромке и обрезан формой карточки - растушёвка
         // ему не нужна, срез совпадает с её краем. Портрет остаётся снаружи: он
         // выступает над верхней кромкой, внутри его срезало бы.
         if (avatar != null && !wideShot) {
@@ -562,7 +562,7 @@ private val PORTRAIT_RISE = 26.dp
 
 /**
  * Подложка карточки: общий градиентный налёт по диагонали и два размытых пятна
- * за портретом. Размытие делает из кругов свет — с чёткими кромками они читались
+ * за портретом. Размытие делает из кругов свет - с чёткими кромками они читались
  * аппликацией. На Android 11 и ниже RenderEffect не умеет, там останутся круги.
  */
 @Composable
@@ -633,7 +633,7 @@ private fun SocialButton(@DrawableRes iconRes: Int, description: String, flip: B
 }
 
 
-/** Первые буквы имени и фамилии: «Артём Джапаридзе» → «АД». */
+/** Первые буквы имени и фамилии: "Артём Джапаридзе" -> "АД". */
 private fun String.initials(): String =
     trim().split(" ").filter { it.isNotBlank() }.take(2).map { it.first().uppercase() }.joinToString("")
 

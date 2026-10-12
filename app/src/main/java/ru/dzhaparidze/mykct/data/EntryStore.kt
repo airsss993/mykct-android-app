@@ -3,7 +3,7 @@ package ru.dzhaparidze.mykct.data
 import android.content.Context
 
 /**
- * Прошёл ли пользователь экран входа. Одна булева строка в SharedPreferences —
+ * Прошёл ли пользователь экран входа. Одна булева строка в SharedPreferences -
  * DataStore тут не за что, как и в [ThemeStore].
  */
 class EntryStore(context: Context) {

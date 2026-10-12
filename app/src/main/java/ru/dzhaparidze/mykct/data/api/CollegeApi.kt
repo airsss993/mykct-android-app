@@ -23,7 +23,7 @@ import java.time.LocalDate
 
 /**
  * Эндпоинты, которым нужен токен: посещаемость, стрик, успеваемость.
- * Токен подставляет [AuthService.withToken] — он же повторит запрос после 401.
+ * Токен подставляет [AuthService.withToken] - он же повторит запрос после 401.
  */
 class CollegeApi(
     private val auth: AuthService,
@@ -132,7 +132,7 @@ private fun StreakDto.toStreak() = Streak(
     longest = longest,
     daysAttended = daysAttended,
     schoolDays = schoolDays,
-    // attendance_rate бэкенд отдаёт долей (0.5 = 50%), а не процентами — считаем сами
+    // attendance_rate бэкенд отдаёт долей (0.5 = 50%), а не процентами - считаем сами
     rate = if (schoolDays > 0) daysAttended * 100.0 / schoolDays else 0.0,
     lastAttended = date(lastAttended),
     periodStart = date(periodStart),
@@ -190,7 +190,7 @@ private fun ScoreDto.toScore() = Score(
 )
 
 /**
- * Баллы приходят вложенной картой `{предмет: {занятие: [оценки]}}`, пустой ответ — `{}`
+ * Баллы приходят вложенной картой `{предмет: {занятие: [оценки]}}`, пустой ответ - `{}`
  * (`PerformanceService.GetScore` в college-app-core). Предмет запрашивается один, берём первый.
  */
 private fun parseScores(body: JsonElement): List<SubjectLesson> = when (body) {

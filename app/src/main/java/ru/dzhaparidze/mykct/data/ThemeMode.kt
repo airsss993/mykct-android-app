@@ -2,7 +2,7 @@ package ru.dzhaparidze.mykct.data
 
 import android.content.Context
 
-/** Тема приложения. Перенесено из версии 1.1.1 — пользователи к этому выбору привыкли. */
+/** Тема приложения. Перенесено из версии 1.1.1 - пользователи к этому выбору привыкли. */
 enum class ThemeMode(val title: String) {
     SYSTEM("Системная"),
     LIGHT("Светлая"),
@@ -11,7 +11,7 @@ enum class ThemeMode(val title: String) {
     BLACK("Чёрная"),
 }
 
-/** Одна строка в SharedPreferences — как и выбор группы, DataStore тут не за что. */
+/** Одна строка в SharedPreferences - как и выбор группы, DataStore тут не за что. */
 class ThemeStore(context: Context) {
 
     private val prefs = context.getSharedPreferences("theme", Context.MODE_PRIVATE)

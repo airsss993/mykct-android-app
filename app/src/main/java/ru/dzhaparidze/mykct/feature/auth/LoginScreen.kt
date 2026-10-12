@@ -42,7 +42,7 @@ import ru.dzhaparidze.mykct.ui.theme.VioletLight
 
 /**
  * Форма входа: логин и пароль уходят в auth-сервис колледжа через [AuthService].
- * [onSkip] пустой на входе из «Главной» — там кнопка «без входа» уже не нужна,
+ * [onSkip] пустой на входе из "Главной" - там кнопка "без входа" уже не нужна,
  * пользователь и так внутри приложения.
  *
  * Экран всегда тёмный, как и [AuthScreen], независимо от темы приложения.
@@ -94,7 +94,7 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
             color = Color.White,
         )
         Text(
-            text = "Введите ваш корпоративный логин и пароль",
+            text = "Введи корпоративный логин и пароль",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.6f),
             modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
@@ -130,7 +130,7 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
         )
 
         ShinyPill(
-            text = if (busy) "Входим…" else "Войти",
+            text = if (busy) "Входим..." else "Войти",
             onClick = {
                 busy = true
                 error = null
@@ -178,7 +178,7 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
     }
 }
 
-/** Поле в тёмном стекле: заливка светлой плёнкой, кромка — акцент при фокусе. */
+/** Поле в тёмном стекле: заливка светлой плёнкой, кромка - акцент при фокусе. */
 @Composable
 private fun Field(
     value: String,

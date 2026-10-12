@@ -49,13 +49,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             val store = remember { ThemeStore(this) }
             var themeMode by remember { mutableStateOf(store.load()) }
-            // Экран входа показываем один раз — пока его не прошли (входом или «без входа»).
+            // Экран входа показываем один раз - пока его не прошли (входом или "без входа").
             val entryStore = remember { EntryStore(this) }
             val auth = remember { AuthService.get(this) }
             // Вошедшего приветственный экран уже не касается, даже если он его не проходил
             var entered by remember { mutableStateOf(entryStore.passed() || auth.hasStoredSession()) }
 
-            // Автологин: обменять сохранённый refresh на access. Молча — не вышло,
+            // Автологин: обменять сохранённый refresh на access. Молча - не вышло,
             // значит приложение работает без входа, расписание от токена не зависит.
             LaunchedEffect(Unit) { auth.bootstrap() }
 
@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.DARK, ThemeMode.BLACK -> true
             }
 
-            // Статус-бар всегда лежит на градиентной шапке — иконки там белые независимо
+            // Статус-бар всегда лежит на градиентной шапке - иконки там белые независимо
             // от темы. Навигационную полосу переключаем по выбранной теме, а не по системной:
             // штатный auto() смотрит на систему и на светлой теме поверх тёмной даёт
             // белые кнопки на белом.

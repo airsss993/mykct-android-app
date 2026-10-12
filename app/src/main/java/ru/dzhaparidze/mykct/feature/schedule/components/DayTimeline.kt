@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter
 
 private const val SLOT_MINUTES = 30
 // Полчаса сетки. Задаёт высоту карточек: пара в 90 минут = три слота. Меньше 50.dp
-// не опускать — содержимое карточки перестанет влезать и она вылезет из своего слота.
+// не опускать - содержимое карточки перестанет влезать и она вылезет из своего слота.
 private val SLOT_HEIGHT = 50.dp
 private val GUTTER = 56.dp
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
@@ -30,7 +30,7 @@ private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
  * высота карточки пропорциональна длительности пары, как в референсе.
  *
  * Перерывы не подписываются: пустое место в сетке и подписи времени слева говорят о
- * дыре сами, а плашка «Перерыв · 30 мин» между карточками спорила с ними за внимание.
+ * дыре сами, а плашка "Перерыв · 30 мин" между карточками спорила с ними за внимание.
  */
 @Composable
 fun DayTimeline(
@@ -52,7 +52,7 @@ fun DayTimeline(
             val slotTime = gridStart.plusMinutes(index.toLong() * SLOT_MINUTES)
             SlotLine(
                 time = slotTime,
-                // Подпись сетки прячется, если рядом стоит «сейчас» — иначе цифры
+                // Подпись сетки прячется, если рядом стоит "сейчас" - иначе цифры
                 // наезжают друг на друга.
                 showLabel = now == null || minutesBetween(minOf(now, slotTime), maxOf(now, slotTime)) > 12,
                 modifier = Modifier.offset(y = SLOT_HEIGHT * index.toFloat()),
@@ -71,7 +71,7 @@ fun DayTimeline(
         }
 
         // Раскладываются не пары, а слоты: у студента в одно время могут идти два-три
-        // своих занятия (см. splitOwn), и по offset(y) они встали бы друг на друга —
+        // своих занятия (см. splitOwn), и по offset(y) они встали бы друг на друга -
         // видно было бы только верхнее. Одинаковый слот = один ряд, ширина делится поровну.
         lessons.groupBy { it.start to it.end }.forEach { (slot, row) ->
             val (start, end) = slot
@@ -96,9 +96,9 @@ fun DayTimeline(
                         onClick = { onLessonClick(lesson) },
                         modifier = Modifier
                             .weight(1f)
-                            // ponytail: min, а не фиксированная высота — длинное название темы
+                            // ponytail: min, а не фиксированная высота - длинное название темы
                             // иначе обрежется. Растянувшаяся карточка может наехать на следующую;
-                            // если начнёт мешать — резать текст по maxLines, а не жёстко фиксировать высоту.
+                            // если начнёт мешать - резать текст по maxLines, а не жёстко фиксировать высоту.
                             .heightIn(min = SLOT_HEIGHT * span),
                     )
                 }
@@ -145,7 +145,7 @@ private fun SlotLine(time: LocalTime, showLabel: Boolean, modifier: Modifier = M
     val lineColor = MaterialTheme.colorScheme.outlineVariant
 
     // Линия рисуется ровно на отметке времени (Alignment.Top), подпись поднимается
-    // на половину своей высоты, чтобы стоять по центру линии — иначе карточки,
+    // на половину своей высоты, чтобы стоять по центру линии - иначе карточки,
     // которые позиционируются по той же отметке, разъедутся с сеткой.
     Row(
         modifier = modifier.fillMaxWidth(),

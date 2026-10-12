@@ -31,7 +31,7 @@ class LessonSplittingTest {
 
         assertEquals(listOf("Математика", "Английский"), result.map { it.title })
         assertEquals(listOf("201", "305"), result.map { it.room })
-        // детали у каждой свои — иначе обе покажут одно и то же занятие
+        // детали у каждой свои - иначе обе покажут одно и то же занятие
         assertEquals(listOf("s-Подгр1", "s-A0.11"), result.map { it.id })
         assertEquals(listOf(0, 0), result.map { it.subgroups.size })
     }

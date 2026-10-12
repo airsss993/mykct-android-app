@@ -20,8 +20,8 @@ data class AuthState(
  * Сессия студента: пара токенов, автологин при запуске и обновление access-токена.
  * Логика снята с iOS (`AuthService.swift` + `AuthSession.swift`):
  *
- * - refresh-токен живёт долго и лежит в [TokenStore]; access — только в памяти;
- * - access обновляется за минуту до протухания, refresh — за неделю;
+ * - refresh-токен живёт долго и лежит в [TokenStore]; access - только в памяти;
+ * - access обновляется за минуту до протухания, refresh - за неделю;
  * - на 401 запрос повторяется один раз со свежим access (см. [withToken]).
  *
  * Обновление под [mutex]: иначе три экрана, стартующие одновременно, сделают три
@@ -38,7 +38,7 @@ class AuthService(context: Context, private val api: AuthApi = AuthApi()) {
     private val _state = MutableStateFlow(AuthState())
     val state: StateFlow<AuthState> = _state.asStateFlow()
 
-    /** Есть ли сохранённый вход — до всякой сети. */
+    /** Есть ли сохранённый вход - до всякой сети. */
     fun hasStoredSession(): Boolean = tokens.refreshToken != null
 
     suspend fun signIn(username: String, password: String) {
@@ -50,7 +50,7 @@ class AuthService(context: Context, private val api: AuthApi = AuthApi()) {
         _state.value = AuthState(user = response.user, isBootstrapping = false)
     }
 
-    /** Автологин при старте: молча — если не вышло, приложение просто без входа. */
+    /** Автологин при старте: молча - если не вышло, приложение просто без входа. */
     suspend fun bootstrap() {
         if (tokens.refreshToken == null) {
             _state.value = AuthState(user = null, isBootstrapping = false)
@@ -59,7 +59,7 @@ class AuthService(context: Context, private val api: AuthApi = AuthApi()) {
         try {
             refreshAccess()
         } catch (e: ApiException) {
-            // Протухший или отозванный refresh — чистим, чтобы не долбить сервер каждый старт
+            // Протухший или отозванный refresh - чистим, чтобы не долбить сервер каждый старт
             if (e.status == 401 || e.status == 403) logoutLocal()
         }
         _state.value = _state.value.copy(isBootstrapping = false)
@@ -72,7 +72,7 @@ class AuthService(context: Context, private val api: AuthApi = AuthApi()) {
 
     /**
      * Выполняет запрос с Bearer-токеном; на 401 обновляет токен и повторяет один раз.
-     * Второй 401 — это уже не «протух», а «нет доступа», повторять нечего.
+     * Второй 401 - это уже не "протух", а "нет доступа", повторять нечего.
      */
     suspend fun <T> withToken(block: suspend (String) -> T): T {
         val token = validAccessToken()
@@ -92,7 +92,7 @@ class AuthService(context: Context, private val api: AuthApi = AuthApi()) {
         accessToken ?: throw ApiException(401, "Требуется авторизация")
     }
 
-    /** Обновляет access по refresh, а сам refresh — если ему осталось меньше недели. */
+    /** Обновляет access по refresh, а сам refresh - если ему осталось меньше недели. */
     private suspend fun refreshAccess() {
         val refresh = tokens.refreshToken ?: throw ApiException(401, "Требуется авторизация")
 

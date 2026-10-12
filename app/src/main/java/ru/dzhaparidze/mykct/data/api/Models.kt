@@ -3,7 +3,7 @@ package ru.dzhaparidze.mykct.data.api
 import java.time.LocalDate
 import java.time.LocalTime
 
-/** Отметка на паре. `status == 2` — был, остальное — нет (см. контракт API). */
+/** Отметка на паре. `status == 2` - был, остальное - нет (см. контракт API). */
 enum class Attendance(val title: String) {
     PRESENT("Был"),
     ABSENT("Не был (Н/У)"),
@@ -33,7 +33,7 @@ data class AttendanceRecord(
     val attendance: Attendance,
 )
 
-/** Сводка по загруженному периоду — считается на клиенте, бэкенд её не отдаёт. */
+/** Сводка по загруженному периоду - считается на клиенте, бэкенд её не отдаёт. */
 data class AttendanceStats(
     val total: Int,
     val present: Int,
@@ -82,7 +82,7 @@ data class Leaderboard(val top: List<LeaderboardEntry>, val me: LeaderboardEntry
 
 data class Subject(val id: String, val title: String)
 
-/** Баллы по предмету: занятие → его оценки. */
+/** Баллы по предмету: занятие -> его оценки. */
 data class SubjectLesson(val title: String, val scores: List<Score>)
 
 data class Score(

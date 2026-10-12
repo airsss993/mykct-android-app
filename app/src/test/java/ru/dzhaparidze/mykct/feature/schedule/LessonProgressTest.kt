@@ -24,7 +24,7 @@ class LessonProgressTest {
 
     @Test
     fun `остаток округляется вверх`() {
-        // 40 минут 30 секунд до конца — на карточке должна быть 41-я минута, а не 40-я
+        // 40 минут 30 секунд до конца - на карточке должна быть 41-я минута, а не 40-я
         assertEquals(2430, secondsLeft(lesson, LocalTime.of(9, 19, 30)))
         assertEquals("40 мин", remainingText(2430))
     }

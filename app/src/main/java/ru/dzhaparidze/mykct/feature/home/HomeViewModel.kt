@@ -90,7 +90,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             auth.state.collect { session ->
                 val wasAuthenticated = _state.value.isAuthenticated
                 _state.update { it.copy(user = session.user, isBootstrapping = session.isBootstrapping) }
-                // Загружаемся один раз на переход «вошёл», а не на каждое обновление токена
+                // Загружаемся один раз на переход "вошёл", а не на каждое обновление токена
                 if (session.user != null && !wasAuthenticated) load()
                 if (session.user == null) _state.update {
                     it.copy(
@@ -200,7 +200,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (this == YearMonth.now()) LocalDate.now() else atDay(1)
 
     /**
-     * Полугодие как в iOS: январь–июнь и сентябрь–декабрь. Июль и август — каникулы,
+     * Полугодие как в iOS: январь-июнь и сентябрь-декабрь. Июль и август - каникулы,
      * их относим ко второму полугодию, иначе в списке баллов пусто без объяснений.
      */
     private fun semester(): Pair<LocalDate, LocalDate> {

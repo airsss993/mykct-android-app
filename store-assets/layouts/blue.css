@@ -1,0 +1,49 @@
+/* Синий набор: иллюстрация codex на фоне, жирные строчные заголовки, стеклянные карточки */
+@font-face { font-family: OnestVar; src: url('../fonts/onest_variable.ttf'); font-weight: 100 900; }
+.blue { font-family: OnestVar, Onest, sans-serif; background: url('../assets/violet-panorama.jpg') calc(var(--i, 0) * -1290px) 0 / 7740px 2796px no-repeat, #6C5CE7; }
+.blue.hero { background: url('../assets/violet-hero.jpg') center / cover no-repeat, #6C5CE7; }
+.blue h1 { position: absolute; z-index: 6; left: 80px; right: 60px; margin: 0; font-size: 176px; line-height: .9; font-weight: 900; letter-spacing: -7px; color: #FFF; text-shadow: 0 10px 50px #2A1E7AAA; }
+.blue h1 em { font-style: normal; color: #FFB547; }
+.blue .sub { position: absolute; z-index: 6; left: 84px; right: 120px; margin: 0; font-size: 50px; line-height: 1.25; font-weight: 500; color: #FFFFFFE6; text-shadow: 0 4px 24px #2A1E7A99; }
+.glass { position: absolute; z-index: 5; border-radius: 64px; background: linear-gradient(150deg, #ffffff38, #ffffff12 60%); border: 2px solid #ffffff4d; -webkit-backdrop-filter: blur(36px) saturate(1.5); backdrop-filter: blur(36px) saturate(1.5); box-shadow: inset 0 2px 0 #ffffff55, 0 40px 90px #1E146066; color: #FFF; }
+.blue h1.top { top: 160px; }
+.blue .top-sub { top: var(--sub-top, 520px); }
+
+/* 1: герой */
+.hero h1.top { top: 150px; font-size: 196px; }
+.app-badge { left: 80px; right: 80px; bottom: 300px; display: flex; align-items: center; gap: 40px; padding: 36px 44px; }
+.app-badge img { width: 180px; height: 180px; border-radius: 42px; box-shadow: 0 16px 40px #1E146055; }
+.app-badge b { display: block; font-size: 74px; font-weight: 800; letter-spacing: -2px; }
+.app-badge span { display: block; margin-top: 6px; font-size: 42px; font-weight: 500; opacity: .85; }
+.bottom-note { left: 80px; right: 80px; bottom: 150px; text-align: center; font-size: 40px; }
+
+/* 2: расписание, телефон наверху, текст внизу */
+.schedule .iphone { --device-width: 860px; top: 140px; left: 250px; transform: perspective(4200px) rotateY(-16deg) rotateX(6deg) rotate(10deg); }
+.blue h1.low { top: 2060px; }
+.low-sub { top: 2410px; }
+
+/* 3: баллы */
+.scores { --sub-top: 690px; }
+.scores .iphone { --side: -1; --device-width: 1120px; top: 960px; left: 40px; transform: perspective(4200px) rotateY(15deg) rotateX(6deg) rotate(8deg); }
+
+/* 4: плитки */
+.tiles { position: absolute; z-index: 5; left: 80px; right: 80px; top: 170px; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 480px; gap: 40px; }
+.tile { position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 50px; }
+.tile b { font-size: 220px; line-height: .85; font-weight: 900; letter-spacing: -8px; }
+.tile b small { font-size: 110px; letter-spacing: -2px; opacity: .7; }
+.tile span { margin-top: 20px; font-size: 46px; font-weight: 600; line-height: 1.15; opacity: .9; }
+.t-ring { grid-row: span 2; justify-content: space-between; }
+.att-ring { position: relative; width: 100%; aspect-ratio: 1; display: grid; place-items: center; }
+.att-ring::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#30D158 0 92%, #ffffff2e 0); -webkit-mask: radial-gradient(closest-side, transparent 76%, #000 77%); }
+.tile .att-ring b { font-size: 130px; letter-spacing: -5px; }
+.t-score b, .t-streak b { color: #FFB547; }
+.widgets h1.low { font-size: 160px; }
+.t-streak .fire-icon { position: absolute; top: 34px; right: 34px; height: 180px; }
+.widgets h1.low { top: 1880px; }
+
+/* 5: стрик */
+.streak h1.top { top: 170px; font-size: 150px; letter-spacing: -5px; }
+
+/* 6: OLED */
+.oled { --sub-top: 530px; }
+.oled .iphone { --device-width: 1120px; top: 900px; left: 230px; transform: perspective(4200px) rotateY(-15deg) rotateX(6deg) rotate(-10deg); }

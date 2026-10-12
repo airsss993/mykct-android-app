@@ -1,0 +1,192 @@
+@font-face {
+  font-family: Onest;
+  src: url('../fonts/onest_regular.ttf');
+  font-weight: 400;
+}
+@font-face {
+  font-family: Onest;
+  src: url('../fonts/onest_semibold.ttf');
+  font-weight: 600;
+}
+@font-face {
+  font-family: Onest;
+  src: url('../fonts/onest_bold.ttf');
+  font-weight: 700;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; overflow: hidden; }
+body { font-family: Onest, sans-serif; color: #F4F4F8; background: #0C0C11; }
+.canvas {
+  --w: 1080px;
+  --h: 1920px;
+  --inset: 70px;
+  --copy-top: 76px;
+  --title: 112px;
+  --subtitle: 46px;
+  --text-gap: 25px;
+  --phone-width: 820px;
+  --phone-top: 468px;
+  --phone-left: 130px;
+  --bear-width: 1320px;
+  --bear-top: 548px;
+  --hero-phone-width: 330px;
+  --hero-phone-top: 1570px;
+  --hero-phone-left: 720px;
+  --ring-width: 300px;
+  --ring-top: 1600px;
+  --ring-left: 125px;
+  --rows-width: 940px;
+  --rows-top: 1535px;
+  --back-width: 720px;
+  --back-left: 4px;
+  --back-top: 480px;
+  --front-width: 720px;
+  --front-left: 310px;
+  --front-top: 690px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: var(--w);
+  height: var(--h);
+  background-image: url('../assets/panorama.png');
+  background-size: calc(6 * var(--w)) var(--h);
+  background-position: calc(-1 * var(--index) * var(--w)) 0;
+}
+.copy { position: absolute; z-index: 5; left: var(--inset); right: var(--inset); top: var(--copy-top); }
+h1 { font-size: var(--title); font-weight: 700; letter-spacing: -4px; line-height: 1.03; margin: 0; }
+p { font-size: var(--subtitle); line-height: 1.2; margin: var(--text-gap) 0 0; color: #D6D1E8; }
+.phone {
+  position: absolute;
+  width: var(--phone-width);
+  padding: 10px;
+  background: linear-gradient(140deg, #b4abc9, #393544 25%, #111016 70%, #756885);
+  border: 2px solid #9a91ae;
+  border-radius: 66px;
+  box-shadow: 0 44px 90px #0009;
+  transform: rotate(-3.8deg);
+}
+.phone img { display: block; width: 100%; height: auto; border-radius: 54px; }
+.standard { left: var(--phone-left); top: var(--phone-top); }
+.bear {
+  position: absolute;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  mask-image: linear-gradient(transparent, black 12%, black 72%, transparent), linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
+  mask-composite: intersect;
+}
+.hero-bear { width: var(--bear-width); left: calc((var(--w) - var(--bear-width)) / 2); top: var(--bear-top); }
+.hero-phone { width: var(--hero-phone-width); left: var(--hero-phone-left); top: var(--hero-phone-top); transform: rotate(11.4deg); padding: 6px; border-radius: 40px; }
+.hero-phone img { border-radius: 32px; }
+.callout { position: absolute; z-index: 4; padding: 18px; border: 2px solid #b8a7ff80; background: #292333; border-radius: 46px; box-shadow: 0 25px 60px #0007; }
+.callout img { display: block; width: 100%; border-radius: 30px; }
+.ring { width: var(--ring-width); left: var(--ring-left); top: var(--ring-top); }
+.ring img { border-radius: 50%; }
+.rows { width: var(--rows-width); left: calc((var(--w) - var(--rows-width)) / 2); top: var(--rows-top); padding: 14px; }
+.dual-back { width: var(--back-width); left: var(--back-left); top: var(--back-top); transform: rotate(-11.4deg); }
+.dual-front { width: var(--front-width); left: var(--front-left); top: var(--front-top); transform: rotate(8deg); }
+
+.appstore {
+  --w: 1290px;
+  --h: 2796px;
+  --device-width: 1060px;
+  --device-top: 735px;
+  background: url('../assets/glass-panorama.jpg') calc(var(--i, 0) * -1290px) 0 / 7740px 2796px no-repeat, #5546D2;
+}
+.appstore-copy { position: absolute; z-index: 5; left: 54px; right: 54px; top: 175px; text-align: center; }
+.appstore-copy h1 { text-shadow: 0 6px 40px #1E146080; font-size: 140px; line-height: 1.12; font-weight: 400; letter-spacing: -4px; }
+.appstore-copy h1 span, .appstore-copy h1 strong { display: block; }
+.appstore-copy h1 strong { font-weight: 700; }
+.appstore-copy p { font-size: 54px; line-height: 1.2; margin-top: 36px; color: #FFF; }
+.iphone {
+  --screen-width: calc(var(--device-width) / 1.05);
+  --metal: calc(var(--screen-width) * .015);
+  --depth: calc(var(--device-width) * .05);
+  --bezel: calc(var(--screen-width) * .017);
+  --screen-radius: calc(var(--screen-width) * .135);
+  position: absolute;
+  width: var(--device-width);
+  top: var(--device-top);
+  left: calc((var(--w) - var(--device-width)) / 2);
+  padding: var(--metal);
+  border-radius: calc(var(--screen-radius) + var(--bezel) + var(--metal));
+  background: linear-gradient(115deg, #3a3a3f 2%, #8e8e93 18%, #2c2c30 34%, #4b4b50 62%, #8e8e93 84%, #2c2c30 100%);
+  --side: 1;
+  transform: perspective(4200px) rotateY(calc(var(--side) * -15deg)) rotateX(5deg);
+  box-shadow: inset 0 0 0 2px #d8d9de90, inset 0 0 0 5px #05050555,
+    calc(var(--side) * var(--depth) * 0.042) calc(var(--depth) * 0.015) 0 #adadb3,
+    calc(var(--side) * var(--depth) * 0.083) calc(var(--depth) * 0.029) 0 #a6a6ac,
+    calc(var(--side) * var(--depth) * 0.125) calc(var(--depth) * 0.044) 0 #a0a0a5,
+    calc(var(--side) * var(--depth) * 0.167) calc(var(--depth) * 0.058) 0 #99999f,
+    calc(var(--side) * var(--depth) * 0.208) calc(var(--depth) * 0.073) 0 #929298,
+    calc(var(--side) * var(--depth) * 0.250) calc(var(--depth) * 0.087) 0 #8b8b91,
+    calc(var(--side) * var(--depth) * 0.292) calc(var(--depth) * 0.102) 0 #85858a,
+    calc(var(--side) * var(--depth) * 0.333) calc(var(--depth) * 0.117) 0 #7e7e83,
+    calc(var(--side) * var(--depth) * 0.375) calc(var(--depth) * 0.131) 0 #77777c,
+    calc(var(--side) * var(--depth) * 0.417) calc(var(--depth) * 0.146) 0 #707075,
+    calc(var(--side) * var(--depth) * 0.458) calc(var(--depth) * 0.160) 0 #6a6a6f,
+    calc(var(--side) * var(--depth) * 0.500) calc(var(--depth) * 0.175) 0 #636368,
+    calc(var(--side) * var(--depth) * 0.542) calc(var(--depth) * 0.190) 0 #5c5c61,
+    calc(var(--side) * var(--depth) * 0.583) calc(var(--depth) * 0.204) 0 #55555a,
+    calc(var(--side) * var(--depth) * 0.625) calc(var(--depth) * 0.219) 0 #4f4f53,
+    calc(var(--side) * var(--depth) * 0.667) calc(var(--depth) * 0.233) 0 #48484c,
+    calc(var(--side) * var(--depth) * 0.708) calc(var(--depth) * 0.248) 0 #414145,
+    calc(var(--side) * var(--depth) * 0.750) calc(var(--depth) * 0.263) 0 #3a3a3e,
+    calc(var(--side) * var(--depth) * 0.792) calc(var(--depth) * 0.277) 0 #333338,
+    calc(var(--side) * var(--depth) * 0.833) calc(var(--depth) * 0.292) 0 #2d2d31,
+    calc(var(--side) * var(--depth) * 0.875) calc(var(--depth) * 0.306) 0 #27272a,
+    calc(var(--side) * var(--depth) * 0.917) calc(var(--depth) * 0.321) 0 #212124,
+    calc(var(--side) * var(--depth) * 0.958) calc(var(--depth) * 0.335) 0 #1c1c1e,
+    calc(var(--side) * var(--depth) * 1.000) calc(var(--depth) * 0.350) 0 #161618,
+    calc(var(--side) * var(--depth) * 2.5) calc(var(--depth) * 3) calc(var(--depth) * 4) #140A3CAA;
+}
+/* Блик на стекле: тонкая диагональ, UI под ней не меняется */
+.iphone-screen::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: linear-gradient(115deg, #ffffff1f 0%, #ffffff08 28%, transparent 42%); }
+.attendance .iphone { --side: -1; }
+.iphone-bezel { padding: var(--bezel); border-radius: calc(var(--screen-radius) + var(--bezel)); background: #050505; }
+.iphone-screen { position: relative; overflow: hidden; border-radius: var(--screen-radius); background: #050505; }
+.iphone-screen > img { display: block; width: 100%; height: auto; }
+.dynamic-island { position: absolute; z-index: 2; width: 28.6%; height: 3.87%; top: 1.15%; left: 35.7%; border-radius: 999px; background: #000; }
+.iphone-button { position: absolute; display: block; width: 6px; border-radius: 3px; background: linear-gradient(90deg, #2c2c30, #8e8e93, #3a3a3f); box-shadow: inset 0 0 0 1px #d0d0d030; }
+.iphone-button.action { left: -5px; top: 255px; height: 65px; }
+.iphone-button.volume-up { left: -5px; top: 380px; height: 133px; }
+.iphone-button.volume-down { left: -5px; top: 553px; height: 133px; }
+.iphone-button.power { right: -5px; top: 425px; height: 195px; }
+.iphone-button.camera-control { right: -4px; top: 1060px; height: 134px; width: 5px; }
+.appstore.welcome { --device-top: 2050px; background: radial-gradient(ellipse 850px 1250px at 50% 49%, #6C5CE740, transparent 76%), linear-gradient(#2A2170, #120E2E); }
+.appstore.welcome .appstore-copy h1 { font-size: 136px; }
+.appstore-bear { width: 1550px; left: -130px; top: 645px; }
+.appstore-chip { position: absolute; z-index: 4; padding: 14px; border: 2px solid #e8e5ff99; border-radius: 50px; box-shadow: 0 30px 70px #20105d66; }
+.appstore-chip img { display: block; width: 100%; border-radius: 36px; }
+.attendance-chip { width: 375px; right: 28px; top: 2235px; border-radius: 50%; background: #242132; }
+.attendance-chip img { border-radius: 50%; }
+.scores-chip { width: 1110px; left: 24px; top: 2040px; background: #E8E5FF; }
+
+/* Ключевое слово заголовка на плашке, как маркер */
+.appstore-copy h1 mark { text-shadow: none; display: inline-block; margin: 4px -6px; padding: 0 30px 10px; border-radius: 40px; background: #E8E5FF; color: #4B3FBF; font-weight: 700; transform: rotate(-2deg); box-shadow: 0 18px 40px #20105d40; }
+.appstore-copy h1 mark.fire { background: linear-gradient(135deg, #FFB547, #FF6A2B); color: #FFF; }
+
+/* Кадр 1: веер из шести экранов */
+.fan .iphone { --device-width: 600px; top: 1080px; transform-origin: 50% 150%; }
+.fan .iphone:nth-of-type(-n+4) { --side: -1; }
+.fan .iphone:nth-of-type(2) { transform: perspective(4200px) rotateX(8deg) rotate(-19deg); z-index: 1; }
+.fan .iphone:nth-of-type(3) { transform: perspective(4200px) rotateX(8deg) rotate(-11.4deg); z-index: 2; }
+.fan .iphone:nth-of-type(4) { transform: perspective(4200px) rotateX(8deg) rotate(-3.8deg); z-index: 4; }
+.fan .iphone:nth-of-type(5) { transform: perspective(4200px) rotateX(8deg) rotate(3.8deg); z-index: 3; }
+.fan .iphone:nth-of-type(6) { transform: perspective(4200px) rotateX(8deg) rotate(11.4deg); z-index: 2; }
+.fan .iphone:nth-of-type(7) { transform: perspective(4200px) rotateX(8deg) rotate(19deg); z-index: 1; }
+
+/* Кадр 5: лист стрика выходит из телефона */
+/* Кадр 5: огненный экран стрика, телефон крупно и за край кадра */
+.streak .iphone { --side: 1; --device-width: 1380px; top: 730px; left: 40px; transform: perspective(4200px) rotateY(-14deg) rotateX(6deg) rotate(-11deg); }
+.streak-glow { position: absolute; inset: 0; background: radial-gradient(ellipse 1000px 700px at 60% 34%, #FF7A2B88, #FF3B3033 45%, transparent 75%); }
+.fire-screen { position: relative; aspect-ratio: 1320 / 2868; overflow: hidden; background: linear-gradient(170deg, #FFB547 0%, #FF8A1F 28%, #FF3B30 58%, #C2185B 80%, #6B2BD9 100%); }
+.fire-lines i { position: absolute; border-radius: 999px; background: linear-gradient(#ffffff00, #ffffffee); transform: rotate(14deg); }
+.fire-lines b { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; background: #FFE08A; box-shadow: 0 0 24px 6px #FFB54799; }
+.fire-pill { position: absolute; left: 7%; right: 7%; top: 13%; height: 15%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 70px 0 30px; border-radius: 999px; background: #FFF; box-shadow: 0 40px 90px #8a1a0066, inset 0 -10px 0 #0000000d; }
+.fire-icon { position: relative; height: 100%; aspect-ratio: 1; flex: none; border-radius: 50%; background: radial-gradient(closest-side, #FF950045, #FF950018 60%, transparent); }
+.fire-icon::after { content: ""; position: absolute; inset: 12% 16% 10%; background: linear-gradient(#FFB547, #FF6A2B 55%, #FF3B30); -webkit-mask: url("../assets/flame-fill.png") center / contain no-repeat; }
+.fire-pill strong { font-size: 330px; line-height: 1; font-weight: 800; letter-spacing: -12px; background: linear-gradient(#FF9500, #FF3B30); -webkit-background-clip: text; color: transparent; }
+.fire-caption { position: absolute; top: 30%; left: 0; right: 0; margin: 0; text-align: center; font-size: 96px; font-weight: 700; color: #FFF; text-shadow: 0 6px 30px #8a1a0055; }
+.fire-week { position: absolute; top: 38%; left: 7%; right: 7%; display: flex; justify-content: space-between; }
+.fire-week span { display: flex; flex-direction: column; align-items: center; gap: 14px; font-size: 44px; font-weight: 600; color: #FFFFFFcc; }
+.fire-week svg { width: 120px; height: 120px; padding: 22px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF40; box-shadow: inset 0 0 0 3px #FFFFFF66; }

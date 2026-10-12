@@ -1,0 +1,46 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Баннер README</title>
+<link rel="stylesheet" href="shared.css"><link rel="stylesheet" href="black.css">
+<style>
+  .banner { width: 2048px; height: 1000px; overflow: hidden; }
+  /* свет как на постере promo-redesign-3: тёмно-синий фон, широкий фиолетовый свет справа и снизу */
+  .banner { background:
+    radial-gradient(55% 95% at 102% 50%, #5A3CF0b0 0%, #3B24B866 35%, transparent 72%),
+    radial-gradient(55% 55% at 70% 115%, #4A30D070 0%, transparent 70%),
+    radial-gradient(40% 50% at 0% 100%, #2A1C8a40 0%, transparent 70%),
+    linear-gradient(165deg, #0A0918 0%, #08071A 45%, #0D0A2A 100%); }
+  .banner .glow { width: 1300px; height: 1300px; opacity: .45; }
+  /* блик как на стекле: узкий яркий эллипс, белёсый в центре, сине-фиолетовый к краям */
+  .flare { pointer-events: none; border-radius: 50%; mix-blend-mode: screen; filter: blur(var(--b, 18px));
+    background: radial-gradient(closest-side, #FFFFFF 0%, #E4EEFF 14%, #7FA2FF 30%, #4F6BFF 46%, #5B3DFFaa 64%, #4B3FBF33 82%, transparent); }
+  .beam { z-index: 1; width: 6px; height: 1000px; top: 0; filter: blur(5px);
+    background: linear-gradient(transparent, #6F7CFF55 30%, #9AA6FFaa 55%, #6F7CFF33 80%, transparent); }
+  .vignette { z-index: 9; inset: 0; pointer-events: none; background: radial-gradient(120% 110% at 55% 45%, transparent 55%, #000000cc 100%); }
+  .banner .bear { z-index: 6; left: 108px; top: 110px; height: 240px; border-radius: 54px; border: 2px solid #ffffff33; box-shadow: 0 30px 90px #6C5CE7aa; }
+  .banner h1 { left: 100px; top: 390px; font-size: 230px; letter-spacing: -10px; }
+  .banner .sub { left: 108px; top: 640px; font-size: 46px; }
+  .banner .pill { z-index: 6; left: 108px; top: 805px; padding: 22px 56px; border-radius: 99px; overflow: hidden; color: #FFF; font-size: 36px; font-weight: 600;
+    display: flex; align-items: center; gap: 14px; text-shadow: 0 1px 8px #2a1590aa;
+    background: radial-gradient(45% 85% at 50% 120%, #FFFFFF 0%, #D9CCFF 25%, #A68BFF88 50%, transparent 75%),
+                radial-gradient(90% 150% at 50% 45%, #9273FF 0%, #6440F0 45%, #3812C0 80%, #2A0AA8 100%);
+    border: 2px solid #E8E0FFcc;
+    box-shadow: inset 0 0 22px #ffffff38, inset 0 -6px 26px #ffffff4d, 0 0 0 12px #ffffff07, 0 24px 70px #6C4CFF66, 0 0 120px #6C4CFF33; }
+  .banner .pill::after { content: ''; position: absolute; inset: 0; mix-blend-mode: overlay; opacity: .35;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .banner .pill svg { width: 44px; height: 44px; margin-left: 6px; filter: drop-shadow(0 0 6px #fff8); }
+  .banner .pill span { opacity: .7; font-weight: 500; margin-left: 12px; }
+  .banner .iphone-button { display: none; }
+</style></head>
+<body><main class="canvas black banner" style="--w:2048px;--h:1000px">
+  <img class="bear" src="../assets/app-icon-1024.png" alt="">
+  <h1>Мой<em>КЦТ</em></h1>
+  <p class="sub">Расписание, посещаемость и оценки<br>Колледжа Цифровых Технологий</p>
+  <div class="pill">версия 2.0<span>новый дизайн</span><svg viewBox="0 0 24 24" fill="#fff"><path d="M10 2l1.6 5.4L17 9l-5.4 1.6L10 16l-1.6-5.4L3 9l5.4-1.6z"/><path d="M18.5 13l.8 2.7 2.7.8-2.7.8-.8 2.7-.8-2.7-2.7-.8 2.7-.8z"/><path d="M18 2l.5 1.5L20 4l-1.5.5L18 6l-.5-1.5L16 4l1.5-.5z"/></svg></div>
+  <img class="chalk" src="../assets/chalk/star.png" alt="" style="left:930px;top:300px;width:120px;transform:rotate(12deg)">
+
+  <div class="iphone" style="--device-width:450px;left:1110px;top:200px;z-index:3;transform:perspective(3600px) rotateY(14deg) rotate(-9deg);--side:-1">
+    <div class="iphone-bezel"><div class="iphone-screen"><img src="../src/15-schedule-week-light.png" alt=""><div class="dynamic-island"></div></div></div></div>
+  <div class="iphone" style="--device-width:450px;left:1660px;top:210px;z-index:3;transform:perspective(3600px) rotateY(-14deg) rotate(9deg)">
+    <div class="iphone-bezel"><div class="iphone-screen"><img src="../src/24-attendance-dark.png" alt=""><div class="dynamic-island"></div></div></div></div>
+  <div class="iphone" style="--device-width:500px;left:1350px;top:100px;z-index:5;transform:perspective(3600px) rotateX(4deg)">
+    <div class="iphone-bezel"><div class="iphone-screen"><img src="../src/26-schedule-week-black.png" alt=""><div class="dynamic-island"></div></div></div></div>
+</main></body></html>

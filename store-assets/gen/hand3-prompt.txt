@@ -1,0 +1,5 @@
+Generate a photorealistic image, portrait 4:5.
+Composition from the FIRST attached image (hand2.png): one human hand holding a modern iPhone 16 Pro upright from below and behind, phone almost frontal, slightly tilted, fingers wrapping the left edge, silver titanium frame. Keep this pose and framing.
+Lighting and mood from the SECOND attached image (hands.png): dark moody scene, deep violet-indigo background (#0B0B14 to #1E1650), the hand mostly in shadow with a cool violet rim light (#7464EE) on the edges of fingers and palm, soft glow from the screen spilling on the fingers, deep natural shadows, cinematic low-key studio photo.
+The phone screen must be a perfectly flat, uniform chroma-key green (#00FF00), no UI, no reflections, no text, edge to edge inside the rounded screen, thin black border around it, black Dynamic Island pill at the top. Nothing covers the screen.
+Leave empty dark space at the top and bottom for text. No text, no logos, no watermarks. Save the image as a PNG file named hand3.png in the current directory.

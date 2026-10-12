@@ -1,0 +1,5 @@
+Generate a photorealistic image, portrait 4:5, based on the attached reference composition.
+Two human hands holding a modern black iPhone 16 Pro at a slight angle, exactly like the reference: left hand cradles the phone from below, right thumb hovers over the lower-middle part of the screen.
+The phone screen must be a perfectly flat, uniform chroma-key green (#00FF00), no UI, no reflections, no text, edge to edge inside the rounded screen, with the black Dynamic Island pill at the top. The thumb must be in front of the screen (occluding part of the green).
+Background: very dark, moody deep violet-indigo gradient (#0B0B14 to #1E1650), soft violet rim light on the hands (#7464EE), cinematic, shallow depth of field, studio product shot.
+No text, no logos, no watermarks anywhere in the image. Save the image as a PNG file named hands.png in the current directory.

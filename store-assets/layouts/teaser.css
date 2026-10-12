@@ -1,0 +1,19 @@
+/* Тизер для чата 1080x1350 поверх black.css */
+.teaser { width: 1080px; height: 1350px; overflow: hidden; }
+.teaser h1 { left: 70px; font-size: 128px; letter-spacing: -5px; }
+.teaser .mid { left: 0; width: 1080px; text-align: center; }
+.teaser .huge { font-size: 240px; letter-spacing: -11px; }
+.teaser .sub { font-size: 48px; }
+.teaser .iphone-button { display: none; }
+.teaser .iphone { z-index: 4; }
+.teaser .icon { z-index: 6; left: 390px; top: 300px; width: 300px; border-radius: 68px; box-shadow: 0 40px 120px #6C5CE788; }
+.teaser .icon.small { left: 470px; top: 1140px; width: 140px; border-radius: 32px; }
+.teaser .pills { z-index: 6; left: 70px; top: 270px; display: flex; gap: 16px; }
+.teaser .pills span { padding: 14px 30px; border-radius: 99px; border: 2px solid #ffffff26; font-size: 40px; font-weight: 700; color: #FFFFFF80; }
+.teaser .pills span.on { background: #7464EE; border-color: #7464EE; color: #FFF; }
+.teaser .secret .iphone-screen img { filter: blur(26px) saturate(1.3); transform: scale(1.1); }
+.teaser .stamp { z-index: 8; left: 200px; top: 790px; width: 680px; padding: 22px 0; transform: rotate(-12deg); text-align: center;
+  border: 10px solid #FF3B30; border-radius: 28px; color: #FF3B30; background: #0B0B10CC;
+  font-size: 64px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
+.teaser .tag { z-index: 8; left: 50%; transform: translateX(-50%); top: 1110px; padding: 22px 44px; border-radius: 99px; background: #0B0B10E6; white-space: nowrap; font-size: 56px; font-weight: 800; color: #FFF; }
+.teaser .tag::before { content: "\25CF"; margin-right: 18px; color: #FF3B30; }

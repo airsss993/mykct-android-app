@@ -1,0 +1,26 @@
+/* Чёрная лента: один холст на 6 кадров, меловые штрихи, акцент фиолетовый и огненный */
+@font-face { font-family: OnestVar; src: url('../fonts/onest_variable.ttf'); font-weight: 100 900; }
+.black { --w: 7740px; font-family: OnestVar, Onest, sans-serif; background: #0B0B10; }
+.black > * { position: absolute; }
+.black .chalk { z-index: 7; pointer-events: none; opacity: .92; }
+.black h1 { z-index: 6; margin: 0; font-size: 176px; line-height: .9; font-weight: 900; letter-spacing: -7px; color: #FFF; white-space: nowrap; }
+.black h1 em { font-style: normal; color: #9B8CFF; }
+.black h1 em.fire { background: linear-gradient(90deg, #FFB547, #FF6A2B); -webkit-background-clip: text; color: transparent; }
+.black .sub { z-index: 6; margin: 0; font-size: 50px; line-height: 1.25; font-weight: 500; color: #FFFFFFB3; }
+.glow { z-index: 0; width: 1000px; height: 1000px; border-radius: 50%; background: radial-gradient(closest-side, #6C5CE755, transparent); }
+.glow.fire { background: radial-gradient(closest-side, #FF7A2B55, transparent); }
+.ring-big { z-index: 6; border-radius: 50%; background: radial-gradient(closest-side, #15151C 96%, transparent); box-shadow: 0 40px 100px #000000AA; aspect-ratio: 1; display: grid; place-items: center; text-align: center; }
+.ring-big::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from -90deg, var(--c) 0 var(--p), #ffffff1a 0); -webkit-mask: radial-gradient(closest-side, transparent 78%, #000 79%); }
+.ring-big b { display: block; font-size: 0.24em; }
+.ring-big div { font-size: inherit; }
+.ring-big b { font-weight: 900; color: #FFF; letter-spacing: -4px; line-height: 1; }
+.ring-big span { display: block; margin-top: 10px; font-size: 38px; line-height: 1.1; font-weight: 600; color: #FFFFFFA0; }
+.tile-dark { z-index: 5; display: flex; flex-direction: column; justify-content: flex-end; padding: 44px; border-radius: 56px; background: #17171E; border: 2px solid #ffffff14; color: #FFF; }
+.tile-dark b { font-size: 190px; line-height: .85; font-weight: 900; letter-spacing: -7px; }
+.tile-dark b.v { color: #9B8CFF; }
+.tile-dark b small { font-size: 96px; letter-spacing: -2px; opacity: .6; }
+.tile-dark span { margin-top: 18px; font-size: 44px; font-weight: 600; line-height: 1.15; color: #FFFFFFCC; }
+.tile-dark i { position: absolute; top: 40px; right: 44px; font-style: normal; font-size: 38px; font-weight: 600; color: #FFFFFF73; }
+.tile-dark.wide { justify-content: space-between; }
+.bars { display: flex; align-items: flex-end; gap: 22px; height: 140px; }
+.bars s { flex: 1; height: var(--v); border-radius: 18px; background: linear-gradient(#9B8CFF, #6C5CE7); }

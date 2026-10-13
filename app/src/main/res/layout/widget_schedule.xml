@@ -1,35 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Текст по умолчанию - пример пары: эту же разметку лаунчер показывает превью в списке виджетов -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:gravity="center"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="12dp">
 
-    <ImageView
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:importantForAccessibility="no"
-        android:src="@drawable/ic_hourglass"
-        android:tint="@color/widget_accent" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="4dp">
 
-    <TextView
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/widget_day"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:text="Сегодня"
+            android:textColor="@color/widget_text"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/widget_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:text="3 пары"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/widget_card"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:fontFamily="sans-serif-medium"
-        android:text="Скоро"
-        android:textColor="@color/widget_text"
-        android:textSize="20sp" />
+        android:background="@drawable/widget_card_background">
 
-    <TextView
-        android:layout_width="wrap_content"
+        <!-- водяной знак предмета, как на карточке в приложении -->
+        <ImageView
+            android:id="@+id/widget_card_icon"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="-8dp"
+            android:layout_marginBottom="-8dp"
+            android:alpha="0.13"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_code" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="11dp">
+
+            <TextView
+                android:id="@+id/widget_card_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_pill"
+                android:fontFamily="sans-serif"
+                android:textStyle="bold"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="9:00 - 10:30"
+                android:textColor="@color/widget_pill_text"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/widget_card_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:text="Разработка модулей ПО"
+                android:textColor="#FFFFFFFF"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/widget_card_meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif"
+                android:maxLines="1"
+                android:text="312 · идёт до 10:30"
+                android:textColor="#BFFFFFFF"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_list"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
+        android:orientation="vertical" />
+
+    <!-- пар нет или расписание не загрузилось: вместо карточки и списка -->
+    <LinearLayout
+        android:id="@+id/widget_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:gravity="center"
-        android:text="Виджеты МойКЦТ в разработке"
-        android:textColor="@color/widget_text_secondary"
-        android:textSize="13sp" />
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/widget_message_icon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_check"
+            android:tint="@color/widget_accent" />
+
+        <TextView
+            android:id="@+id/widget_message_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="sans-serif"
+            android:textStyle="bold"
+            android:textColor="@color/widget_text"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/widget_message_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="sans-serif"
+            android:gravity="center"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
 </LinearLayout>

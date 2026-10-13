@@ -34,6 +34,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.dzhaparidze.mykct.MainActivity
 import ru.dzhaparidze.mykct.R
+import ru.dzhaparidze.mykct.feature.widget.ScheduleWidget
 import ru.dzhaparidze.mykct.data.api.bearer
 import ru.dzhaparidze.mykct.data.auth.AuthService
 import ru.dzhaparidze.mykct.data.net.API_URL
@@ -200,6 +201,8 @@ class PushService : FirebaseMessagingService() {
 
     @SuppressLint("MissingPermission") // areNotificationsEnabled проверяет и разрешение
     override fun onMessageReceived(message: RemoteMessage) {
+        // пуш - это изменение расписания: виджет перерисовывается, даже если уведомления выключены
+        ScheduleWidget.refresh(this)
         val notification = message.notification ?: return
         val manager = NotificationManagerCompat.from(this)
         if (!manager.areNotificationsEnabled() || !Push.enabled.value) return

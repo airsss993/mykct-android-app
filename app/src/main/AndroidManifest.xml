@@ -40,7 +40,7 @@
             </intent-filter>
         </service>
 
-        <!-- Виджет на домашний экран (feature/widget), пока заглушка "Скоро" -->
+        <!-- Виджет расписания на домашний экран (feature/widget) -->
         <receiver
             android:name="ru.dzhaparidze.mykct.feature.widget.ScheduleWidget"
             android:exported="false"

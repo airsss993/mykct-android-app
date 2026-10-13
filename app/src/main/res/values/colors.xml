@@ -16,4 +16,8 @@
     <color name="widget_text">#FF16161D</color>
     <color name="widget_text_secondary">#FF6E6E7A</color>
     <color name="widget_accent">#FF6C5CE7</color>
+    <!-- полоска у строки пары: GreyFill -->
+    <color name="widget_fill">#FFE7E7EE</color>
+    <!-- карточка пары одна на обе темы, как в приложении: текст пилюли - Violet -->
+    <color name="widget_pill_text">#FF6C5CE7</color>
 </resources>

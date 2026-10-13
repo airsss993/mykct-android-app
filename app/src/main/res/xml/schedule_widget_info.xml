@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- updatePeriodMillis - страховка раз в 3 часа на случай, если расписание поменяли без пуша;
+     на смену пары виджет сам ставит будильник (render в ScheduleWidget.kt) -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"
     android:initialLayout="@layout/widget_schedule"
     android:previewLayout="@layout/widget_schedule"
-    android:minWidth="250dp"
-    android:minHeight="110dp"
-    android:minResizeWidth="110dp"
-    android:minResizeHeight="110dp"
+    android:minWidth="300dp"
+    android:minHeight="160dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="180dp"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:resizeMode="horizontal|vertical"
-    android:updatePeriodMillis="0"
+    android:updatePeriodMillis="10800000"
     android:widgetCategory="home_screen" />

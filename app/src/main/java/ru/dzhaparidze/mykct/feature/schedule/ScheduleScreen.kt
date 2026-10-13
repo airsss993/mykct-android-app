@@ -77,7 +77,7 @@ private val MONTHS_GENITIVE = listOf(
     "июля", "августа", "сентября", "октября", "ноября", "декабря",
 )
 
-private fun LocalDate.dayMonth(): String = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 1]}"
+internal fun LocalDate.dayMonth(): String = "$dayOfMonth ${MONTHS_GENITIVE[monthValue - 1]}"
 
 private fun LocalDate.dayTitle(): String =
     "${dayOfWeek.getDisplayName(TextStyle.FULL, RU).replaceFirstChar { it.uppercase() }}, ${dayMonth()}"
@@ -91,7 +91,7 @@ private fun dateRange(from: LocalDate, to: LocalDate): String {
 private fun weekRange(weekStart: LocalDate): String = dateRange(weekStart, weekStart.plusDays(6))
 
 /** "1 пара", "4 пары", "11 пар". */
-private fun lessonsCount(count: Int): String {
+internal fun lessonsCount(count: Int): String {
     val word = when {
         count % 100 in 11..14 -> "пар"
         count % 10 == 1 -> "пара"

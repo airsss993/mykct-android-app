@@ -7,4 +7,5 @@
     <color name="widget_text">#FFFFFFFF</color>
     <color name="widget_text_secondary">#FF8A8A99</color>
     <color name="widget_accent">#FF9B8CFF</color>
+    <color name="widget_fill">#FF23232D</color>
 </resources>

@@ -2,5 +2,5 @@
     <string name="app_name">МойКЦТ</string>
     <string name="push_channel_schedule">Изменения в расписании</string>
     <string name="widget_name">Расписание</string>
-    <string name="widget_description">Скоро здесь появится расписание.</string>
+    <string name="widget_description">Текущая пара и что дальше по расписанию.</string>
 </resources>

@@ -3,6 +3,7 @@ package ru.dzhaparidze.mykct.data
 import android.content.Context
 import kotlinx.coroutines.flow.MutableSharedFlow
 import ru.dzhaparidze.mykct.data.auth.User
+import ru.dzhaparidze.mykct.feature.widget.ScheduleWidget
 
 /** Что выбрал студент - это же параметры GET /api/mykct/v1/schedule, кроме дат. null = "все". */
 data class Selection(
@@ -44,6 +45,7 @@ fun selectionOf(user: User): Selection? {
 /** Выбор переживает перезапуск. SharedPreferences: четыре строки, DataStore тут не за что. */
 class SelectionStore(context: Context) {
 
+    private val appContext = context.applicationContext
     private val prefs = context.getSharedPreferences("selection", Context.MODE_PRIVATE)
 
     fun load() = Selection(
@@ -57,6 +59,7 @@ class SelectionStore(context: Context) {
     fun save(selection: Selection) {
         write(selection)
         changed.tryEmit(selection)
+        ScheduleWidget.refresh(appContext)
     }
 
     private fun write(selection: Selection) = prefs.edit()

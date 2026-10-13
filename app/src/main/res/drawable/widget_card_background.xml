@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AccentGradient из Color.kt: из правого верхнего угла в левый нижний.
+     У shape три остановки, блик VioletTint не помещается - берём VioletLight -> Violet -> VioletDeep. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="225"
+        android:centerColor="#FF6C5CE7"
+        android:endColor="#FF4B3FBF"
+        android:startColor="#FF9B8CFF" />
+    <corners android:radius="20dp" />
+</shape>

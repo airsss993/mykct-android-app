@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>МойКЦТ - 50 звёзд</title><link rel="stylesheet" href="shared.css">
+<style>
+/* Тизер редизайна: фон со звездой и светом gen/stars-bg5.png (звезда из первой генерации, увеличенная в gen/star-hq.png), мягкий свет на экраны слоем .beam, под ней веер экранов, крайние под блюром.
+   Текст внизу, ссылки идут текстом в посте. 2160x2700 (4:5) */
+.stars { --w: 2160px; --h: 2700px; background: #03042C url(../assets/stars-bg.png) center / cover; }
+.corner { position: absolute; z-index: 6; top: 110px; font-size: 40px; color: #C8C6DC; }
+.corner.l { left: 110px; } .corner.r { right: 110px; }
+.stars .iphone { --device-width: 760px; top: 820px; transform-origin: 50% 100%; }
+.stars .p1 { transform: translateX(-370px) translateY(90px) rotate(-12deg); z-index: 1; }
+.stars .p2 { --side: -1; transform: translateX(-200px) rotate(-4deg); z-index: 3; }
+.stars .p3 { transform: translateX(200px) rotate(4deg); z-index: 2; }
+.stars .p4 { --side: -1; transform: translateX(370px) translateY(90px) rotate(12deg); z-index: 1; }
+/* Корпус: светлый титан, свет сверху от звезды, поэтому блик на верхней грани */
+.stars .iphone {
+  background: linear-gradient(180deg, #FFFFFF 0%, #E4E0FA 6%, #A6A1C2 20%, #6F6A8E 55%, #4A4766 100%);
+  box-shadow: inset 0 0 0 2px #FFFFFF60, inset 0 3px 0 1px #FFFFFFD0, inset 0 0 0 5px #1A1640,
+    0 -10px 50px #8C7BFF55, 0 140px 180px #000000CC; }
+.stars .iphone-button { background: linear-gradient(90deg, #5B5778, #E9E5FF, #8C88A6); }
+.stars .iphone-screen > img { filter: contrast(1.03); }
+/* Крайние телефоны дальше от камеры и от света: лёгкий блюр экрана и чуть темнее */
+.stars .hidden { filter: brightness(.8); }
+.stars .hidden .iphone-screen > img { filter: blur(11px) brightness(1.04); transform: scale(1.04); }
+/* Мягкий свет звезды на экранах: конус на чёрном (gen/beam-prompt.txt) в сильном блюре, screen - чёрное прозрачно */
+.beam { position: absolute; z-index: 4; inset: 0; background: url(../assets/stars-beam.png) center / cover; transform: translate(-14px, 200px) scaleX(1.1); filter: blur(44px); mix-blend-mode: screen; opacity: .55; pointer-events: none; }
+.fade { position: absolute; z-index: 5; left: 0; right: 0; bottom: 0; height: 1250px; background: linear-gradient(transparent, #03042CA0 25%, #020322F0 50%, #020322 100%); }
+/* Низ без карточки: заголовок, стеклянная кнопка-капсула и подпись про ссылки */
+.stars .appstore-copy { top: auto; bottom: 100px; left: 50%; right: auto; width: 1760px; transform: translateX(-50%); z-index: 6; padding: 64px 70px 70px; }
+.stars .appstore-copy h1 { position: relative; font-size: 124px; letter-spacing: -3px; }
+.stars .appstore-copy h1 mark { padding: 0 26px 8px; }
+.cta { display: inline-flex; align-items: center; gap: 22px; margin-top: 64px; padding: 30px 60px 32px; border-radius: 999px; font-size: 46px; color: #FFF; background: linear-gradient(160deg, #FFFFFF38, #FFFFFF10 60%); -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); border: 2px solid #FFFFFF55; box-shadow: inset 0 3px 0 #FFFFFFB0, inset 0 -2px 0 #FFFFFF20, 0 30px 80px #00000080; }
+.cta svg { width: 46px; height: 46px; }
+.stars .appstore-copy p.note { position: relative; margin-top: 34px; font-size: 34px; color: #9C99BA; }
+</style></head>
+<body><main class="canvas stars">
+<div class="corner l">МойКЦТ</div><div class="corner r">Октябрь 2026</div>
+
+<div class="iphone p1 hidden"><i class="iphone-button action"></i><i class="iphone-button volume-up"></i><i class="iphone-button volume-down"></i><i class="iphone-button power"></i><i class="iphone-button camera-control"></i><div class="iphone-bezel"><div class="iphone-screen"><img src="../src/07-leaderboard-light.png" alt=""><div class="dynamic-island"></div></div></div></div>
+<div class="iphone p2"><i class="iphone-button action"></i><i class="iphone-button volume-up"></i><i class="iphone-button volume-down"></i><i class="iphone-button power"></i><i class="iphone-button camera-control"></i><div class="iphone-bezel"><div class="iphone-screen"><img src="../src/15-schedule-week-light.png" alt=""><div class="dynamic-island"></div></div></div></div>
+<div class="iphone p3"><i class="iphone-button action"></i><i class="iphone-button volume-up"></i><i class="iphone-button volume-down"></i><i class="iphone-button power"></i><i class="iphone-button camera-control"></i><div class="iphone-bezel"><div class="iphone-screen"><img src="../src/24-attendance-dark.png" alt=""><div class="dynamic-island"></div></div></div></div>
+<div class="iphone p4 hidden"><i class="iphone-button action"></i><i class="iphone-button volume-up"></i><i class="iphone-button volume-down"></i><i class="iphone-button power"></i><i class="iphone-button camera-control"></i><div class="iphone-bezel"><div class="iphone-screen"><img src="../src/26-schedule-week-black.png" alt=""><div class="dynamic-island"></div></div></div></div>
+
+<div class="beam"></div>
+<div class="fade"></div>
+<div class="appstore-copy"><h1><span><mark>50 звёзд</mark> ускорят</span><span>выход нового МойКЦТ</span></h1><div class="cta"><svg viewBox="0 0 24 24" fill="#FFF"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>Поставь звезду на GitHub</div><p class="note">Ссылки на iOS и Android - в сообщении</p></div>
+</main></body>
+</html>

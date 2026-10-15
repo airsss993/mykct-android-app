@@ -96,18 +96,60 @@
   .btn-ghost { border: 1px solid #ffffff2e; background: #ffffff0d; backdrop-filter: blur(12px); }
   .btn-ghost:hover { background: #ffffff1f; }
 
-  /* Телефон: скриншот уже со статус-строкой, рамку рисуем сами */
+  /* iPhone: та же модель, что в промо (store-assets/layouts/shared.css), в долях ширины.
+     Титановая рамка градиентом, толщина корпуса - стопка сдвинутых теней, кнопки и остров поверх. */
   .phone {
+    --dw: min(320px, 72vw);
+    --side: 1;
+    --metal: calc(var(--dw) * .0143);
+    --bezel: calc(var(--dw) * .0162);
+    --radius: calc(var(--dw) * .1286);
+    --depth: calc(var(--dw) * .05);
     position: relative;
-    width: min(320px, 72vw);
-    aspect-ratio: 1320 / 2868;
-    border-radius: 48px;
-    padding: 9px;
-    background: linear-gradient(145deg, #3a3a44, #121216 40%, #2a2a32);
-    box-shadow: 0 0 0 1px #ffffff1f inset, 0 40px 120px -20px #5B4BFF66, 0 30px 60px #000a;
+    width: var(--dw);
+    padding: var(--metal);
+    border-radius: calc(var(--radius) + var(--bezel) + var(--metal));
+    background: linear-gradient(115deg, #3a3a3f 2%, #8e8e93 18%, #2c2c30 34%, #4b4b50 62%, #8e8e93 84%, #2c2c30 100%);
+    transform: perspective(1600px) rotateY(calc(var(--side) * -15deg)) rotateX(5deg);
+    box-shadow: inset 0 0 0 1px #d8d9de90, inset 0 0 0 2px #05050555,
+    calc(var(--side) * var(--depth) * 0.042) calc(var(--depth) * 0.015) 0 #adadb3,
+    calc(var(--side) * var(--depth) * 0.083) calc(var(--depth) * 0.029) 0 #a6a6ac,
+    calc(var(--side) * var(--depth) * 0.125) calc(var(--depth) * 0.044) 0 #a0a0a5,
+    calc(var(--side) * var(--depth) * 0.167) calc(var(--depth) * 0.058) 0 #99999f,
+    calc(var(--side) * var(--depth) * 0.208) calc(var(--depth) * 0.073) 0 #929298,
+    calc(var(--side) * var(--depth) * 0.250) calc(var(--depth) * 0.087) 0 #8b8b91,
+    calc(var(--side) * var(--depth) * 0.292) calc(var(--depth) * 0.102) 0 #85858a,
+    calc(var(--side) * var(--depth) * 0.333) calc(var(--depth) * 0.117) 0 #7e7e83,
+    calc(var(--side) * var(--depth) * 0.375) calc(var(--depth) * 0.131) 0 #77777c,
+    calc(var(--side) * var(--depth) * 0.417) calc(var(--depth) * 0.146) 0 #707075,
+    calc(var(--side) * var(--depth) * 0.458) calc(var(--depth) * 0.160) 0 #6a6a6f,
+    calc(var(--side) * var(--depth) * 0.500) calc(var(--depth) * 0.175) 0 #636368,
+    calc(var(--side) * var(--depth) * 0.542) calc(var(--depth) * 0.190) 0 #5c5c61,
+    calc(var(--side) * var(--depth) * 0.583) calc(var(--depth) * 0.204) 0 #55555a,
+    calc(var(--side) * var(--depth) * 0.625) calc(var(--depth) * 0.219) 0 #4f4f53,
+    calc(var(--side) * var(--depth) * 0.667) calc(var(--depth) * 0.233) 0 #48484c,
+    calc(var(--side) * var(--depth) * 0.708) calc(var(--depth) * 0.248) 0 #414145,
+    calc(var(--side) * var(--depth) * 0.750) calc(var(--depth) * 0.262) 0 #3a3a3e,
+    calc(var(--side) * var(--depth) * 0.792) calc(var(--depth) * 0.277) 0 #333338,
+    calc(var(--side) * var(--depth) * 0.833) calc(var(--depth) * 0.292) 0 #2d2d31,
+    calc(var(--side) * var(--depth) * 0.875) calc(var(--depth) * 0.306) 0 #27272a,
+    calc(var(--side) * var(--depth) * 0.917) calc(var(--depth) * 0.321) 0 #212124,
+    calc(var(--side) * var(--depth) * 0.958) calc(var(--depth) * 0.335) 0 #1c1c1e,
+    calc(var(--side) * var(--depth) * 1.000) calc(var(--depth) * 0.350) 0 #161618,
+    calc(var(--side) * var(--depth) * 2.5) calc(var(--depth) * 3) calc(var(--depth) * 4) #140A3CAA;
   }
-  .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 40px; }
-  .hero .phone { justify-self: center; transform: rotate(4deg); }
+  .bezel { padding: var(--bezel); border-radius: calc(var(--radius) + var(--bezel)); background: #050505; }
+  .screen { position: relative; overflow: hidden; border-radius: var(--radius); background: #050505; }
+  .screen img { width: 100%; height: auto; }
+  .screen::after { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: linear-gradient(115deg, #ffffff1f 0%, #ffffff08 28%, transparent 42%); }
+  .island { position: absolute; z-index: 2; width: 28.6%; height: 3.87%; top: 1.15%; left: 35.7%; border-radius: 999px; background: #000; }
+  .hw { position: absolute; width: 3px; border-radius: 2px; background: linear-gradient(90deg, #2c2c30, #8e8e93, #3a3a3f); }
+  .hw.action { left: -2px; top: 11.3%; height: 2.9%; }
+  .hw.vol-up { left: -2px; top: 16.8%; height: 5.9%; }
+  .hw.vol-down { left: -2px; top: 24.5%; height: 5.9%; }
+  .hw.power { right: -2px; top: 18.8%; height: 8.6%; }
+  .hw.cam { right: -2px; top: 47%; height: 5.9%; width: 2px; }
+  .hero .phone { justify-self: center; }
 
   section { padding: 120px 0; }
   h2 {
@@ -147,6 +189,7 @@
   }
   .glass p { position: relative; max-width: 34ch; font-size: 17px; line-height: 1.5; color: #8E8BA8; }
   .glass p b { color: var(--fg); font-weight: 600; }
+  .glass .ring { width: 50%; top: 4%; right: 4%; }
   .glass .cal { width: 46%; top: -4%; right: -4%; }
   .s4 { grid-column: span 4; }
   .s2 { grid-column: span 2; }
@@ -157,16 +200,22 @@
   .peek { position: relative; flex: 1; margin-bottom: 24px; }
   .fade-b { -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent); }
   .lessons { position: absolute; left: 4px; top: 12px; width: min(380px, 100%); display: grid; gap: 10px; transform: rotate(-3deg); transform-origin: left top; }
+  /* Карточка пары повторяет LessonCard.kt: градиент AccentGradient из правого верхнего угла,
+     белая пилюля времени, чипы с обводкой, водяной знак предмета 84dp с прозрачностью 0.13 */
   .lesson {
-    padding: 14px 16px 16px; border-radius: 18px; color: #fff;
-    background: linear-gradient(135deg, #7A68FF, #5A47E6);
-    box-shadow: inset 0 1px 0 #ffffff40, 0 20px 40px -10px #3b2fd080;
+    position: relative; overflow: hidden; padding: 11px; border-radius: 20px; color: #fff;
+    background: linear-gradient(to bottom left, #C3B6FF 0%, #9B8CFF 12%, #6C5CE7 40%, #4B3FBF 100%);
+    box-shadow: 0 6px 18px #0006;
   }
-  .lesson.now { outline: 2px solid #A99FFF; outline-offset: 3px; }
-  .lesson time { display: inline-block; padding: 2px 10px; margin-bottom: 8px; border-radius: 999px; background: #fff; color: #4b3ad6; font-size: 13px; font-weight: 600; }
-  .lesson strong { display: block; font-size: 18px; letter-spacing: -0.02em; }
-  .lesson small { font-size: 13px; opacity: .75; }
-  .lesson .left { float: right; margin-top: 2px; font-size: 13px; opacity: .9; }
+  .lesson.now { box-shadow: inset 0 0 0 2px #ffffffd9, 0 14px 40px -8px #9B8CFFa6; }
+  .lesson > * { position: relative; }
+  .lesson .wm { position: absolute; right: -8px; bottom: -8px; width: 84px; height: 84px; fill: #ffffff21; }
+  .lesson time { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #fff; color: #6C5CE7; font-size: 14px; font-weight: 700; }
+  .lesson strong { display: block; margin-top: 8px; font-size: 21px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
+  .lesson small { display: block; margin-top: 2px; font-size: 14px; color: #ffffffbf; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid #ffffff80; border-radius: 999px; font-size: 13px; font-weight: 500; }
+  .chip svg { width: 14px; height: 14px; fill: #fff; }
 
   .big {
     position: relative; font-size: clamp(64px, 8vw, 96px); font-weight: 700; letter-spacing: -0.06em; line-height: 1;
@@ -198,8 +247,7 @@
   }
   .seg button[aria-pressed="true"] { background: #ffffff1f; color: var(--fg); box-shadow: inset 0 1px 0 #ffffff26; }
   .themes .crop { flex: 0 0 min(340px, 40%); position: relative; padding-top: 48px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
-  .themes .phone { width: 100%; border-radius: 40px 40px 0 0; padding-bottom: 0; aspect-ratio: auto; height: 100%; }
-  .themes .phone img { height: auto; border-radius: 32px 32px 0 0; transition: opacity .25s; }
+  .themes .phone { --dw: min(300px, 76vw); --side: 0; margin: 0 auto; transform: none; box-shadow: inset 0 0 0 1px #d8d9de90, 0 30px 80px -20px #5B4BFF66; }
 
   /* Финал */
   .end { text-align: center; }
@@ -220,7 +268,7 @@
         var(--bg);
     }
     .hero-body { grid-template-columns: 1fr; padding-top: 32px; padding-bottom: 64px; }
-    .hero .phone { transform: none; }
+    .hero .phone { --side: .6; }
     section { padding: 80px 0; }
     .bento { grid-template-columns: 1fr; margin-top: 40px; }
     .s4, .s2, .s6 { grid-column: auto; }
@@ -228,7 +276,7 @@
     .tall { min-height: 440px; }
     .themes { flex-direction: column; padding: 24px 24px 0; height: auto; }
     .themes .txt { padding: 0; }
-    .themes .crop { flex: none; width: 100%; max-width: 300px; height: 320px; margin: 0 auto; padding-top: 0; }
+    .themes .crop { flex: none; width: 100%; height: 340px; margin: 0 auto; padding-top: 0; }
     .btn { flex: 1 1 auto; justify-content: center; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -265,7 +313,7 @@
         </a>
       </div>
     </div>
-    <div class="phone"><img src="site/26-schedule-week-black.webp" alt="Экран расписания в тёмной теме" width="330" height="717"></div>
+    <div class="phone"><i class="hw action"></i><i class="hw vol-up"></i><i class="hw vol-down"></i><i class="hw power"></i><i class="hw cam"></i><div class="bezel"><div class="screen"><span class="island"></span><img src="site/26-schedule-week-black.webp" alt="Экран расписания в тёмной теме" width="330" height="717"></div></div></div>
   </div>
 </header>
 
@@ -285,16 +333,30 @@
           <img class="obj cal" src="site/obj-calendar.webp" alt="">
           <div class="peek fade-b" aria-hidden="true">
             <div class="lessons">
-              <div class="lesson now"><time>9:00 - 10:30</time><span class="left">ещё 25 мин</span><strong>Математика</strong><small>Пределы и непрерывность - каб. 301</small></div>
-              <div class="lesson"><time>10:40 - 12:10</time><strong>Основы алгоритмизации</strong><small>Сортировки - каб. 215</small></div>
-              <div class="lesson"><time>12:40 - 14:10</time><strong>Базы данных</strong><small>Нормальные формы</small></div>
+              <div class="lesson now"><svg class="wm" viewBox="0 -960 960 960" aria-hidden="true"><path d="M326.15-326.15V-270q0 10.31 6.77 17.08 6.77 6.77 17.08 6.77 10.31 0 17.08-6.77 6.77-6.77 6.77-17.08v-56.15H430q10.31 0 17.08-6.77 6.77-6.77 6.77-17.08 0-10.31-6.77-17.08-6.77-6.77-17.08-6.77h-56.15V-430q0-10.31-6.77-17.08-6.77-6.77-17.08-6.77-10.31 0-17.08 6.77-6.77 6.77-6.77 17.08v56.15H270q-10.31 0-17.08 6.77-6.77 6.77-6.77 17.08 0 10.31 6.77 17.08 6.77 6.77 17.08 6.77h56.15Zm223.85 50h140q10.31 0 17.08-6.77 6.77-6.77 6.77-17.08 0-10.31-6.77-17.08-6.77-6.77-17.08-6.77H550q-10.31 0-17.08 6.77-6.77 6.77-6.77 17.08 0 10.31 6.77 17.08 6.77 6.77 17.08 6.77Zm0-100h140q10.31 0 17.08-6.77 6.77-6.77 6.77-17.08 0-10.31-6.77-17.08-6.77-6.77-17.08-6.77H550q-10.31 0-17.08 6.77-6.77 6.77-6.77 17.08 0 10.31 6.77 17.08 6.77 6.77 17.08 6.77Zm-270-222h140q10.31 0 17.08-6.77 6.77-6.77 6.77-17.08 0-10.31-6.77-17.08-6.77-6.77-17.08-6.77H280q-10.31 0-17.08 6.77-6.77 6.77-6.77 17.08 0 10.31 6.77 17.08 6.77 6.77 17.08 6.77ZM212.31-140Q182-140 161-161q-21-21-21-51.31v-535.38Q140-778 161-799q21-21 51.31-21h535.38Q778-820 799-799q21 21 21 51.31v535.38Q820-182 799-161q-21 21-51.31 21H212.31Zm0-60h535.38q4.62 0 8.46-3.85 3.85-3.84 3.85-8.46v-535.38q0-4.62-3.85-8.46-3.84-3.85-8.46-3.85H212.31q-4.62 0-8.46 3.85-3.85 3.84-3.85 8.46v535.38q0 4.62 3.85 8.46 3.84 3.85 8.46 3.85ZM200-760v560-560Zm420 172.77L659.23-548q7.08 7.08 16.58 7.27 9.5.19 16.96-7.27 6.84-6.85 7.15-16.46.31-9.62-6.54-17.08L653.54-622l39.23-39.23q7.08-7.08 7.27-16.58.19-9.5-7.27-16.96-7.46-7.46-16.77-7.46-9.31 0-16.77 7.46L620-655.54l-39.23-39.23q-7.08-7.08-16.58-7.27-9.5-.19-16.96 7.27-7.46 7.46-7.46 16.77 0 9.31 7.46 16.77L586.46-622l-39.84 40.46q-6.47 7.08-6.66 16.58-.19 9.5 7.27 16.96 7.46 7.46 16.77 7.46 9.31 0 16.77-7.46L620-587.23Z"/></svg><time>9:00 - 10:30</time><strong>Математика</strong><small>Пределы и непрерывность</small><div class="chips"><span class="chip"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M510-492.15V-650q0-12.75-8.63-21.38-8.63-8.62-21.38-8.62-12.76 0-21.37 8.62Q450-662.75 450-650v167.08q0 7.06 2.62 13.68 2.61 6.62 8.23 12.24l137 137q8.3 8.31 20.88 8.5 12.58.19 21.27-8.5t8.69-21.08q0-12.38-8.69-21.07l-130-130ZM480.07-100q-78.84 0-148.21-29.92t-120.68-81.21q-51.31-51.29-81.25-120.63Q100-401.1 100-479.93q0-78.84 29.92-148.21t81.21-120.68q51.29-51.31 120.63-81.25Q401.1-860 479.93-860q78.84 0 148.21 29.92t120.68 81.21q51.31 51.29 81.25 120.63Q860-558.9 860-480.07q0 78.84-29.92 148.21t-81.21 120.68q-51.29 51.31-120.63 81.25Q558.9-100 480.07-100ZM480-480Zm0 320q133 0 226.5-93.5T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160Z"/></svg>Идёт · осталось 25 мин</span><span class="chip"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-179.46q117.38-105.08 179.65-201.58 62.27-96.5 62.27-169.04 0-109.38-69.5-179.84-69.5-70.46-172.42-70.46-102.92 0-172.42 70.46-69.5 70.46-69.5 179.84 0 72.54 62.27 169.04 62.27 96.5 179.65 201.58Zm0 57.07q-11.69 0-23.38-4.03-11.7-4.04-21.16-12.5-53.84-49.62-100.77-102.2-46.92-52.57-81.57-105.11-34.66-52.54-54.85-104.15-20.19-51.62-20.19-99.7 0-138.46 89.57-224.19Q357.23-860 480-860t212.35 85.73q89.57 85.73 89.57 224.19 0 48.08-20.19 99.5-20.19 51.43-54.65 104.16-34.47 52.73-81.39 105.11-46.92 52.39-100.77 102-9.32 8.46-21.19 12.69-11.86 4.23-23.73 4.23Zm0-435.3Zm.07 72.3q29.85 0 51.04-21.26 21.2-21.26 21.2-51.11 0-29.85-21.26-51.05Q509.79-630 479.93-630q-29.85 0-51.04 21.26-21.2 21.26-21.2 51.12 0 29.85 21.26 51.04 21.26 21.19 51.12 21.19Z"/></svg>301</span></div></div>
+<div class="lesson"><svg class="wm" viewBox="0 -960 960 960" aria-hidden="true"><path d="M610-190.77V-250h-87.69q-29.92 0-51.12-21.19Q450-292.39 450-322.31V-650H350v59.23q0 25.31-17.73 43.04T289.23-530H150.77q-25.31 0-43.04-17.73T90-590.77v-178.46q0-25.31 17.73-43.04T150.77-830h138.46q25.31 0 43.04 17.73T350-769.23V-710h260v-59.23q0-25.31 17.73-43.04T670.77-830h138.46q25.31 0 43.04 17.73T870-769.23v178.46q0 25.31-17.73 43.04T809.23-530H670.77q-25.31 0-43.04-17.73T610-590.77V-650H510v327.69q0 5.39 3.46 8.85t8.85 3.46H610v-59.23q0-25.31 17.73-43.04T670.77-430h138.46q25.31 0 43.04 17.73T870-369.23v178.46q0 25.31-17.73 43.04T809.23-130H670.77q-25.31 0-43.04-17.73T610-190.77ZM150-770v180-180Zm520 400v180-180Zm0-400v180-180Zm0 180h140v-180H670v180Zm0 400h140v-180H670v180ZM150-590h140v-180H150v180Z"/></svg><time>10:40 - 12:10</time><strong>Основы алгоритмизации</strong><small>Сортировки</small><div class="chips"><span class="chip"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-179.46q117.38-105.08 179.65-201.58 62.27-96.5 62.27-169.04 0-109.38-69.5-179.84-69.5-70.46-172.42-70.46-102.92 0-172.42 70.46-69.5 70.46-69.5 179.84 0 72.54 62.27 169.04 62.27 96.5 179.65 201.58Zm0 57.07q-11.69 0-23.38-4.03-11.7-4.04-21.16-12.5-53.84-49.62-100.77-102.2-46.92-52.57-81.57-105.11-34.66-52.54-54.85-104.15-20.19-51.62-20.19-99.7 0-138.46 89.57-224.19Q357.23-860 480-860t212.35 85.73q89.57 85.73 89.57 224.19 0 48.08-20.19 99.5-20.19 51.43-54.65 104.16-34.47 52.73-81.39 105.11-46.92 52.39-100.77 102-9.32 8.46-21.19 12.69-11.86 4.23-23.73 4.23Zm0-435.3Zm.07 72.3q29.85 0 51.04-21.26 21.2-21.26 21.2-51.11 0-29.85-21.26-51.05Q509.79-630 479.93-630q-29.85 0-51.04 21.26-21.2 21.26-21.2 51.12 0 29.85 21.26 51.04 21.26 21.19 51.12 21.19Z"/></svg>215</span></div></div>
+<div class="lesson"><svg class="wm" viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-140q-145.61 0-242.81-41.12Q140-222.23 140-283.85V-680q0-57.92 99.54-98.96Q339.08-820 480-820q140.92 0 240.46 41.04Q820-737.92 820-680v396.15q0 61.62-97.19 102.73Q625.61-140 480-140Zm0-461.69q87.46 0 176.12-24.73 88.65-24.73 102.73-53.35-13.7-29.38-101.66-54.81Q569.23-760 480-760q-89.08 0-176.58 24.73-87.5 24.73-103.04 53.96 15.16 30 102.27 54.81 87.12 24.81 177.35 24.81Zm0 200.15q41.62 0 81-4t75.27-11.69q35.88-7.69 67.19-19.08 31.31-11.38 56.54-25.77V-604q-25.23 14.38-56.54 25.77-31.31 11.38-67.19 19.07-35.89 7.7-75.27 11.7-39.38 4-81 4-42.38 0-82.58-4.2-40.19-4.19-75.88-11.88t-66.5-18.88Q224.23-589.62 200-604v141.92q24.23 14.39 55.04 25.58 30.81 11.19 66.5 18.88 35.69 7.7 75.88 11.89 40.2 4.19 82.58 4.19ZM480-200q48.69 0 95.62-6.42 46.92-6.43 85.38-17.54 38.46-11.12 64.88-25.81 26.43-14.69 34.12-30.85v-121.46q-25.23 14.39-56.54 25.77-31.31 11.39-67.19 19.08-35.89 7.69-75.27 11.69-39.38 4-81 4-42.38 0-82.58-4.19-40.19-4.19-75.88-11.89-35.69-7.69-66.5-18.88-30.81-11.19-55.04-25.58V-280q7.69 16.54 33.81 30.73 26.11 14.19 64.57 25.31 38.47 11.11 85.7 17.54Q431.31-200 480-200Z"/></svg><time>12:40 - 14:10</time><strong>Базы данных</strong><small>Нормальные формы</small><div class="chips"></div></div>
             </div>
           </div>
           <p><b>Расписание на временной сетке.</b> Высота пары равна её длительности, идущая подсвечена и считает, сколько осталось. Неделя, три дня или один.</p>
         </div>
 
         <div class="glass s2 tall">
-          <img class="obj" src="site/obj-ring.webp" alt="">
+          <svg class="obj ring" viewBox="0 0 200 200" aria-hidden="true">
+            <defs>
+              <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C3B6FF"/><stop offset=".35" stop-color="#7B6CFF"/><stop offset="1" stop-color="#3A2FB0"/></linearGradient>
+              <filter id="rb" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>
+            </defs>
+            <g transform="rotate(-46 100 100)" fill="none" stroke-linecap="round">
+              <circle cx="100" cy="100" r="70" stroke="#ffffff10" stroke-width="24"/>
+              <circle cx="100" cy="100" r="70" pathLength="100" stroke-dasharray="92 100" stroke="#7B6CFF" stroke-width="26" filter="url(#rb)" opacity=".7"/>
+              <circle cx="100" cy="100" r="70" pathLength="100" stroke-dasharray="92 100" stroke="url(#rg)" stroke-width="24"/>
+              <circle cx="100" cy="100" r="70" pathLength="100" stroke-dasharray="92 100" stroke="#1B1466" stroke-width="12" opacity=".55"/>
+              <circle cx="100" cy="100" r="77" pathLength="100" stroke-dasharray="0 58 26 100" stroke="#fff" stroke-width="3.5" opacity=".85"/>
+              <circle cx="100" cy="100" r="74" pathLength="100" stroke-dasharray="0 5 6 100" stroke="#fff" stroke-width="2.5" opacity=".6"/>
+              <circle cx="100" cy="100" r="63" pathLength="100" stroke-dasharray="0 12 20 100" stroke="#E4DEFF" stroke-width="2" opacity=".45"/>
+            </g>
+          </svg>
           <div class="big">92<sup>%</sup></div>
           <p><b>Посещаемость.</b> Календарь месяца с отметками по дням: был, уважительная, неуважительная.</p>
         </div>
@@ -328,7 +390,7 @@
               <button type="button" data-src="site/26-schedule-week-black.webp" aria-pressed="false">Тёмная</button>
             </div>
           </div>
-          <div class="crop"><div class="phone"><img id="themeShot" src="site/15-schedule-week-light.webp" alt="Экран расписания" loading="lazy" width="330" height="717"></div></div>
+          <div class="crop"><div class="phone"><i class="hw action"></i><i class="hw vol-up"></i><i class="hw vol-down"></i><i class="hw power"></i><i class="hw cam"></i><div class="bezel"><div class="screen"><span class="island"></span><img id="themeShot" src="site/15-schedule-week-light.webp" alt="Экран расписания" loading="lazy" width="330" height="717"></div></div></div></div>
         </div>
       </div>
     </div>

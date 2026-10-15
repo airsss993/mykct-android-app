@@ -109,44 +109,103 @@
   .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 40px; }
   .hero .phone { justify-self: center; transform: rotate(4deg); }
 
-  /* Функции */
-  section { padding: 96px 0; }
-  .eyebrow { color: var(--violet-hi); font-size: 14px; font-weight: 500; margin-bottom: 12px; }
-  h2 { margin: 0 0 16px; font-size: clamp(32px, 4.5vw, 52px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 700; }
-  h3 { margin: 0 0 8px; font-size: 20px; letter-spacing: -0.02em; font-weight: 600; }
+  section { padding: 120px 0; }
+  h2 {
+    margin: 0 auto; max-width: 20ch; text-align: center;
+    font-size: clamp(34px, 5vw, 56px); line-height: 1.05; letter-spacing: -0.04em; font-weight: 700;
+  }
+  h2 span { color: #6F6C8A; }
   p { margin: 0; }
-  .muted { color: var(--muted); }
 
-  .feature {
-    display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 64px;
-    padding: 56px 0;
+  /* Фраза, которая загорается по словам при скролле */
+  .say {
+    margin: 0 auto; max-width: 24ch; text-align: center;
+    font-size: clamp(30px, 4.4vw, 52px); line-height: 1.15; letter-spacing: -0.035em; font-weight: 600;
   }
-  .feature + .feature { border-top: 1px solid var(--border); }
-  .feature.flip .shot { order: -1; }
-  .feature .shot { display: flex; justify-content: center; }
-  .feature .phone { width: min(280px, 64vw); }
-  .feature .text p { max-width: 42ch; font-size: 17px; }
-  .feature ul { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-  .feature li { display: flex; gap: 10px; color: #CFCDE3; }
-  .feature li::before { content: ""; flex: none; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--violet); }
+  .say .w { color: #ffffff26; transition: color .35s; }
+  .say .w.on { color: var(--fg); }
 
-  .grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px;
+  /* Стеклянные карточки */
+  .bento {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin-top: 64px;
   }
-  .card {
-    padding: 24px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface);
+  .glass {
+    position: relative; overflow: hidden; isolation: isolate;
+    min-height: 360px; padding: 28px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #15141F, #0D0C15 60%);
+    box-shadow: inset 0 1px 0 #ffffff26, inset 0 0 0 1px #ffffff12;
   }
-  .card p { font-size: 15px; }
+  .glass::before {
+    content: ""; position: absolute; z-index: -1; inset: -20% -20% auto auto; width: 70%; aspect-ratio: 1;
+    background: radial-gradient(closest-side, #5B4BFF40, transparent);
+  }
+  .glass .obj {
+    position: absolute; z-index: -1; top: -6%; right: -8%; width: 62%;
+    mix-blend-mode: screen; pointer-events: none;
+  }
+  .glass p { position: relative; max-width: 34ch; font-size: 17px; line-height: 1.5; color: #8E8BA8; }
+  .glass p b { color: var(--fg); font-weight: 600; }
+  .glass .cal { width: 46%; top: -4%; right: -4%; }
+  .s4 { grid-column: span 4; }
+  .s2 { grid-column: span 2; }
+  .s6 { grid-column: span 6; }
+  .tall { min-height: 460px; }
 
-  /* Звёзды */
-  .star {
-    position: relative; overflow: hidden; text-align: center;
-    padding: 72px 24px; border: 1px solid #7B6CFF40; border-radius: 28px;
-    background: radial-gradient(70% 90% at 50% 0%, #3b2f9e 0%, #121040 55%, #0a0918 100%);
+  /* Кусочки интерфейса, свёрстанные вручную: дразнят, но не показывают экран целиком */
+  .peek { position: relative; flex: 1; margin-bottom: 24px; }
+  .fade-b { -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent); }
+  .lessons { position: absolute; left: 4px; top: 12px; width: min(380px, 100%); display: grid; gap: 10px; transform: rotate(-3deg); transform-origin: left top; }
+  .lesson {
+    padding: 14px 16px 16px; border-radius: 18px; color: #fff;
+    background: linear-gradient(135deg, #7A68FF, #5A47E6);
+    box-shadow: inset 0 1px 0 #ffffff40, 0 20px 40px -10px #3b2fd080;
   }
-  .star h2 { margin-bottom: 12px; }
-  .star p { margin: 0 auto 28px; max-width: 46ch; color: #CFCDE3; }
-  .star mark { background: none; color: var(--violet-hi); }
+  .lesson.now { outline: 2px solid #A99FFF; outline-offset: 3px; }
+  .lesson time { display: inline-block; padding: 2px 10px; margin-bottom: 8px; border-radius: 999px; background: #fff; color: #4b3ad6; font-size: 13px; font-weight: 600; }
+  .lesson strong { display: block; font-size: 18px; letter-spacing: -0.02em; }
+  .lesson small { font-size: 13px; opacity: .75; }
+  .lesson .left { float: right; margin-top: 2px; font-size: 13px; opacity: .9; }
+
+  .big {
+    position: relative; font-size: clamp(64px, 8vw, 96px); font-weight: 700; letter-spacing: -0.06em; line-height: 1;
+    margin-bottom: 16px;
+  }
+  .big sup { font-size: .35em; letter-spacing: -0.02em; color: var(--violet-hi); vertical-align: top; margin-left: 4px; }
+
+  .rows { display: grid; gap: 8px; margin-bottom: 20px; }
+  .row {
+    display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px;
+    border-radius: 14px; background: #ffffff0a; box-shadow: inset 0 0 0 1px #ffffff0f; font-size: 14px;
+  }
+  .row b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ok { color: #3ecf8e; } .mid { color: #f5a623; }
+
+  .nick {
+    align-self: flex-start; margin-bottom: 20px; padding: 10px 14px; border-radius: 14px;
+    background: #ffffff0d; box-shadow: inset 0 1px 0 #ffffff1f; font-size: 14px;
+  }
+  .nick span { display: block; color: var(--muted); font-size: 13px; }
+
+  /* Темы */
+  .themes { flex-direction: row; align-items: stretch; gap: 32px; padding: 0 0 0 40px; height: 440px; min-height: 0; }
+  .themes .txt { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 24px; padding: 40px 0; }
+  .seg { display: inline-flex; align-self: flex-start; padding: 4px; border-radius: 999px; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff14; }
+  .seg button {
+    padding: 8px 16px; border: 0; border-radius: 999px; background: none; color: var(--muted);
+    font: 500 14px/1 Geist, system-ui, sans-serif; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: #ffffff1f; color: var(--fg); box-shadow: inset 0 1px 0 #ffffff26; }
+  .themes .crop { flex: 0 0 min(340px, 40%); position: relative; padding-top: 48px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+  .themes .phone { width: 100%; border-radius: 40px 40px 0 0; padding-bottom: 0; aspect-ratio: auto; height: 100%; }
+  .themes .phone img { height: auto; border-radius: 32px 32px 0 0; transition: opacity .25s; }
+
+  /* Финал */
+  .end { text-align: center; }
+  .end .bear { width: min(260px, 60vw); margin: 0 auto 8px; filter: drop-shadow(0 30px 80px #5B4BFF80); }
+  .end p { margin: 20px auto 32px; max-width: 40ch; color: var(--muted); font-size: 17px; }
+  .end .stores { justify-content: center; }
 
   footer { padding: 40px 0 56px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted); }
   footer .wrap { display: flex; flex-wrap: wrap; gap: 16px 32px; justify-content: space-between; }
@@ -162,15 +221,19 @@
     }
     .hero-body { grid-template-columns: 1fr; padding-top: 32px; padding-bottom: 64px; }
     .hero .phone { transform: none; }
-    .feature { grid-template-columns: 1fr; gap: 32px; padding: 40px 0; }
-    .feature.flip .shot { order: 0; }
-    .grid { grid-template-columns: 1fr; }
-    section { padding: 64px 0; }
+    section { padding: 80px 0; }
+    .bento { grid-template-columns: 1fr; margin-top: 40px; }
+    .s4, .s2, .s6 { grid-column: auto; }
+    .glass { min-height: 340px; padding: 24px; }
+    .tall { min-height: 440px; }
+    .themes { flex-direction: column; padding: 24px 24px 0; height: auto; }
+    .themes .txt { padding: 0; }
+    .themes .crop { flex: none; width: 100%; max-width: 300px; height: 320px; margin: 0 auto; padding-top: 0; }
     .btn { flex: 1 1 auto; justify-content: center; }
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .btn, .gh { transition: none; }
+    .btn, .gh, .say .w { transition: none; }
   }
 </style>
 </head>
@@ -207,76 +270,81 @@
 </header>
 
 <main>
+  <section>
+    <div class="wrap">
+      <p class="say" id="say">Пара через пять минут, кабинет не помнишь, а расписание где-то в чате группы. МойКЦТ открывается сразу на сегодняшнем дне.</p>
+    </div>
+  </section>
+
   <section id="features">
     <div class="wrap">
-      <div class="feature">
-        <div class="text">
-          <div class="eyebrow">Расписание</div>
-          <h2>Вся неделя на одном экране</h2>
-          <p class="muted">Пары лежат на временной сетке: высота карточки равна длительности, идущая пара подсвечена и показывает, сколько осталось.</p>
-          <ul>
-            <li>Неделя, три дня или один - на выбор</li>
-            <li>Группа, подгруппа, профиль и английская группа</li>
-            <li>Тема, преподаватель и кабинет по нажатию на пару</li>
-          </ul>
-        </div>
-        <div class="shot"><div class="phone"><img src="site/15-schedule-week-light.webp" alt="Расписание на неделю в светлой теме" loading="lazy" width="330" height="717"></div></div>
-      </div>
+      <h2>Вся учёба в одном месте. <span>Расписание, пропуски, оценки.</span></h2>
 
-      <div class="feature flip">
-        <div class="text">
-          <div class="eyebrow">Посещаемость</div>
-          <h2>Видно каждый пропуск</h2>
-          <p class="muted">Календарь месяца с отметками по дням, кольцо с процентом и разбивка: был, уважительная, неуважительная.</p>
-          <ul>
-            <li>Список пар за выбранный день</li>
-            <li>Стрик - недели без пропусков прямо в шапке</li>
-          </ul>
+      <div class="bento">
+        <div class="glass s4 tall">
+          <img class="obj cal" src="site/obj-calendar.webp" alt="">
+          <div class="peek fade-b" aria-hidden="true">
+            <div class="lessons">
+              <div class="lesson now"><time>9:00 - 10:30</time><span class="left">ещё 25 мин</span><strong>Математика</strong><small>Пределы и непрерывность - каб. 301</small></div>
+              <div class="lesson"><time>10:40 - 12:10</time><strong>Основы алгоритмизации</strong><small>Сортировки - каб. 215</small></div>
+              <div class="lesson"><time>12:40 - 14:10</time><strong>Базы данных</strong><small>Нормальные формы</small></div>
+            </div>
+          </div>
+          <p><b>Расписание на временной сетке.</b> Высота пары равна её длительности, идущая подсвечена и считает, сколько осталось. Неделя, три дня или один.</p>
         </div>
-        <div class="shot"><div class="phone"><img src="site/24-attendance-dark.webp" alt="Экран посещаемости с календарём" loading="lazy" width="330" height="717"></div></div>
-      </div>
 
-      <div class="feature">
-        <div class="text">
-          <div class="eyebrow">Успеваемость</div>
-          <h2>Оценки по каждой работе</h2>
-          <p class="muted">Средний балл по предмету и все оценки за период: практические, самостоятельные, рефераты.</p>
+        <div class="glass s2 tall">
+          <img class="obj" src="site/obj-ring.webp" alt="">
+          <div class="big">92<sup>%</sup></div>
+          <p><b>Посещаемость.</b> Календарь месяца с отметками по дням: был, уважительная, неуважительная.</p>
         </div>
-        <div class="shot"><div class="phone"><img src="site/11-scores-sheet-light.webp" alt="Оценки по предмету" loading="lazy" width="330" height="717"></div></div>
-      </div>
 
-      <div class="feature flip">
-        <div class="text">
-          <div class="eyebrow">Рейтинг</div>
-          <h2>Своё место на курсе</h2>
-          <p class="muted">Рейтинг студентов курса по стрику посещаемости. Имена скрыты за случайными никами.</p>
+        <div class="glass s2">
+          <img class="obj" src="site/obj-flame.webp" alt="">
+          <div class="big">5<sup>дней</sup></div>
+          <p><b>Стрик.</b> Сколько дней подряд без пропусков. Огонёк живёт в шапке расписания.</p>
         </div>
-        <div class="shot"><div class="phone"><img src="site/07-leaderboard-light.webp" alt="Рейтинг студентов курса" loading="lazy" width="330" height="717"></div></div>
+
+        <div class="glass s2">
+          <img class="obj" src="site/obj-cap.webp" alt="">
+          <div class="rows" aria-hidden="true">
+            <div class="row">Вёрстка макета <b class="ok">5 / 5</b></div>
+            <div class="row">Формы и валидация <b class="mid">3 / 5</b></div>
+          </div>
+          <p><b>Оценки по каждой работе.</b> Практические, самостоятельные и средний балл по предмету.</p>
+        </div>
+
+        <div class="glass s2">
+          <img class="obj" src="site/obj-trophy.webp" alt="">
+          <div class="nick"><span>14 место из 214</span>Асинхронный Планировщик 0x5D91</div>
+          <p><b>Рейтинг курса.</b> Вместо имён случайные псевдонимы, так что меряться можно спокойно.</p>
+        </div>
+
+        <div class="glass s6 themes">
+          <div class="txt">
+            <p><b>Светлая, тёмная или как в системе.</b> Свой шрифт, свои иконки предметов, без случайных цветов от обоев.</p>
+            <div class="seg" role="group" aria-label="Тема">
+              <button type="button" data-src="site/15-schedule-week-light.webp" aria-pressed="true">Светлая</button>
+              <button type="button" data-src="site/26-schedule-week-black.webp" aria-pressed="false">Тёмная</button>
+            </div>
+          </div>
+          <div class="crop"><div class="phone"><img id="themeShot" src="site/15-schedule-week-light.webp" alt="Экран расписания" loading="lazy" width="330" height="717"></div></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section>
+  <section class="end">
     <div class="wrap">
-      <div class="eyebrow">Ещё</div>
-      <h2>Мелочи, которые важны</h2>
-      <div class="grid">
-        <div class="card"><h3>Три темы</h3><p class="muted">Светлая, тёмная и системная. Свой шрифт и свои иконки предметов.</p></div>
-        <div class="card"><h3>Без входа</h3><p class="muted">Расписание открывается сразу. Вход нужен только для посещаемости и оценок.</p></div>
-        <div class="card"><h3>Виджет</h3><p class="muted">Текущая и следующие пары на домашнем экране, работает и без сети.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <div class="star">
-        <h2><mark>50 звёзд</mark> ускорят выход нового МойКЦТ</h2>
-        <p>Код открыт. Поставь звезду репозиторию на GitHub - так мы поймём, что редизайн ждут.</p>
+      <img class="bear" src="site/bear.webp" alt="" loading="lazy">
+      <h2>50 звёзд ускорят выход. <span>Новый МойКЦТ почти готов.</span></h2>
+      <p>Код открыт. Звезда на GitHub - самый простой способ сказать, что редизайн ждут.</p>
+      <div class="stores">
         <a class="btn btn-primary" href="https://github.com/airsss993/mykct-android-app">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>
           Поставить звезду
         </a>
+        <a class="btn btn-ghost" href="https://www.rustore.ru/catalog/app/ru.dzhaparidze.collegeapp">Скачать в RuStore</a>
       </div>
     </div>
   </section>
@@ -292,5 +360,27 @@
   </div>
 </footer>
 
+<script>
+  // Фраза загорается по словам, пока блок проходит через экран
+  const say = document.getElementById('say');
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    say.innerHTML = say.textContent.split(' ').map(w => '<span class="w">' + w + '</span>').join(' ');
+    const words = say.querySelectorAll('.w');
+    const tick = () => {
+      const r = say.getBoundingClientRect();
+      const t = Math.min(1, Math.max(0, (innerHeight * 0.85 - r.top) / (r.height + innerHeight * 0.35)));
+      const n = Math.round(t * words.length);
+      words.forEach((w, i) => w.classList.toggle('on', i < n));
+    };
+    addEventListener('scroll', tick, { passive: true });
+    tick();
+  }
+
+  const shot = document.getElementById('themeShot');
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    shot.src = b.dataset.src;
+  }));
+</script>
 </body>
 </html>

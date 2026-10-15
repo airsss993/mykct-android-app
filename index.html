@@ -193,7 +193,15 @@
   }
   .glass p { position: relative; max-width: 34ch; font-size: 17px; line-height: 1.5; color: #8E8BA8; }
   .glass p b { color: var(--fg); font-weight: 600; }
-  .glass .ring { width: 54%; top: -4%; right: -4%; }
+  /* Кольцо заполнено на --p: снизу та же картинка приглушённой дорожкой, сверху она же под конической маской.
+     Центр маски сдвинут под центр тора на картинке (621,633 из 1254). */
+  .glass .ring { width: 48%; top: 5%; right: 5%; display: grid; }
+  .ring img { grid-area: 1 / 1; width: 100%; opacity: .16; }
+  .ring .fill {
+    opacity: 1;
+    --m: conic-gradient(from 0deg at 49.5% 50.5%, #000 calc(var(--p) - .6%), transparent var(--p));
+    -webkit-mask-image: var(--m); mask-image: var(--m);
+  }
   .glass .cal { width: 46%; top: -4%; right: -4%; }
   .s4 { grid-column: span 4; }
   .s2 { grid-column: span 2; }
@@ -341,7 +349,7 @@
         </div>
 
         <div class="glass s2 tall">
-          <img class="obj ring" src="site/obj-ring.webp" alt="">
+          <div class="obj ring" style="--p: 92%"><img src="site/obj-ring.webp" alt=""><img class="fill" src="site/obj-ring.webp" alt=""></div>
           <div class="big">92<sup>%</sup></div>
           <p><b>Посещаемость.</b> Календарь месяца с отметками по дням: был, уважительная, неуважительная.</p>
         </div>

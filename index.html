@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>МойКЦТ - расписание, посещаемость и оценки КЦТ</title>
+<meta name="description" content="Расписание, посещаемость и оценки Колледжа Цифровых Технологий в одном приложении для Android.">
+<meta property="og:title" content="МойКЦТ">
+<meta property="og:description" content="Расписание, посещаемость и оценки Колледжа Цифровых Технологий в одном приложении.">
+<meta property="og:image" content="https://airsss993.github.io/mykct-android-app/banner.png">
+<meta name="theme-color" content="#07060C">
+<link rel="icon" href="site/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07060C;
+    --fg: #F2F1FA;
+    --muted: #9C9AB3;
+    --border: #ffffff14;
+    --surface: #ffffff08;
+    --violet: #7B6CFF;
+    --violet-hi: #A99FFF;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 Geist, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+  img { display: block; max-width: 100%; }
+  .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* Шапка */
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    background:
+      linear-gradient(180deg, transparent 70%, var(--bg)),
+      url(site/hero.webp) 70% 40% / cover no-repeat,
+      radial-gradient(60% 60% at 75% 35%, #2a2470 0%, #0B1240 45%, var(--bg) 100%);
+  }
+  nav { display: flex; align-items: center; justify-content: space-between; padding-top: 24px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; text-decoration: none; }
+  .brand img { width: 32px; height: 32px; border-radius: 8px; }
+  .gh {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px;
+    background: #ffffff0d; backdrop-filter: blur(12px);
+    font-size: 14px; text-decoration: none; transition: background .2s;
+  }
+  .gh:hover { background: #ffffff1f; }
+  .gh svg { width: 16px; height: 16px; }
+
+  .hero-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    align-items: center;
+    gap: 48px;
+    padding-top: 48px;
+    padding-bottom: 80px;
+  }
+  .badge {
+    display: inline-block; padding: 4px 12px; margin-bottom: 20px;
+    border: 1px solid #7B6CFF55; border-radius: 999px; background: #7B6CFF1a;
+    color: var(--violet-hi); font-size: 13px; font-weight: 500;
+  }
+  h1 {
+    margin: 0 0 20px;
+    font-size: clamp(48px, 8vw, 88px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    font-weight: 700;
+  }
+  .lead { margin: 0 0 32px; max-width: 30ch; font-size: clamp(18px, 2vw, 21px); color: #CFCDE3; }
+  .stores { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 22px; border-radius: 14px;
+    font-weight: 600; text-decoration: none; font-size: 16px;
+    transition: transform .15s, background .2s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+  .btn-primary { background: var(--fg); color: #0B0A14; }
+  .btn-primary:hover { background: #fff; }
+  .btn-ghost { border: 1px solid #ffffff2e; background: #ffffff0d; backdrop-filter: blur(12px); }
+  .btn-ghost:hover { background: #ffffff1f; }
+
+  /* Телефон: скриншот уже со статус-строкой, рамку рисуем сами */
+  .phone {
+    position: relative;
+    width: min(320px, 72vw);
+    aspect-ratio: 1320 / 2868;
+    border-radius: 48px;
+    padding: 9px;
+    background: linear-gradient(145deg, #3a3a44, #121216 40%, #2a2a32);
+    box-shadow: 0 0 0 1px #ffffff1f inset, 0 40px 120px -20px #5B4BFF66, 0 30px 60px #000a;
+  }
+  .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 40px; }
+  .hero .phone { justify-self: center; transform: rotate(4deg); }
+
+  /* Функции */
+  section { padding: 96px 0; }
+  .eyebrow { color: var(--violet-hi); font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  h2 { margin: 0 0 16px; font-size: clamp(32px, 4.5vw, 52px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 700; }
+  h3 { margin: 0 0 8px; font-size: 20px; letter-spacing: -0.02em; font-weight: 600; }
+  p { margin: 0; }
+  .muted { color: var(--muted); }
+
+  .feature {
+    display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 64px;
+    padding: 56px 0;
+  }
+  .feature + .feature { border-top: 1px solid var(--border); }
+  .feature.flip .shot { order: -1; }
+  .feature .shot { display: flex; justify-content: center; }
+  .feature .phone { width: min(280px, 64vw); }
+  .feature .text p { max-width: 42ch; font-size: 17px; }
+  .feature ul { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .feature li { display: flex; gap: 10px; color: #CFCDE3; }
+  .feature li::before { content: ""; flex: none; width: 6px; height: 6px; margin-top: 10px; border-radius: 50%; background: var(--violet); }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px;
+  }
+  .card {
+    padding: 24px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface);
+  }
+  .card p { font-size: 15px; }
+
+  /* Звёзды */
+  .star {
+    position: relative; overflow: hidden; text-align: center;
+    padding: 72px 24px; border: 1px solid #7B6CFF40; border-radius: 28px;
+    background: radial-gradient(70% 90% at 50% 0%, #3b2f9e 0%, #121040 55%, #0a0918 100%);
+  }
+  .star h2 { margin-bottom: 12px; }
+  .star p { margin: 0 auto 28px; max-width: 46ch; color: #CFCDE3; }
+  .star mark { background: none; color: var(--violet-hi); }
+
+  footer { padding: 40px 0 56px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 16px 32px; justify-content: space-between; }
+  footer nav { padding: 0; gap: 24px; }
+
+  @media (max-width: 860px) {
+    .wrap { padding: 0 16px; }
+    .hero {
+      background:
+        linear-gradient(180deg, #07060Ccc 0, #07060C80 260px, transparent 420px, var(--bg) 640px),
+        url(site/hero.webp) 62% 0 / auto 640px no-repeat,
+        var(--bg);
+    }
+    .hero-body { grid-template-columns: 1fr; padding-top: 32px; padding-bottom: 64px; }
+    .hero .phone { transform: none; }
+    .feature { grid-template-columns: 1fr; gap: 32px; padding: 40px 0; }
+    .feature.flip .shot { order: 0; }
+    .grid { grid-template-columns: 1fr; }
+    section { padding: 64px 0; }
+    .btn { flex: 1 1 auto; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .btn, .gh { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <nav>
+      <a class="brand" href="./"><img src="site/icon.png" alt="">МойКЦТ</a>
+      <a class="gh" href="https://github.com/airsss993/mykct-android-app">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </div>
+  <div class="wrap hero-body">
+    <div>
+      <span class="badge">Версия 2.0 - новый дизайн</span>
+      <h1>МойКЦТ</h1>
+      <p class="lead">Расписание, посещаемость и оценки Колледжа Цифровых Технологий в одном приложении.</p>
+      <div class="stores">
+        <a class="btn btn-primary" href="https://www.rustore.ru/catalog/app/ru.dzhaparidze.collegeapp">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3a1 1 0 011 1v9.6l3.3-3.3a1 1 0 111.4 1.4l-5 5a1 1 0 01-1.4 0l-5-5a1 1 0 111.4-1.4l3.3 3.3V4a1 1 0 011-1zM5 19h14a1 1 0 110 2H5a1 1 0 110-2z"/></svg>
+          Скачать в RuStore
+        </a>
+        <a class="btn btn-ghost" href="https://play.google.com/store/apps/details?id=ru.dzhaparidze.collegeapp">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.6 2.3c-.3.2-.5.6-.5 1.1v17.2c0 .5.2.9.5 1.1l9.6-9.7L4.6 2.3zm10.7 8.6l2.8-2.8L6.6 1.6l8.7 9.3zm0 2.2l-8.7 9.3 11.5-6.5-2.8-2.8zm4.1-3.9l-3.2-1.8-3.1 3.1 3.1 3.1 3.2-1.8c.9-.5.9-2.1 0-2.6z"/></svg>
+          Google Play
+        </a>
+      </div>
+    </div>
+    <div class="phone"><img src="site/26-schedule-week-black.webp" alt="Экран расписания в тёмной теме" width="330" height="717"></div>
+  </div>
+</header>
+
+<main>
+  <section id="features">
+    <div class="wrap">
+      <div class="feature">
+        <div class="text">
+          <div class="eyebrow">Расписание</div>
+          <h2>Вся неделя на одном экране</h2>
+          <p class="muted">Пары лежат на временной сетке: высота карточки равна длительности, идущая пара подсвечена и показывает, сколько осталось.</p>
+          <ul>
+            <li>Неделя, три дня или один - на выбор</li>
+            <li>Группа, подгруппа, профиль и английская группа</li>
+            <li>Тема, преподаватель и кабинет по нажатию на пару</li>
+          </ul>
+        </div>
+        <div class="shot"><div class="phone"><img src="site/15-schedule-week-light.webp" alt="Расписание на неделю в светлой теме" loading="lazy" width="330" height="717"></div></div>
+      </div>
+
+      <div class="feature flip">
+        <div class="text">
+          <div class="eyebrow">Посещаемость</div>
+          <h2>Видно каждый пропуск</h2>
+          <p class="muted">Календарь месяца с отметками по дням, кольцо с процентом и разбивка: был, уважительная, неуважительная.</p>
+          <ul>
+            <li>Список пар за выбранный день</li>
+            <li>Стрик - недели без пропусков прямо в шапке</li>
+          </ul>
+        </div>
+        <div class="shot"><div class="phone"><img src="site/24-attendance-dark.webp" alt="Экран посещаемости с календарём" loading="lazy" width="330" height="717"></div></div>
+      </div>
+
+      <div class="feature">
+        <div class="text">
+          <div class="eyebrow">Успеваемость</div>
+          <h2>Оценки по каждой работе</h2>
+          <p class="muted">Средний балл по предмету и все оценки за период: практические, самостоятельные, рефераты.</p>
+        </div>
+        <div class="shot"><div class="phone"><img src="site/11-scores-sheet-light.webp" alt="Оценки по предмету" loading="lazy" width="330" height="717"></div></div>
+      </div>
+
+      <div class="feature flip">
+        <div class="text">
+          <div class="eyebrow">Рейтинг</div>
+          <h2>Своё место на курсе</h2>
+          <p class="muted">Рейтинг студентов курса по стрику посещаемости. Имена скрыты за случайными никами.</p>
+        </div>
+        <div class="shot"><div class="phone"><img src="site/07-leaderboard-light.webp" alt="Рейтинг студентов курса" loading="lazy" width="330" height="717"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="eyebrow">Ещё</div>
+      <h2>Мелочи, которые важны</h2>
+      <div class="grid">
+        <div class="card"><h3>Три темы</h3><p class="muted">Светлая, тёмная и системная. Свой шрифт и свои иконки предметов.</p></div>
+        <div class="card"><h3>Без входа</h3><p class="muted">Расписание открывается сразу. Вход нужен только для посещаемости и оценок.</p></div>
+        <div class="card"><h3>Виджет</h3><p class="muted">Текущая и следующие пары на домашнем экране, работает и без сети.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="star">
+        <h2><mark>50 звёзд</mark> ускорят выход нового МойКЦТ</h2>
+        <p>Код открыт. Поставь звезду репозиторию на GitHub - так мы поймём, что редизайн ждут.</p>
+        <a class="btn btn-primary" href="https://github.com/airsss993/mykct-android-app">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>
+          Поставить звезду
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Иван Коломацкий, Артём Джапаридзе. Сделано для студентов КЦТ.</span>
+    <nav>
+      <a href="privacy.html">Конфиденциальность</a>
+      <a href="https://github.com/airsss993/mykct-android-app">Исходный код</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>

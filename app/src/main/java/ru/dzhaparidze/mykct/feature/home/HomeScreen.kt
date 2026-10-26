@@ -10,7 +10,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,7 +31,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -55,6 +53,7 @@ import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.ui.Fade
 import ru.dzhaparidze.mykct.ui.HeroSummary
+import ru.dzhaparidze.mykct.ui.LiquidGlassPanda
 import ru.dzhaparidze.mykct.ui.Phase
 import ru.dzhaparidze.mykct.ui.Swirl
 import ru.dzhaparidze.mykct.ui.phaseOf
@@ -266,12 +265,8 @@ private fun SignInInvite(onLogin: () -> Unit) {
 @Composable
 private fun PandaArt() {
     val light = isLightTheme
-    Image(
-        painter = painterResource(R.drawable.login_liquid_glass),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        alignment = Alignment.TopCenter,
-        modifier = Modifier
+    LiquidGlassPanda(
+        Modifier
             .size(240.dp)
             .then(
                 if (light) {

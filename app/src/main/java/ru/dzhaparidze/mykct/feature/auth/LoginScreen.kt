@@ -1,6 +1,5 @@
 package ru.dzhaparidze.mykct.feature.auth
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
@@ -26,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -38,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.R
 import ru.dzhaparidze.mykct.data.auth.AuthService
+import ru.dzhaparidze.mykct.ui.LiquidGlassPanda
 import ru.dzhaparidze.mykct.ui.ShinyPill
 import ru.dzhaparidze.mykct.ui.theme.DarkBackground
 import ru.dzhaparidze.mykct.ui.theme.Danger
@@ -64,13 +63,7 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
     var error by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
-        Image(
-            painter = painterResource(R.drawable.login_liquid_glass),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.TopCenter,
-            modifier = Modifier.fillMaxSize(),
-        )
+        LiquidGlassPanda(Modifier.fillMaxSize())
         Box(
             modifier = Modifier.matchParentSize().background(
                 Brush.verticalGradient(

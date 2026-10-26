@@ -45,7 +45,7 @@ import ru.dzhaparidze.mykct.data.api.Attendance
 import ru.dzhaparidze.mykct.data.api.AttendanceStats
 import ru.dzhaparidze.mykct.data.api.AttendanceRecord
 import ru.dzhaparidze.mykct.data.api.Subject
-import ru.dzhaparidze.mykct.feature.auth.PandaBackdrop
+import ru.dzhaparidze.mykct.feature.auth.LoginScreen
 import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.ui.Fade
@@ -61,7 +61,6 @@ import ru.dzhaparidze.mykct.ui.hairline
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.compositeOver
 import ru.dzhaparidze.mykct.ui.theme.GreenLime
-import ru.dzhaparidze.mykct.ui.theme.AppTheme
 import ru.dzhaparidze.mykct.ui.theme.statusDanger
 import ru.dzhaparidze.mykct.ui.theme.statusGreen
 import ru.dzhaparidze.mykct.ui.theme.statusWarning
@@ -130,7 +129,7 @@ private fun Attendance.color() = when (this) {
 
 /**
  * "Главная": посещаемость и успеваемость. Всё это бэкенд отдаёт только с токеном,
- * поэтому без входа экран показывает приглашение войти, а не пустые карточки.
+ * поэтому без входа во вкладке стоит обычная форма входа, а не пустые карточки.
  *
  * Верстка повторяет расписание: тот же фон со светом, тот же `ScreenTitle` с огоньком
  * стрика и те же карточки. Посещаемость показывает календарь месяца, а не кольцо с
@@ -138,24 +137,25 @@ private fun Attendance.color() = when (this) {
  */
 @Composable
 fun HomeScreen(
-    onLogin: () -> Unit,
     account: @Composable () -> Unit,
     viewModel: HomeViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var streakOpen by rememberSaveable { mutableStateOf(false) }
 
-    // Без входа "Главная" - тот же экран, что и вход: панда на весь экран и тёмная
-    // схема в любой теме, иначе шапка темнела бы на чёрной картинке.
-    val invite = !state.isBootstrapping && !state.isSessionPending && !state.isAuthenticated
-    DarkWhen(invite) {
     val accent = MaterialTheme.colorScheme.primary
 
+    // Первый кадр - индикатор, потом либо форма входа, либо данные. Форма закрывает
+    // всю вкладку, как отдельный экран входа; после входа `HomeViewModel` сам узнаёт
+    // о сессии из `AuthService`, и вкладка переключается на данные.
+    val signedOut = !state.isBootstrapping && !state.isSessionPending && !state.isAuthenticated
+    Fade(target = signedOut, modifier = Modifier.fillMaxSize()) { showLogin ->
+    if (showLogin) {
+        LoginScreen(onBack = null, onSuccess = {}, bottomInset = navBarInset())
+        return@Fade
+    }
     // Фон, свет и сетка - в `AppShell`, общие на все экраны.
     Box(modifier = Modifier.fillMaxSize()) {
-        Fade(target = invite, modifier = Modifier.fillMaxSize()) { shown ->
-            if (shown) PandaBackdrop()
-        }
         // `isRefreshing` только поверх уже показанных данных: на первой загрузке
         // крутится свой индикатор в теле экрана, и два спиннера сразу читались бы
         // как подвисание.
@@ -165,14 +165,10 @@ fun HomeScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize(),
         ) {
-        // Высота не меньше экрана, чтобы приглашение войти встало над навбаром;
-        // данные длиннее экрана скроллятся как раньше.
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .heightIn(min = maxHeight)
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp),
         ) {
@@ -188,10 +184,7 @@ fun HomeScreen(
             // Первый кадр экрана - индикатор поверх пустоты; он гаснет, и на его месте
             // проявляется либо приглашение войти, либо данные. Мгновенная подмена
             // читалась как мигание: автологин отвечает за доли секунды.
-            Fade(
-                target = Triple(state.isBootstrapping, state.isSessionPending, state.isAuthenticated),
-                modifier = if (state.isAuthenticated) Modifier else Modifier.weight(1f),
-            ) {
+            Fade(target = Triple(state.isBootstrapping, state.isSessionPending, state.isAuthenticated)) {
                 (loading, pending, authorized) ->
                 when {
                     loading -> Box(
@@ -201,14 +194,14 @@ fun HomeScreen(
 
                     pending -> ErrorBlock("Нет связи с сервером", onRetry = viewModel::reconnect)
 
-                    !authorized -> SignInInvite(onLogin = onLogin)
+                    // Форму входа рисует внешний `Fade`; здесь пусто, пока он сменяет кадр.
+                    !authorized -> Unit
 
                     else -> Authorized(state = state, viewModel = viewModel)
                 }
             }
 
             Spacer(Modifier.height(navBarInset()))
-        }
         }
         }
     }
@@ -226,33 +219,6 @@ fun HomeScreen(
             error = state.scoresError,
             onDismiss = viewModel::closeSubject,
         )
-    }
-}
-
-/**
- * Без токена бэкенд не отдаёт ничего из этого экрана - честно объясняем и зовём войти.
- * Выглядит как экран входа: панда на фоне всего экрана (её рисует [HomeScreen]), текст
- * и кнопка внизу, слева.
- */
-@Composable
-private fun SignInInvite(onLogin: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(bottom = 24.dp),
-        verticalArrangement = Arrangement.Bottom,
-    ) {
-        Text(
-            text = "Посещаемость и баллы",
-            style = MaterialTheme.typography.headlineLarge,
-            color = Color.White,
-        )
-        Text(
-            text = "Стрик посещений, отметки по парам и баллы по предметам колледж отдаёт " +
-                "только вошедшим. Нужен корпоративный логин и пароль.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.6f),
-            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
-        )
-        ShinyPill(text = "Войти", onClick = onLogin)
     }
 }
 
@@ -672,10 +638,4 @@ internal fun ErrorBlock(text: String, retry: String = "Повторить", onRe
             }
         }
     }
-}
-
-/** [content] в тёмной схеме, если [dark]; иначе в теме приложения как есть. */
-@Composable
-private fun DarkWhen(dark: Boolean, content: @Composable () -> Unit) {
-    if (dark) AppTheme(darkTheme = true, content = content) else content()
 }

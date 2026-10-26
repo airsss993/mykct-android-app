@@ -10,6 +10,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,6 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -60,6 +66,7 @@ import ru.dzhaparidze.mykct.ui.hairline
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.compositeOver
 import ru.dzhaparidze.mykct.ui.theme.GreenLime
+import ru.dzhaparidze.mykct.ui.theme.isLightTheme
 import ru.dzhaparidze.mykct.ui.theme.statusDanger
 import ru.dzhaparidze.mykct.ui.theme.statusGreen
 import ru.dzhaparidze.mykct.ui.theme.statusWarning
@@ -156,10 +163,14 @@ fun HomeScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize(),
         ) {
+        // Высота не меньше экрана, чтобы приглашение войти встало по центру между
+        // шапкой и навбаром; данные длиннее экрана скроллятся как раньше.
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp),
         ) {
@@ -175,7 +186,10 @@ fun HomeScreen(
             // Первый кадр экрана - индикатор поверх пустоты; он гаснет, и на его месте
             // проявляется либо приглашение войти, либо данные. Мгновенная подмена
             // читалась как мигание: автологин отвечает за доли секунды.
-            Fade(target = Triple(state.isBootstrapping, state.isSessionPending, state.isAuthenticated)) {
+            Fade(
+                target = Triple(state.isBootstrapping, state.isSessionPending, state.isAuthenticated),
+                modifier = if (state.isAuthenticated) Modifier else Modifier.weight(1f),
+            ) {
                 (loading, pending, authorized) ->
                 when {
                     loading -> Box(
@@ -192,6 +206,7 @@ fun HomeScreen(
             }
 
             Spacer(Modifier.height(navBarInset()))
+        }
         }
         }
     }
@@ -211,25 +226,74 @@ fun HomeScreen(
     }
 }
 
-/** Без токена бэкенд не отдаёт ничего из этого экрана - честно объясняем и зовём войти. */
+/**
+ * Без токена бэкенд не отдаёт ничего из этого экрана - честно объясняем и зовём войти.
+ * Стеклянная панда та же, что на экране входа: приглашение и форма выглядят одним сюжетом.
+ */
 @Composable
 private fun SignInInvite(onLogin: () -> Unit) {
-    Column(modifier = Modifier.padding(top = 40.dp)) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(vertical = 24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        PandaArt()
         Text(
             text = "Посещаемость и баллы",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 20.dp),
         )
         Text(
             text = "Стрик посещений, отметки по парам и баллы по предметам колледж отдаёт " +
                 "только вошедшим. Нужен корпоративный логин и пароль.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp, bottom = 28.dp),
         )
         ShinyPill(text = "Войти", onClick = onLogin)
     }
+}
+
+/**
+ * Верхний квадрат кадра экрана входа, где сидит панда. Фон у картинки чёрный: в тёмной
+ * теме края растворяются в фоне экрана, в светлой чёрное пятно смотрелось бы грязью,
+ * поэтому там кадр стоит скруглённой плиткой.
+ */
+@Composable
+private fun PandaArt() {
+    val light = isLightTheme
+    Image(
+        painter = painterResource(R.drawable.login_liquid_glass),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        alignment = Alignment.TopCenter,
+        modifier = Modifier
+            .size(240.dp)
+            .then(
+                if (light) {
+                    Modifier.clip(RoundedCornerShape(32.dp))
+                } else {
+                    // DstIn оставляет картинку только под маской, и только в своём слое.
+                    Modifier
+                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(
+                                brush = Brush.radialGradient(
+                                    0.6f to Color.Black,
+                                    1f to Color.Transparent,
+                                    radius = size.minDimension / 2,
+                                ),
+                                blendMode = BlendMode.DstIn,
+                            )
+                        }
+                },
+            ),
+    )
 }
 
 @Composable

@@ -1,5 +1,8 @@
 package ru.dzhaparidze.mykct.feature.auth
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,9 +23,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -59,121 +63,145 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBackground)
-            .drawBehind { drawGlowArc() }
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .padding(horizontal = 24.dp),
-    ) {
+    Box(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
+        Image(
+            painter = painterResource(R.drawable.login_liquid_glass),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.TopCenter,
+            modifier = Modifier.fillMaxSize(),
+        )
         Box(
+            modifier = Modifier.matchParentSize().background(
+                Brush.verticalGradient(
+                    0.40f to Color.Transparent,
+                    0.65f to DarkBackground.copy(alpha = 0.94f),
+                    1f to DarkBackground,
+                ),
+            ),
+        )
+        BoxWithConstraints(
             modifier = Modifier
-                .padding(top = 8.dp)
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.08f))
-                .clickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding(),
         ) {
-            Icon(
-                painterResource(R.drawable.ic_chevron_left),
-                contentDescription = "Назад",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp),
-            )
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        Text(
-            text = "Вход",
-            style = MaterialTheme.typography.headlineLarge,
-            color = Color.White,
-        )
-        Text(
-            text = "Введи корпоративный логин и пароль",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.6f),
-            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
-        )
-
-        Field(
-            value = login,
-            onValueChange = { login = it; error = null },
-            label = "Логин",
-            keyboardType = KeyboardType.Text,
-            imeAction = ImeAction.Next,
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        Field(
-            value = password,
-            onValueChange = { password = it; error = null },
-            label = "Пароль",
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done,
-            visualTransformation = if (passwordShown) VisualTransformation.None else PasswordVisualTransformation(),
-            trailing = {
-                IconButton(onClick = { passwordShown = !passwordShown }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = maxHeight)
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.08f))
+                        .clickable(onClick = onBack),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Icon(
-                        painter = painterResource(if (passwordShown) R.drawable.ic_eye_off else R.drawable.ic_eye),
-                        contentDescription = if (passwordShown) "Скрыть пароль" else "Показать пароль",
-                        tint = Color.White.copy(alpha = 0.6f),
-                        modifier = Modifier.size(22.dp),
+                        painterResource(R.drawable.ic_chevron_left),
+                        contentDescription = "Назад",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
                     )
                 }
-            },
-        )
 
-        ShinyPill(
-            text = if (busy) "Входим..." else "Войти",
-            onClick = {
-                busy = true
-                error = null
-                scope.launch {
-                    try {
-                        auth.signIn(login.trim(), password)
-                        onSuccess()
-                    } catch (e: Exception) {
-                        error = e.message ?: "Не удалось войти"
-                    } finally {
-                        busy = false
+                Column(modifier = Modifier.padding(top = 24.dp)) {
+                    Text(
+                        text = "Вход",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = Color.White,
+                    )
+                    Text(
+                        text = "Введи корпоративный логин и пароль",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
+                    )
+
+                    Field(
+                        value = login,
+                        onValueChange = { login = it; error = null },
+                        label = "Логин",
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next,
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Field(
+                        value = password,
+                        onValueChange = { password = it; error = null },
+                        label = "Пароль",
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
+                        visualTransformation = if (passwordShown) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailing = {
+                            IconButton(onClick = { passwordShown = !passwordShown }) {
+                                Icon(
+                                    painter = painterResource(if (passwordShown) R.drawable.ic_eye_off else R.drawable.ic_eye),
+                                    contentDescription = if (passwordShown) "Скрыть пароль" else "Показать пароль",
+                                    tint = Color.White.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            }
+                        },
+                    )
+
+                    ShinyPill(
+                        text = if (busy) "Входим..." else "Войти",
+                        onClick = {
+                            busy = true
+                            error = null
+                            scope.launch {
+                                try {
+                                    auth.signIn(login.trim(), password)
+                                    onSuccess()
+                                } catch (e: Exception) {
+                                    error = e.message ?: "Не удалось войти"
+                                } finally {
+                                    busy = false
+                                }
+                            }
+                        },
+                        enabled = login.isNotBlank() && password.isNotBlank() && !busy,
+                        modifier = Modifier.padding(top = 24.dp),
+                    )
+
+                    Text(
+                        text = error ?: "Вход нужен для посещаемости и баллов. Расписание работает и без него.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (error != null) Danger else Color.White.copy(alpha = 0.4f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                    )
+
+                    if (onSkip != null) {
+                        Text(
+                            text = "Продолжить без входа",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .padding(top = 8.dp, bottom = 24.dp)
+                                .fillMaxWidth()
+                                .clip(CircleShape)
+                                .clickable(onClick = onSkip)
+                                .padding(vertical = 12.dp),
+                        )
+                    } else {
+                        Spacer(Modifier.height(24.dp))
                     }
                 }
-            },
-            enabled = login.isNotBlank() && password.isNotBlank() && !busy,
-            modifier = Modifier.padding(top = 24.dp),
-        )
-
-        Text(
-            text = error ?: "Вход нужен для посещаемости и баллов. Расписание работает и без него.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (error != null) Danger else Color.White.copy(alpha = 0.4f),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-        )
-
-        if (onSkip != null) {
-            Text(
-                text = "Продолжить без входа",
-                style = MaterialTheme.typography.titleSmall,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 24.dp)
-                    .fillMaxWidth()
-                    .clip(CircleShape)
-                    .clickable(onClick = onSkip)
-                    .padding(vertical = 12.dp),
-            )
-        } else {
-            Spacer(Modifier.height(24.dp))
+            }
         }
     }
 }

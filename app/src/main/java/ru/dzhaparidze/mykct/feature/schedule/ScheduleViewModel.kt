@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -92,6 +94,10 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     )
     val state: StateFlow<ScheduleUiState> = _state.asStateFlow()
 
+    private val _pushOpened = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    /** Неделя открыта из пуша: экран закрывает свои листы, иначе переход случится под ними. */
+    val pushOpened: SharedFlow<Unit> = _pushOpened
+
     private var weekLessons: List<Lesson> = emptyList()
     private var loadJob: Job? = null
 
@@ -144,6 +150,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         val selected = if (mondayOf(today) == weekStart) today else weekStart
         _state.update { it.copy(weekStart = weekStart, selectedDate = selected, details = null) }
         loadWeek(silent = true)
+        _pushOpened.tryEmit(Unit)
     }
 
     fun updateSelection(selection: Selection) {

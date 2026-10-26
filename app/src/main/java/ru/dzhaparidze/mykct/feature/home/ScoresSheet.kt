@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ru.dzhaparidze.mykct.data.api.Score
 import ru.dzhaparidze.mykct.data.api.Subject
@@ -69,28 +70,36 @@ fun ScoresSheet(
 
             Fade(target = phaseOf(isLoading, error, lessons.isEmpty())) { phase ->
                 when (phase) {
-                    Phase.Loading -> Box(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center,
-                    ) { Swirl() }
+                    Phase.Loading -> Centered { Swirl() }
 
-                    Phase.Error -> Text(
-                        text = error ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Phase.Error -> Centered { Note(error ?: "Не удалось загрузить баллы") }
 
-                    Phase.Empty -> Text(
-                        text = "За это полугодие баллов нет",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Phase.Empty -> Centered { Note("За это полугодие баллов нет") }
 
                     Phase.Content -> lessons.forEach { lesson -> LessonScores(lesson) }
                 }
             }
         }
     }
+}
+
+/** Заглушка листа - по центру, как в iOS, а не прижатой к левому краю. */
+@Composable
+private fun Centered(content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+        contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+@Composable
+private fun Note(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable

@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
@@ -159,6 +160,12 @@ fun ScheduleScreen(
     }
     var groupSheetOpen by rememberSaveable { mutableStateOf(false) }
     var streakOpen by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(viewModel) {
+        viewModel.pushOpened.collect {
+            groupSheetOpen = false
+            streakOpen = false
+        }
+    }
 
     // Стрик и посещаемость грузит "Главная"; ViewModel одна на приложение (владелец -
     // активити), поэтому огонёк берёт готовые данные, а не ходит в сеть второй раз.
@@ -176,10 +183,13 @@ fun ScheduleScreen(
         onRefresh = viewModel::retry,
         modifier = Modifier.fillMaxSize(),
     ) {
+    // Колонка не короче экрана: иначе заглушке без пар нечем встать по центру
+    BoxWithConstraints {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .heightIn(min = maxHeight),
     ) {
         Hero(
             state = state,
@@ -193,8 +203,17 @@ fun ScheduleScreen(
             account = account,
         )
 
+        val phase = phaseOf(
+            isLoading = state.isLoading,
+            error = state.error,
+            isEmpty = state.visible.all { it.lessons.isEmpty() },
+        )
+        // Заглушка встаёт по центру свободного места: колонка тянется до низа экрана
+        // только без пар, иначе длинная неделя упрётся в высоту экрана
+        val fills = Modifier.weight(1f).takeIf { phase != Phase.Content } ?: Modifier
+
         // Отдельного "листа" больше нет: контент лежит на том же фоне, что и шапка.
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().then(fills)) {
             WeekStrip(
                 days = state.days,
                 // подсвечен весь показанный диапазон, а не только "точка входа" в него
@@ -207,13 +226,7 @@ fun ScheduleScreen(
 
             // Ошибка и "пар нет" приходят на место индикатора плавно: неделя грузится
             // за доли секунды, и без перехода экран дёргается на каждом переключении.
-            Fade(
-                target = phaseOf(
-                    isLoading = state.isLoading,
-                    error = state.error,
-                    isEmpty = state.visible.all { it.lessons.isEmpty() },
-                ),
-            ) { phase ->
+            Fade(target = phase, modifier = fills) { phase ->
                 when (phase) {
                     Phase.Loading -> Placeholder { Swirl() }
 
@@ -278,6 +291,7 @@ fun ScheduleScreen(
 
             Spacer(Modifier.height(navBarInset()))
         }
+    }
     }
     }
     }
@@ -488,8 +502,10 @@ private fun Placeholder(content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .fillMaxHeight()
             .padding(vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         content = content,
     )
 }

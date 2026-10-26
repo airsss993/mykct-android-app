@@ -35,7 +35,7 @@ android {
         applicationId = "ru.dzhaparidze.collegeapp"
         minSdk = 24
         targetSdk = 36
-        versionCode = 9
+        versionCode = 12
         versionName = "2.0.0"
 
         buildConfigField("String", "API_BASE_URL", "\"${getEnvVariable("API_BASE_URL", "https://mykct.it-college.ru")}\"")

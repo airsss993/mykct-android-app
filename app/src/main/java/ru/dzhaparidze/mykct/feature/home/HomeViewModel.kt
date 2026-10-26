@@ -40,6 +40,8 @@ sealed interface LeaderboardFeed {
 data class HomeUiState(
     val user: User? = null,
     val isBootstrapping: Boolean = true,
+    /** Вход сохранён, но автологин не прошёл (нет сети): не зовём входить заново. */
+    val isSessionPending: Boolean = false,
     val month: YearMonth = YearMonth.now(),
     val selected: LocalDate = LocalDate.now(),
     val records: List<AttendanceRecord> = emptyList(),
@@ -95,7 +97,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             auth.state.collect { session ->
                 val wasAuthenticated = _state.value.isAuthenticated
-                _state.update { it.copy(user = session.user, isBootstrapping = session.isBootstrapping) }
+                _state.update {
+                    it.copy(
+                        user = session.user,
+                        isBootstrapping = session.isBootstrapping,
+                        isSessionPending = session.isPending && !session.isBootstrapping,
+                    )
+                }
                 // Загружаемся один раз на переход "вошёл", а не на каждое обновление токена
                 if (session.user != null && !wasAuthenticated) load()
                 if (session.user == null) _state.update {
@@ -115,6 +123,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refresh() = load()
+
+    /** Повтор автологина с экрана "нет связи"; удался - данные загрузит подписка на сессию. */
+    fun reconnect() {
+        viewModelScope.launch { auth.bootstrap() }
+    }
 
     fun shiftMonth(months: Long) {
         _state.update { val month = it.month.plusMonths(months); it.copy(month = month, selected = month.pick()) }

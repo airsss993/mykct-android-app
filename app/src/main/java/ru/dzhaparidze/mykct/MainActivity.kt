@@ -19,9 +19,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.data.EntryStore
 import ru.dzhaparidze.mykct.data.auth.AuthService
 import ru.dzhaparidze.mykct.data.ThemeMode
@@ -57,7 +61,10 @@ class MainActivity : ComponentActivity() {
 
             // Автологин: обменять сохранённый refresh на access. Молча - не вышло,
             // значит приложение работает без входа, расписание от токена не зависит.
-            LaunchedEffect(Unit) { auth.bootstrap() }
+            // ON_START - и первый запуск, и возврат из фона: стартовали без сети -
+            // сессия подтвердится, когда приложение откроют снова.
+            val scope = rememberCoroutineScope()
+            LifecycleEventEffect(Lifecycle.Event.ON_START) { scope.launch { auth.bootstrap() } }
 
             // Пуши: регистрация сводится к состоянию на каждом его изменении - вход, выход,
             // смена группы, переключатель. Разрешение на Android 13+ спрашиваем после входа:
@@ -67,7 +74,7 @@ class MainActivity : ComponentActivity() {
             val askNotifications = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission(),
             ) {}
-            LaunchedEffect(session.isBootstrapping, session.user?.id, session.user?.academicGroup, pushEnabled) {
+            LaunchedEffect(session.isPending, session.user?.id, session.user?.academicGroup, pushEnabled) {
                 Push.sync(this@MainActivity)
             }
             LaunchedEffect(session.user?.id) {

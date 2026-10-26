@@ -109,9 +109,11 @@ fun AppShell(
     val scope = rememberCoroutineScope()
     // Кнопка аккаунта одна на три шапки: у вошедшего - профиль, иначе - форма входа.
     val account: @Composable () -> Unit = {
+        // Сохранённая, но не подтверждённая без сети сессия - тоже "вошёл": форма входа ей не нужна
+        val signedIn = session.user != null || session.hasStoredSession
         AccountButton(
-            signedIn = session.user != null,
-            onClick = { if (session.user != null) profileOpen = true else loginOpen = true },
+            signedIn = signedIn,
+            onClick = { if (signedIn) profileOpen = true else loginOpen = true },
         )
     }
 
@@ -188,10 +190,9 @@ fun AppShell(
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
-        val user = session.user
-        if (profileOpen && user != null) {
+        if (profileOpen && (session.user != null || session.hasStoredSession)) {
             ProfileSheet(
-                user = user,
+                user = session.user,
                 onSignOut = {
                     profileOpen = false
                     scope.launch { auth.signOut() }

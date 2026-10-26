@@ -20,6 +20,9 @@ interface ScheduleRepository {
     /** Расписание на неделю, начиная с понедельника [monday], для выбора [selection]. */
     suspend fun weekSchedule(monday: LocalDate, selection: Selection): WeekSchedule
 
+    /** Последняя удачная загрузка этой недели с диска; null - её не было. */
+    suspend fun cachedWeek(monday: LocalDate, selection: Selection): WeekSchedule? = null
+
     /**
      * Детали пары из GET /api/mykct/v1/classdetails плоским "ключ -> значение":
      * схемы у портала нет (см. `flattenDetails`). Мок деталей не знает - их неоткуда взять.

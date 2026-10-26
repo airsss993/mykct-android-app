@@ -12,8 +12,16 @@ import ru.dzhaparidze.mykct.data.net.ApiException
 data class AuthState(
     val user: User? = null,
     val isBootstrapping: Boolean = true,
+    /** Refresh-токен лежит на диске, даже если подтвердить его пока не вышло (нет сети). */
+    val hasStoredSession: Boolean = false,
 ) {
     val isAuthenticated: Boolean get() = user != null
+
+    /**
+     * Сессия есть, но сервер её ещё не подтвердил: старт без сети. Это не выход -
+     * пуши не снимаем, вместо приглашения войти показываем "нет связи".
+     */
+    val isPending: Boolean get() = isBootstrapping || (user == null && hasStoredSession)
 }
 
 /**
@@ -47,22 +55,26 @@ class AuthService(context: Context, private val api: AuthApi = AuthApi()) {
         tokens.refreshExpiresAt = now() + response.refreshExpiresIn * 1000
         accessToken = response.accessToken
         accessExpiresAt = now() + response.accessExpiresIn * 1000
-        _state.value = AuthState(user = response.user, isBootstrapping = false)
+        _state.value = AuthState(user = response.user, isBootstrapping = false, hasStoredSession = true)
     }
 
-    /** Автологин при старте: молча - если не вышло, приложение просто без входа. */
+    /**
+     * Автологин: при старте и при возврате из фона, пока сессия не подтверждена.
+     * Молча - если не вышло, приложение работает без входа до следующей попытки.
+     */
     suspend fun bootstrap() {
+        if (_state.value.user != null) return
         if (tokens.refreshToken == null) {
             _state.value = AuthState(user = null, isBootstrapping = false)
             return
         }
         try {
-            refreshAccess()
+            mutex.withLock { refreshAccess() }
         } catch (e: ApiException) {
             // Протухший или отозванный refresh - чистим, чтобы не долбить сервер каждый старт
             if (e.status == 401 || e.status == 403) logoutLocal()
         }
-        _state.value = _state.value.copy(isBootstrapping = false)
+        _state.value = _state.value.copy(isBootstrapping = false, hasStoredSession = tokens.refreshToken != null)
     }
 
     suspend fun signOut() {

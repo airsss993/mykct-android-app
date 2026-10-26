@@ -75,7 +75,7 @@ fun AccountButton(signedIn: Boolean, onClick: () -> Unit, modifier: Modifier = M
 /** Профиль: что знает о студенте auth и выход. Заменил блок "Аккаунт" в настройках. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileSheet(user: User, onSignOut: () -> Unit, onDismiss: () -> Unit) {
+fun ProfileSheet(user: User?, onSignOut: () -> Unit, onDismiss: () -> Unit) {
     var confirm by rememberSaveable { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -94,27 +94,30 @@ fun ProfileSheet(user: User, onSignOut: () -> Unit, onDismiss: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            Caption("Информация об аккаунте")
-            Card {
-                val rows = profileRows(user)
-                rows.forEachIndexed { index, (label, value) ->
-                    if (index > 0) Divider()
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = value,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.End,
-                            modifier = Modifier.weight(1f).padding(start = 16.dp),
-                        )
+            // Без сети данных профиля нет, но выйти из сохранённой сессии можно и так
+            if (user != null) {
+                Caption("Информация об аккаунте")
+                Card {
+                    val rows = profileRows(user)
+                    rows.forEachIndexed { index, (label, value) ->
+                        if (index > 0) Divider()
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = value,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.weight(1f).padding(start = 16.dp),
+                            )
+                        }
                     }
                 }
             }

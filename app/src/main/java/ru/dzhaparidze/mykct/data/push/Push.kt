@@ -98,7 +98,8 @@ object Push {
 
     private suspend fun syncLocked(context: Context, newToken: String?) {
         val state = AuthService.get(context).state.value
-        if (state.isBootstrapping) return
+        // Сессия не подтверждена (старт без сети) - это не выход, регистрацию не трогаем
+        if (state.isPending) return
         val prefs = prefs(context)
         val user = state.user
         val group = user?.academicGroup?.takeIf { it.isNotBlank() }

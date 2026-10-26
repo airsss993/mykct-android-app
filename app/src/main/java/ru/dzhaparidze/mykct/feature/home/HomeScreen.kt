@@ -175,12 +175,15 @@ fun HomeScreen(
             // Первый кадр экрана - индикатор поверх пустоты; он гаснет, и на его месте
             // проявляется либо приглашение войти, либо данные. Мгновенная подмена
             // читалась как мигание: автологин отвечает за доли секунды.
-            Fade(target = state.isBootstrapping to state.isAuthenticated) { (loading, authorized) ->
+            Fade(target = Triple(state.isBootstrapping, state.isSessionPending, state.isAuthenticated)) {
+                (loading, pending, authorized) ->
                 when {
                     loading -> Box(
                         modifier = Modifier.fillMaxWidth().padding(top = 120.dp),
                         contentAlignment = Alignment.Center,
                     ) { Swirl(color = accent) }
+
+                    pending -> ErrorBlock("Нет связи с сервером", onRetry = viewModel::reconnect)
 
                     !authorized -> SignInInvite(onLogin = onLogin)
 

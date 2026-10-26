@@ -3,6 +3,8 @@ package ru.dzhaparidze.mykct.data
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -21,7 +23,11 @@ import java.time.LocalTime
  * Ключи с капитализацией портала (`ClID`, `Day`, `SubGroup`) остаются здесь и наружу
  * не выходят: экран работает с [Lesson].
  */
-class ApiScheduleRepository(private val baseUrl: String = API_URL) : ScheduleRepository {
+class ApiScheduleRepository(
+    private val baseUrl: String = API_URL,
+    /** null - без кеша: виджету хватает своего. */
+    private val cache: ScheduleCache? = null,
+) : ScheduleRepository {
 
     override suspend fun weekSchedule(monday: LocalDate, selection: Selection): WeekSchedule = apiCall {
         val response: ScheduleResponse = Http.client.get("$baseUrl/schedule") {
@@ -33,12 +39,16 @@ class ApiScheduleRepository(private val baseUrl: String = API_URL) : ScheduleRep
             selection.englishGroup?.let { parameter("english_group", it) }
             selection.profileSubgroup?.let { parameter("profile_subgroup", it) }
         }.decode()
-        WeekSchedule(
-            lessons = response.events.mapNotNull { it.toLesson() },
-            isStale = response.stale,
-            fetchedAt = response.fetchedAt?.let(::parseDay),
-        )
+        // В кеш - без признака снимка: устаревшим его объявит экран, когда сеть не ответит
+        val saved = response.copy(stale = false, fetchedAt = response.fetchedAt ?: LocalDate.now().toString())
+        cache?.put(monday, selection, Http.json.encodeToString(saved))
+        response.toWeek()
     }
+
+    override suspend fun cachedWeek(monday: LocalDate, selection: Selection): WeekSchedule? =
+        cache?.get(monday, selection)
+            ?.let { runCatching { Http.json.decodeFromString<ScheduleResponse>(it) }.getOrNull() }
+            ?.toWeek()
 
     override suspend fun classDetails(id: String): List<Pair<String, String>> = apiCall {
         val details: JsonObject = Http.client.get("$baseUrl/classdetails") {
@@ -108,6 +118,12 @@ private data class SubGroupDto(
     @SerialName("SGCaID") val room: String = "",
     @SerialName("STopic") val topic: String = "",
     @SerialName("STitle") val title: String = "",
+)
+
+private fun ScheduleResponse.toWeek() = WeekSchedule(
+    lessons = events.mapNotNull { it.toLesson() },
+    isStale = stale,
+    fetchedAt = fetchedAt?.let(::parseDay),
 )
 
 /** Пара с непарсящейся датой или временем выбрасывается: рисовать её всё равно негде. */

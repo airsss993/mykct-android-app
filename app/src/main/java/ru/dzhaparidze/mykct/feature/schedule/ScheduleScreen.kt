@@ -31,6 +31,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.dzhaparidze.mykct.R
@@ -143,6 +145,7 @@ fun ScheduleScreen(
     viewModel: ScheduleViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.refreshIfOutdated() }
     // Часы тикают сами: линия "сейчас" и переход пары в прошедшие должны ехать без
     // перезахода на экран. Сон до ближайшей :00, а не ровные полминуты от входа -
     // иначе линия переезжает в случайный момент и опаздывает до полуминуты.
@@ -356,8 +359,8 @@ private fun Hero(
                 ?: state.visible.dateRange(),
         )
 
-        if (state.isStale) {
-            StaleNote(fetchedAt = state.fetchedAt)
+        if (state.isStale || state.isOffline) {
+            StaleNote(fetchedAt = state.fetchedAt, offline = state.isOffline)
         }
 
         Spacer(Modifier.height(20.dp))
@@ -367,11 +370,12 @@ private fun Hero(
 }
 
 /**
- * Портал колледжа лежит, и бэкенд отдал снимок. Без этой строки расписание недельной
+ * Портал лежит (бэкенд отдал снимок) или нет сети (показан кеш). Без этой строки расписание недельной
  * давности выглядит как свежее - а это худший вид ошибки: студент придёт не туда.
  */
 @Composable
-private fun StaleNote(fetchedAt: LocalDate?) {
+private fun StaleNote(fetchedAt: LocalDate?, offline: Boolean) {
+    val reason = if (offline) "Нет связи" else "Портал недоступен"
     Row(
         modifier = Modifier.padding(top = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -385,8 +389,8 @@ private fun StaleNote(fetchedAt: LocalDate?) {
         )
         Text(
             text = fetchedAt
-                ?.let { "Портал недоступен, расписание от ${it.dayMonth()}" }
-                ?: "Портал недоступен, показано сохранённое расписание",
+                ?.let { "$reason, расписание от ${it.dayMonth()}" }
+                ?: "$reason, показано сохранённое расписание",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

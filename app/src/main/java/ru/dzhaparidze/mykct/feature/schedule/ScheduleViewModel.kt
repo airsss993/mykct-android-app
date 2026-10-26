@@ -3,6 +3,8 @@ package ru.dzhaparidze.mykct.feature.schedule
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,9 @@ import ru.dzhaparidze.mykct.data.ScheduleSettingsStore
 import ru.dzhaparidze.mykct.data.ScheduleView
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.data.SelectionStore
+import ru.dzhaparidze.mykct.data.ScheduleCache
+import ru.dzhaparidze.mykct.data.WeekSchedule
+import ru.dzhaparidze.mykct.data.net.ApiException
 import ru.dzhaparidze.mykct.data.net.isFeatureDisabled
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -67,13 +72,15 @@ data class ScheduleUiState(
     /** Портал не ответил и показан снимок: [fetchedAt] - когда его сняли. */
     val isStale: Boolean = false,
     val fetchedAt: LocalDate? = null,
+    /** Сети нет, показана сохранённая неделя: плашка говорит "Нет связи", а не про портал. */
+    val isOffline: Boolean = false,
 )
 
 class ScheduleViewModel(application: Application) : AndroidViewModel(application) {
 
     private val store = SelectionStore(application)
     private val settingsStore = ScheduleSettingsStore(application)
-    private val repository: ScheduleRepository = ApiScheduleRepository()
+    private val repository: ScheduleRepository = ApiScheduleRepository(cache = ScheduleCache(application))
 
     private val _state = MutableStateFlow(
         ScheduleUiState(
@@ -86,6 +93,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     val state: StateFlow<ScheduleUiState> = _state.asStateFlow()
 
     private var weekLessons: List<Lesson> = emptyList()
+    private var loadJob: Job? = null
 
     init {
         loadWeek()
@@ -147,6 +155,11 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
 
     fun retry() = loadWeek()
 
+    /** Возврат в приложение: неделю, показанную без связи или снимком, грузим заново. */
+    fun refreshIfOutdated() {
+        if (_state.value.isOffline || _state.value.isStale) loadWeek(silent = true)
+    }
+
     fun openLesson(lesson: Lesson) {
         _state.update { it.copy(details = LessonDetails(lesson)) }
         loadDetails()
@@ -188,17 +201,41 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
      * как рывок; старые пары держатся на экране, пока не приедут новые.
      */
     private fun loadWeek(silent: Boolean = false) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = !silent || it.days.isEmpty(), error = null, isDisabled = false) }
+        // Новая неделя или группа отменяет прошлый запрос: его поздний ответ затёр бы свежий
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            val monday = _state.value.weekStart
+            val selection = _state.value.selection
+            // Сохранённая неделя рисуется сразу, сеть догоняет её поверх
+            val cached = repository.cachedWeek(monday, selection)
+            if (cached != null) {
+                show(cached, selection)
+            } else {
+                _state.update {
+                    it.copy(
+                        isLoading = !silent || it.days.isEmpty(),
+                        error = null,
+                        isDisabled = false,
+                        isOffline = false,
+                        isStale = false,
+                        fetchedAt = null,
+                    )
+                }
+            }
             try {
-                val selection = _state.value.selection
-                val week = repository.weekSchedule(_state.value.weekStart, selection)
-                // Разворачиваем параллельные пары один раз здесь: дальше и таймлайн,
-                // и счётчик пар в шапке работают с обычными парами.
-                weekLessons = week.lessons.splitOwn(selection)
-                _state.update { it.copy(isStale = week.isStale, fetchedAt = week.fetchedAt) }
-                applyWeek()
+                val week = repository.weekSchedule(monday, selection)
+                _state.update { it.copy(isOffline = false) }
+                show(week, selection)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
+                // Сбой при сохранённой неделе - плашка над ней. Выключенное расписание
+                // кешем не прикрываем: студент должен увидеть, что его нет.
+                if (cached != null && !e.isFeatureDisabled()) {
+                    val offline = e is ApiException && e.status == null
+                    _state.update { it.copy(isOffline = offline, isStale = !offline) }
+                    return@launch
+                }
                 weekLessons = emptyList()
                 _state.update {
                     it.copy(
@@ -207,12 +244,22 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                         isDisabled = e.isFeatureDisabled(),
                         days = emptyList(),
                         visible = emptyList(),
+                        isOffline = false,
                         isStale = false,
                         fetchedAt = null,
                     )
                 }
             }
         }
+    }
+
+    /** Неделя пришла из сети или кеша. */
+    private fun show(week: WeekSchedule, selection: Selection) {
+        // Разворачиваем параллельные пары один раз здесь: дальше и таймлайн,
+        // и счётчик пар в шапке работают с обычными парами.
+        weekLessons = week.lessons.splitOwn(selection)
+        _state.update { it.copy(isStale = week.isStale, fetchedAt = week.fetchedAt, isDisabled = false) }
+        applyWeek()
     }
 
     private fun applyWeek() {

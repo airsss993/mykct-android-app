@@ -27,10 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -49,11 +45,11 @@ import ru.dzhaparidze.mykct.data.api.Attendance
 import ru.dzhaparidze.mykct.data.api.AttendanceStats
 import ru.dzhaparidze.mykct.data.api.AttendanceRecord
 import ru.dzhaparidze.mykct.data.api.Subject
+import ru.dzhaparidze.mykct.feature.auth.PandaBackdrop
 import ru.dzhaparidze.mykct.feature.navBarInset
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.ui.Fade
 import ru.dzhaparidze.mykct.ui.HeroSummary
-import ru.dzhaparidze.mykct.ui.LiquidGlassPanda
 import ru.dzhaparidze.mykct.ui.Phase
 import ru.dzhaparidze.mykct.ui.Swirl
 import ru.dzhaparidze.mykct.ui.phaseOf
@@ -65,7 +61,7 @@ import ru.dzhaparidze.mykct.ui.hairline
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.compositeOver
 import ru.dzhaparidze.mykct.ui.theme.GreenLime
-import ru.dzhaparidze.mykct.ui.theme.isLightTheme
+import ru.dzhaparidze.mykct.ui.theme.AppTheme
 import ru.dzhaparidze.mykct.ui.theme.statusDanger
 import ru.dzhaparidze.mykct.ui.theme.statusGreen
 import ru.dzhaparidze.mykct.ui.theme.statusWarning
@@ -149,10 +145,17 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var streakOpen by rememberSaveable { mutableStateOf(false) }
 
+    // Без входа "Главная" - тот же экран, что и вход: панда на весь экран и тёмная
+    // схема в любой теме, иначе шапка темнела бы на чёрной картинке.
+    val invite = !state.isBootstrapping && !state.isSessionPending && !state.isAuthenticated
+    DarkWhen(invite) {
     val accent = MaterialTheme.colorScheme.primary
 
     // Фон, свет и сетка - в `AppShell`, общие на все экраны.
     Box(modifier = Modifier.fillMaxSize()) {
+        Fade(target = invite, modifier = Modifier.fillMaxSize()) { shown ->
+            if (shown) PandaBackdrop()
+        }
         // `isRefreshing` только поверх уже показанных данных: на первой загрузке
         // крутится свой индикатор в теле экрана, и два спиннера сразу читались бы
         // как подвисание.
@@ -162,8 +165,8 @@ fun HomeScreen(
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize(),
         ) {
-        // Высота не меньше экрана, чтобы приглашение войти встало по центру между
-        // шапкой и навбаром; данные длиннее экрана скроллятся как раньше.
+        // Высота не меньше экрана, чтобы приглашение войти встало над навбаром;
+        // данные длиннее экрана скроллятся как раньше.
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -209,6 +212,7 @@ fun HomeScreen(
         }
         }
     }
+    }
 
     if (streakOpen && state.isAuthenticated) {
         StreakSheet(viewModel = viewModel, onDismiss = { streakOpen = false })
@@ -227,68 +231,29 @@ fun HomeScreen(
 
 /**
  * Без токена бэкенд не отдаёт ничего из этого экрана - честно объясняем и зовём войти.
- * Стеклянная панда та же, что на экране входа: приглашение и форма выглядят одним сюжетом.
+ * Выглядит как экран входа: панда на фоне всего экрана (её рисует [HomeScreen]), текст
+ * и кнопка внизу, слева.
  */
 @Composable
 private fun SignInInvite(onLogin: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(vertical = 24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.Bottom,
     ) {
-        PandaArt()
         Text(
             text = "Посещаемость и баллы",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 20.dp),
+            style = MaterialTheme.typography.headlineLarge,
+            color = Color.White,
         )
         Text(
             text = "Стрик посещений, отметки по парам и баллы по предметам колледж отдаёт " +
                 "только вошедшим. Нужен корпоративный логин и пароль.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp, bottom = 28.dp),
+            color = Color.White.copy(alpha = 0.6f),
+            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
         )
         ShinyPill(text = "Войти", onClick = onLogin)
     }
-}
-
-/**
- * Верхний квадрат кадра экрана входа, где сидит панда. Фон у картинки чёрный: в тёмной
- * теме края растворяются в фоне экрана, в светлой чёрное пятно смотрелось бы грязью,
- * поэтому там кадр стоит скруглённой плиткой.
- */
-@Composable
-private fun PandaArt() {
-    val light = isLightTheme
-    LiquidGlassPanda(
-        Modifier
-            .size(240.dp)
-            .then(
-                if (light) {
-                    Modifier.clip(RoundedCornerShape(32.dp))
-                } else {
-                    // DstIn оставляет картинку только под маской, и только в своём слое.
-                    Modifier
-                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                        .drawWithContent {
-                            drawContent()
-                            drawRect(
-                                brush = Brush.radialGradient(
-                                    0.6f to Color.Black,
-                                    1f to Color.Transparent,
-                                    radius = size.minDimension / 2,
-                                ),
-                                blendMode = BlendMode.DstIn,
-                            )
-                        }
-                },
-            ),
-    )
 }
 
 @Composable
@@ -707,4 +672,10 @@ internal fun ErrorBlock(text: String, retry: String = "Повторить", onRe
             }
         }
     }
+}
+
+/** [content] в тёмной схеме, если [dark]; иначе в теме приложения как есть. */
+@Composable
+private fun DarkWhen(dark: Boolean, content: @Composable () -> Unit) {
+    if (dark) AppTheme(darkTheme = true, content = content) else content()
 }

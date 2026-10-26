@@ -62,17 +62,8 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
-        LiquidGlassPanda(Modifier.fillMaxSize())
-        Box(
-            modifier = Modifier.matchParentSize().background(
-                Brush.verticalGradient(
-                    0.40f to Color.Transparent,
-                    0.65f to DarkBackground.copy(alpha = 0.94f),
-                    1f to DarkBackground,
-                ),
-            ),
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        PandaBackdrop()
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
@@ -196,6 +187,26 @@ fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)?
                 }
             }
         }
+    }
+}
+
+/**
+ * Фон экрана входа: панда на весь экран, снизу она уходит в тёмный фон под форму.
+ * Тот же фон у приглашения войти на "Главной", чтобы это читалось одним экраном.
+ */
+@Composable
+fun PandaBackdrop() {
+    Box(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
+        LiquidGlassPanda(Modifier.fillMaxSize())
+        Box(
+            modifier = Modifier.matchParentSize().background(
+                Brush.verticalGradient(
+                    0.40f to Color.Transparent,
+                    0.65f to DarkBackground.copy(alpha = 0.94f),
+                    1f to DarkBackground,
+                ),
+            ),
+        )
     }
 }
 

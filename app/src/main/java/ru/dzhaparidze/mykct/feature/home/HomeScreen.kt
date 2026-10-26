@@ -300,7 +300,10 @@ private fun AttendanceTab(state: HomeUiState, viewModel: HomeViewModel) {
         when (phase) {
             Phase.Loading -> Loading()
 
-            Phase.Error -> ErrorBlock(state.error ?: "", onRetry = viewModel::refresh)
+            Phase.Error -> ErrorBlock(
+                state.error ?: "",
+                onRetry = if (state.attendanceDisabled) null else viewModel::refresh,
+            )
 
             Phase.Empty -> Empty("За этот месяц отметок нет")
 
@@ -427,7 +430,8 @@ private fun PerformanceTab(state: HomeUiState, viewModel: HomeViewModel) {
     ) { phase ->
         when (phase) {
             Phase.Loading -> Loading()
-            Phase.Empty -> Empty("Колледж не отдал ни одного предмета")
+            Phase.Empty -> state.performanceDisabled?.let { ErrorBlock(it, onRetry = null) }
+                ?: Empty("Колледж не отдал ни одного предмета")
             // Ошибку успеваемости показывает вкладка посещаемости: `error` в состоянии один.
             else -> state.subjects.forEach { subject ->
                 SubjectRow(subject) { viewModel.openSubject(subject) }
@@ -612,22 +616,33 @@ private fun SubjectRow(subject: Subject, onClick: () -> Unit) {
 }
 
 @Composable
-internal fun ErrorBlock(text: String, retry: String = "Повторить", onRetry: () -> Unit) {
+internal fun ErrorBlock(text: String, retry: String = "Повторить", onRetry: (() -> Unit)?) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        // Без повтора - раздел выключен на бэкенде: пауза вместо кнопки
+        if (onRetry == null) {
+            Icon(
+                painterResource(R.drawable.ic_pause),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 12.dp).size(40.dp),
+            )
+        }
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(12.dp))
-        Button(onClick = onRetry) {
-            Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(retry)
+        if (onRetry != null) {
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = onRetry) {
+                Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(retry)
+            }
         }
     }
 }

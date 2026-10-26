@@ -14,6 +14,7 @@ import ru.dzhaparidze.mykct.data.api.CollegeApi
 import ru.dzhaparidze.mykct.data.api.Leaderboard
 import ru.dzhaparidze.mykct.data.api.Motivation
 import ru.dzhaparidze.mykct.data.net.ApiException
+import ru.dzhaparidze.mykct.data.net.isFeatureDisabled
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import ru.dzhaparidze.mykct.data.api.Streak
@@ -50,6 +51,10 @@ data class HomeUiState(
     val subjects: List<Subject> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
+    /** Разделы, выключенные на бэкенде: у стрика и успеваемости здесь его текст. */
+    val attendanceDisabled: Boolean = false,
+    val streakDisabled: String? = null,
+    val performanceDisabled: String? = null,
     /** Открытый предмет и его баллы: лист успеваемости грузится отдельно. */
     val openSubject: Subject? = null,
     val scores: List<SubjectLesson> = emptyList(),
@@ -59,7 +64,8 @@ data class HomeUiState(
     val isAuthenticated: Boolean get() = user != null
 
     /** Рейтинг по курсу есть только у студента с группой. */
-    val canSeeLeaderboard: Boolean get() = user?.isStudent == true && !user.academicGroup.isNullOrBlank()
+    val canSeeLeaderboard: Boolean
+        get() = user?.isStudent == true && !user.academicGroup.isNullOrBlank() && streakDisabled == null
 
     /** Отметки выбранного дня - календарь показывает месяц, список под ним один день. */
     val dayRecords: List<AttendanceRecord> get() = records.filter { it.date == selected }
@@ -99,6 +105,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         leaderboard = LeaderboardFeed.Idle,
                         subjects = emptyList(),
                         stats = AttendanceStats(0, 0, 0, 0),
+                        attendanceDisabled = false,
+                        streakDisabled = null,
+                        performanceDisabled = null,
                     )
                 }
             }
@@ -173,7 +182,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private fun load() {
         if (!_state.value.isAuthenticated) return
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = true, error = null, attendanceDisabled = false) }
             val month = _state.value.month
             try {
                 val records = api.attendance(month.atDay(1), month.atEndOfMonth())
@@ -186,11 +195,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     _state.update { it.copy(motivation = line) }
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(error = e.message ?: "Не удалось загрузить посещаемость") }
+                _state.update {
+                    it.copy(error = e.message ?: "Не удалось загрузить посещаемость", attendanceDisabled = e.isFeatureDisabled())
+                }
             }
-            // Стрик и предметы не должны падать вместе с посещаемостью: у каждого свой блок
-            runCatching { api.streak() }.onSuccess { streak -> _state.update { it.copy(streak = streak) } }
-            runCatching { api.subjects() }.onSuccess { subjects -> _state.update { it.copy(subjects = subjects) } }
+            // Стрик и предметы не должны падать вместе с посещаемостью: у каждого свой блок.
+            // Обычный сбой оставляет прошлые данные, выключенный раздел их убирает.
+            runCatching { api.streak() }
+                .onSuccess { streak -> _state.update { it.copy(streak = streak, streakDisabled = null) } }
+                .onFailure { e -> if (e.isFeatureDisabled()) _state.update { it.copy(streak = null, streakDisabled = e.message) } }
+            runCatching { api.subjects() }
+                .onSuccess { subjects -> _state.update { it.copy(subjects = subjects, performanceDisabled = null) } }
+                .onFailure { e ->
+                    if (e.isFeatureDisabled()) _state.update { it.copy(subjects = emptyList(), performanceDisabled = e.message) }
+                }
             _state.update { it.copy(isLoading = false) }
         }
     }

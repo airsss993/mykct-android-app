@@ -198,6 +198,7 @@ private fun StreakTab(state: HomeUiState, viewModel: HomeViewModel) {
     val streak = state.streak
     when {
         streak != null -> StreakContent(streak, state)
+        state.streakDisabled != null -> ErrorBlock(state.streakDisabled, onRetry = null)
         state.isLoading -> Placeholder { Swirl() }
         else -> ErrorBlock("Не удалось загрузить стрик", retry = "Обновить", onRetry = viewModel::refresh)
     }

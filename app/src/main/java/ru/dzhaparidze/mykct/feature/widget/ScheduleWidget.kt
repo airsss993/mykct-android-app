@@ -24,6 +24,7 @@ import ru.dzhaparidze.mykct.data.Lesson
 import ru.dzhaparidze.mykct.data.SelectionStore
 import ru.dzhaparidze.mykct.data.slotCount
 import ru.dzhaparidze.mykct.data.splitOwn
+import ru.dzhaparidze.mykct.data.net.isFeatureDisabled
 import ru.dzhaparidze.mykct.feature.schedule.components.subjectIcon
 import ru.dzhaparidze.mykct.feature.schedule.dayMonth
 import ru.dzhaparidze.mykct.feature.schedule.lessonsCount
@@ -98,9 +99,10 @@ private suspend fun render(context: Context) {
     if (ids.isEmpty()) return
     val now = LocalDateTime.now()
     val day = load(context, now.toLocalDate())?.let { pickDay(it, now) }
+    val disabled = context.getSharedPreferences("widget", Context.MODE_PRIVATE).getBoolean(DISABLED, false)
     ids.forEach { id ->
         val height = manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
-        manager.updateAppWidget(id, views(context, day, now.toLocalTime(), height))
+        manager.updateAppWidget(id, views(context, day, disabled, now.toLocalTime(), height))
     }
     // не загрузилось - пробуем снова через полчаса, а не на границе пары
     val next = day?.nextChange(now) ?: now.plusMinutes(30)
@@ -115,7 +117,7 @@ private suspend fun render(context: Context) {
 /** Пары на сегодня и завтра: из сети, без неё - из кеша. null - нет ни того, ни другого. */
 private suspend fun load(context: Context, today: LocalDate): List<Lesson>? {
     val days = listOf(today, today.plusDays(1))
-    val fresh = withTimeoutOrNull(8_000) {
+    val result = withTimeoutOrNull(8_000) {
         runCatching {
             val selection = SelectionStore(context).load()
             val repository = ApiScheduleRepository()
@@ -123,12 +125,19 @@ private suspend fun load(context: Context, today: LocalDate): List<Lesson>? {
             days.map { it.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)) }.distinct()
                 .flatMap { repository.weekSchedule(it, selection).lessons.splitOwn(selection) }
                 .filter { it.date in days }
-        }.getOrNull()
+        }
     }
     val prefs = context.getSharedPreferences("widget", Context.MODE_PRIVATE)
+    // Выключенное на бэкенде расписание стирает кеш: старые пары под паузой только путают.
+    // Флаг держится до первой удачной загрузки, без сети виджет остаётся на паузе.
+    if (result?.exceptionOrNull()?.isFeatureDisabled() == true) {
+        prefs.edit().remove(CACHE).putBoolean(DISABLED, true).apply()
+        return null
+    }
+    val fresh = result?.getOrNull()
     if (fresh != null) {
         val cached = Cached(today.toString(), fresh.map(CachedLesson::of))
-        prefs.edit().putString(CACHE, Json.encodeToString(cached)).apply()
+        prefs.edit().putString(CACHE, Json.encodeToString(cached)).putBoolean(DISABLED, false).apply()
         return fresh
     }
     val cached = prefs.getString(CACHE, null)
@@ -140,6 +149,7 @@ private suspend fun load(context: Context, today: LocalDate): List<Lesson>? {
 }
 
 private const val CACHE = "lessons"
+private const val DISABLED = "disabled"
 
 @Serializable
 private class Cached(val savedOn: String, val lessons: List<CachedLesson>)
@@ -201,7 +211,7 @@ internal fun WidgetDay.nextChange(now: LocalDateTime): LocalDateTime =
         date.atStartOfDay()
     }
 
-private fun views(context: Context, day: WidgetDay?, now: LocalTime, heightDp: Int): RemoteViews {
+private fun views(context: Context, day: WidgetDay?, disabled: Boolean, now: LocalTime, heightDp: Int): RemoteViews {
     val views = RemoteViews(context.packageName, R.layout.widget_schedule)
     views.setOnClickPendingIntent(
         R.id.widget_root,
@@ -214,6 +224,7 @@ private fun views(context: Context, day: WidgetDay?, now: LocalTime, heightDp: I
     if (day == null) {
         views.setTextViewText(R.id.widget_day, "Расписание")
         views.setTextViewText(R.id.widget_count, "")
+        if (disabled) return views.message(R.drawable.ic_pause, "Расписание отключено", "Временно, загляни позже")
         return views.message(R.drawable.ic_refresh, "Не удалось загрузить", "Нажми, чтобы открыть приложение")
     }
 

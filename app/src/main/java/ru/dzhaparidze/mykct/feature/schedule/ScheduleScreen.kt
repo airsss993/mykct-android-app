@@ -215,17 +215,27 @@ fun ScheduleScreen(
                     Phase.Loading -> Placeholder { Swirl() }
 
                     Phase.Error -> Placeholder {
+                        if (state.isDisabled) {
+                            Icon(
+                                painterResource(R.drawable.ic_pause),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 12.dp).size(40.dp),
+                            )
+                        }
                         Text(
                             text = state.error ?: "Не удалось загрузить расписание",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                         )
-                        Spacer(Modifier.height(12.dp))
-                        Button(onClick = viewModel::retry) {
-                            Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Повторить")
+                        if (!state.isDisabled) {
+                            Spacer(Modifier.height(12.dp))
+                            Button(onClick = viewModel::retry) {
+                                Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Повторить")
+                            }
                         }
                     }
 

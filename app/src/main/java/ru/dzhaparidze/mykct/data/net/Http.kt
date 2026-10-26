@@ -21,6 +21,9 @@ import java.io.IOException
  */
 class ApiException(val status: Int?, message: String, val code: String? = null) : Exception(message)
 
+/** Раздел выключен на бэкенде: показываем его текст, повторять запрос бесполезно. */
+fun Throwable.isFeatureDisabled(): Boolean = this is ApiException && code == "FEATURE_DISABLED"
+
 /** Корень всех маршрутов mykct-api: расписание, auth, посещаемость, пуши. */
 val API_URL = "${BuildConfig.API_BASE_URL}/api/mykct/v1"
 

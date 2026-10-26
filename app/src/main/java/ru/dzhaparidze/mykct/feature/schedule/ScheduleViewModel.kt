@@ -19,6 +19,7 @@ import ru.dzhaparidze.mykct.data.ScheduleSettingsStore
 import ru.dzhaparidze.mykct.data.ScheduleView
 import ru.dzhaparidze.mykct.data.Selection
 import ru.dzhaparidze.mykct.data.SelectionStore
+import ru.dzhaparidze.mykct.data.net.isFeatureDisabled
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -59,6 +60,8 @@ data class ScheduleUiState(
     val isLoading: Boolean = true,
     /** Текст ошибки от сети; null - всё в порядке. */
     val error: String? = null,
+    /** Расписание выключено на бэкенде: [error] - его текст, кнопки повтора нет. */
+    val isDisabled: Boolean = false,
     /** null - лист с парой закрыт. */
     val details: LessonDetails? = null,
     /** Портал не ответил и показан снимок: [fetchedAt] - когда его сняли. */
@@ -186,7 +189,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
      */
     private fun loadWeek(silent: Boolean = false) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = !silent || it.days.isEmpty(), error = null) }
+            _state.update { it.copy(isLoading = !silent || it.days.isEmpty(), error = null, isDisabled = false) }
             try {
                 val selection = _state.value.selection
                 val week = repository.weekSchedule(_state.value.weekStart, selection)
@@ -201,6 +204,7 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                     it.copy(
                         isLoading = false,
                         error = e.message ?: "Не удалось загрузить расписание",
+                        isDisabled = e.isFeatureDisabled(),
                         days = emptyList(),
                         visible = emptyList(),
                         isStale = false,

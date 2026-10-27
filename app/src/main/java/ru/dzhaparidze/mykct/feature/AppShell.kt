@@ -172,7 +172,7 @@ fun AppShell(
         ) { current ->
             when (current) {
                 Screen.SCHEDULE -> ScheduleScreen(account = account)
-                Screen.HOME -> HomeScreen(account = account)
+                Screen.HOME -> HomeScreen(onLogin = { loginOpen = true }, account = account)
 
                 Screen.SETTINGS -> SettingsScreen(
                     themeMode = themeMode,

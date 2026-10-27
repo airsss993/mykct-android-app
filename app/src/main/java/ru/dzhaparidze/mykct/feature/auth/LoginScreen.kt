@@ -32,7 +32,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.dzhaparidze.mykct.R
@@ -49,18 +48,10 @@ import ru.dzhaparidze.mykct.ui.theme.VioletLight
  * [onSkip] пустой на входе из "Главной" - там кнопка "без входа" уже не нужна,
  * пользователь и так внутри приложения.
  *
- * Без входа "Главная" показывает эту же форму у себя во вкладке: без кнопки "Назад"
- * ([onBack] пустой) и с отступом [bottomInset] снизу под плавающий навбар.
- *
  * Экран всегда тёмный, как и [AuthScreen], независимо от темы приложения.
  */
 @Composable
-fun LoginScreen(
-    onBack: (() -> Unit)?,
-    onSuccess: () -> Unit,
-    onSkip: (() -> Unit)? = null,
-    bottomInset: Dp? = null,
-) {
+fun LoginScreen(onBack: () -> Unit, onSuccess: () -> Unit, onSkip: (() -> Unit)? = null) {
     val context = LocalContext.current
     val auth = remember { AuthService.get(context) }
     val scope = rememberCoroutineScope()
@@ -71,22 +62,13 @@ fun LoginScreen(
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
-        LiquidGlassPanda(Modifier.fillMaxSize())
-        Box(
-            modifier = Modifier.matchParentSize().background(
-                Brush.verticalGradient(
-                    0.40f to Color.Transparent,
-                    0.65f to DarkBackground.copy(alpha = 0.94f),
-                    1f to DarkBackground,
-                ),
-            ),
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        PandaBackdrop()
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .then(if (bottomInset == null) Modifier.navigationBarsPadding() else Modifier.padding(bottom = bottomInset))
+                .navigationBarsPadding()
                 .imePadding(),
         ) {
             Column(
@@ -97,26 +79,21 @@ fun LoginScreen(
                     .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
-                if (onBack != null) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.08f))
-                            .clickable(onClick = onBack),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.ic_chevron_left),
-                            contentDescription = "Назад",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                } else {
-                    // Место кнопки: без неё SpaceBetween прижал бы форму к верху.
-                    Spacer(Modifier.height(52.dp))
+                Box(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.08f))
+                        .clickable(onClick = onBack),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_chevron_left),
+                        contentDescription = "Назад",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
                 }
 
                 Column(modifier = Modifier.padding(top = 24.dp)) {
@@ -210,6 +187,26 @@ fun LoginScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * Фон экрана входа: панда на весь экран, снизу она уходит в тёмный фон под форму.
+ * Тот же фон у приглашения войти на "Главной", чтобы это читалось одним экраном.
+ */
+@Composable
+fun PandaBackdrop() {
+    Box(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
+        LiquidGlassPanda(Modifier.fillMaxSize())
+        Box(
+            modifier = Modifier.matchParentSize().background(
+                Brush.verticalGradient(
+                    0.40f to Color.Transparent,
+                    0.65f to DarkBackground.copy(alpha = 0.94f),
+                    1f to DarkBackground,
+                ),
+            ),
+        )
     }
 }
 

@@ -124,24 +124,28 @@ fun LessonCard(
 
                 Spacer(Modifier.height(8.dp))
 
-                Text(
-                    // склеенные названия подгрупп, если пара делится, иначе своё название
-                    text = lesson.displayTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-
-                if (lesson.topic.isNotBlank()) {
+                // Высота карточки = длительность пары. Текст берёт то, что осталось после
+                // времени и чипов, и обрезается многоточием по высоте, а не раздувает карточку.
+                Column(modifier = Modifier.weight(1f, fill = false)) {
                     Text(
-                        text = lesson.topic,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.75f),
+                        // склеенные названия подгрупп, если пара делится, иначе своё название
+                        text = lesson.displayTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 2.dp),
                     )
+
+                    if (lesson.topic.isNotBlank()) {
+                        Text(
+                            text = lesson.topic,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.75f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(8.dp))
